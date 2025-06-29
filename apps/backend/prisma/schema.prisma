@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Center {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String
+  users     User[]
+  classes   Class[]
+  exercises Exercise[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model User {
+  id          String        @id @default(cuid())
+  email       String        @unique
+  password    String
+  username    String?       @unique
+  firstName   String?
+  lastName    String?
+  phoneNumber String?
+  centerId    String
+  center      Center        @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  role        UserRole
+  classes     ClassMember[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+model Class {
+  id           String        @id @default(cuid())
+  name         String
+  description  String?
+  classMembers ClassMember[]
+  centerId     String
+  center       Center        @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model ClassMember {
+  classId     String
+  class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments Assignment[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@id([classId, userId])
+}
+
+model Exercise {
+  id         String       @id @default(cuid())
+  name       String
+  type       ExerciseType
+  content    Json
+  centerId   String?
+  center     Center?      @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  assigments Assignment[]
+  isPublic   Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+enum ExerciseType {
+  READING
+  LISTENING
+  WRITING
+  SPEAKING
+}
+
+model Assignment {
+  id                 String           @id @default(cuid())
+  title              String
+  dueDate            DateTime?
+  classMember        ClassMember      @relation(fields: [classMemberClassId, classMemberUserId], references: [classId, userId], onDelete: Cascade)
+  classMemberClassId String
+  classMemberUserId  String
+  exerciseId         String
+  exercise           Exercise         @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  submission         Submission?
+  status             AssignmentStatus @default(ASSIGNED)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  SUBMITTED
+  REVIEWED
+}
+
+model Submission {
+  id           String     @id @default(cuid())
+  assignmentId String     @unique
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  content      Json
+  grade        Json?
+  feedback     Json?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
