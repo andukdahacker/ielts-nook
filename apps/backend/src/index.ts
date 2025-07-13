@@ -1,3 +1,4 @@
+import fastifyCookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import fastifyEnv from "@fastify/env";
 import helmet from "@fastify/helmet";
@@ -71,7 +72,8 @@ const build = async () => {
   });
 
   app.register(cors, {
-    origin: "*",
+    origin: "http://localhost:3000",
+    credentials: true,
   });
 
   app.register(helmet);
@@ -150,6 +152,8 @@ const build = async () => {
         : undefined,
     },
   });
+
+  await app.register(fastifyCookie);
 
   app.register(s3Plugin);
 

@@ -62,8 +62,19 @@ async function centerRoutes(fastify: FastifyInstance, opts: any) {
     },
     handler: async (
       request: FastifyRequest<{ Body: SignInCenterInput }>,
-      _reply: FastifyReply,
-    ) => await centerController.signIn(request.body),
+      reply: FastifyReply,
+    ) => {
+      const result = await centerController.signIn(request.body);
+
+      return reply
+        .setCookie("token", result.data.token, {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          maxAge: 60 * 60 * 24 * 365,
+        })
+        .send(result);
+    },
   });
 
   fastify.get("/", {
