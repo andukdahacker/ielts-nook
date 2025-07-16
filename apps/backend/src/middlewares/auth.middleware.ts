@@ -22,14 +22,15 @@ declare module "fastify" {
   }
 }
 async function authMiddleware(request: FastifyRequest, reply: FastifyReply) {
-  if (!request.headers.authorization) {
-    return reply.status(401).send({
-      error: "Unauthorized",
-      message: "Unauthorized",
-    });
+  let token: string | undefined;
+  if (request.headers.authorization) {
+    token = request.headers.authorization.split(" ")[1];
   }
 
-  const token = request.headers.authorization.split(" ")[1];
+  if (request.cookies.token) {
+    token = request.cookies.token;
+  }
+
   if (!token) {
     return reply.status(401).send({
       error: "Unauthorized",
