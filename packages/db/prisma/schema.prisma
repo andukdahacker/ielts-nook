@@ -17,6 +17,8 @@ model User {
   preferredLanguage   String    @default("en") @map("preferred_language")
   deletionRequestedAt          DateTime? @map("deletion_requested_at")
   emailScheduleNotifications   Boolean   @default(true) @map("email_schedule_notifications")
+  emailEngagementNotifications Boolean   @default(true) @map("email_engagement_notifications")
+  emailNotificationsPaused     Boolean   @default(false) @map("email_notifications_paused")
   parentEmail                  String?   @map("parent_email")
 
   createdAt DateTime @default(now()) @map("created_at")

@@ -496,6 +496,8 @@ export interface paths {
                                     preferredLanguage?: string;
                                     deletionRequestedAt?: string | null;
                                     emailScheduleNotifications?: boolean;
+                                    emailEngagementNotifications?: boolean;
+                                    emailNotificationsPaused?: boolean;
                                     /** @enum {string} */
                                     role: "OWNER" | "ADMIN" | "TEACHER" | "STUDENT";
                                     centerId: string | null;
@@ -593,6 +595,8 @@ export interface paths {
                                     preferredLanguage?: string;
                                     deletionRequestedAt?: string | null;
                                     emailScheduleNotifications?: boolean;
+                                    emailEngagementNotifications?: boolean;
+                                    emailNotificationsPaused?: boolean;
                                     /** @enum {string} */
                                     role: "OWNER" | "ADMIN" | "TEACHER" | "STUDENT";
                                     centerId: string | null;
@@ -688,6 +692,8 @@ export interface paths {
                                     preferredLanguage?: string;
                                     deletionRequestedAt?: string | null;
                                     emailScheduleNotifications?: boolean;
+                                    emailEngagementNotifications?: boolean;
+                                    emailNotificationsPaused?: boolean;
                                     /** @enum {string} */
                                     role: "OWNER" | "ADMIN" | "TEACHER" | "STUDENT";
                                     centerId: string | null;
@@ -762,6 +768,8 @@ export interface paths {
                                 preferredLanguage?: string;
                                 deletionRequestedAt?: string | null;
                                 emailScheduleNotifications?: boolean;
+                                emailEngagementNotifications?: boolean;
+                                emailNotificationsPaused?: boolean;
                                 /** @enum {string} */
                                 role: "OWNER" | "ADMIN" | "TEACHER" | "STUDENT";
                                 centerId: string | null;
@@ -10900,7 +10908,7 @@ export interface paths {
                                     name: string | null;
                                 };
                                 /** @enum {string|null} */
-                                submissionStatus?: "IN_PROGRESS" | "SUBMITTED" | "GRADED" | null;
+                                submissionStatus?: "IN_PROGRESS" | "SUBMITTED" | "AI_PROCESSING" | "GRADED" | null;
                                 submissionId?: string | null;
                             }[] | null;
                             message: string;
@@ -11003,7 +11011,7 @@ export interface paths {
                                     name: string | null;
                                 };
                                 /** @enum {string|null} */
-                                submissionStatus?: "IN_PROGRESS" | "SUBMITTED" | "GRADED" | null;
+                                submissionStatus?: "IN_PROGRESS" | "SUBMITTED" | "AI_PROCESSING" | "GRADED" | null;
                                 submissionId?: string | null;
                             } | null;
                             message: string;
@@ -15183,6 +15191,8 @@ export interface paths {
                         /** Format: uri */
                         avatarUrl?: string | null;
                         emailScheduleNotifications?: boolean;
+                        emailEngagementNotifications?: boolean;
+                        emailNotificationsPaused?: boolean;
                     };
                 };
             };
@@ -15203,6 +15213,8 @@ export interface paths {
                                 preferredLanguage: string;
                                 deletionRequestedAt: string | null;
                                 emailScheduleNotifications: boolean;
+                                emailEngagementNotifications: boolean;
+                                emailNotificationsPaused: boolean;
                                 /** @enum {string} */
                                 role: "OWNER" | "ADMIN" | "TEACHER" | "STUDENT";
                                 /** @enum {string} */
@@ -15673,6 +15685,8 @@ export interface paths {
                                 preferredLanguage: string;
                                 deletionRequestedAt: string | null;
                                 emailScheduleNotifications: boolean;
+                                emailEngagementNotifications: boolean;
+                                emailNotificationsPaused: boolean;
                                 /** @enum {string} */
                                 role: "OWNER" | "ADMIN" | "TEACHER" | "STUDENT";
                                 /** @enum {string} */

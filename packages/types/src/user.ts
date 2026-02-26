@@ -142,6 +142,8 @@ export const UserProfileSchema = z.object({
   preferredLanguage: z.string(),
   deletionRequestedAt: z.string().nullable(),
   emailScheduleNotifications: z.boolean(),
+  emailEngagementNotifications: z.boolean(),
+  emailNotificationsPaused: z.boolean(),
   role: z.enum(["OWNER", "ADMIN", "TEACHER", "STUDENT"]),
   status: z.enum(["ACTIVE", "SUSPENDED", "INVITED"]),
   createdAt: z.string(),
@@ -164,6 +166,8 @@ export const UpdateProfileSchema = z.object({
   preferredLanguage: z.enum(["en", "vi"]).optional(),
   avatarUrl: z.string().url().optional().nullable(),
   emailScheduleNotifications: z.boolean().optional(),
+  emailEngagementNotifications: z.boolean().optional(),
+  emailNotificationsPaused: z.boolean().optional(),
 });
 
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;

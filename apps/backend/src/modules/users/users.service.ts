@@ -70,6 +70,9 @@ export class UsersService {
       deletionRequestedAt:
         membership.user.deletionRequestedAt?.toISOString() ?? null,
       emailScheduleNotifications: membership.user.emailScheduleNotifications,
+      emailEngagementNotifications:
+        membership.user.emailEngagementNotifications,
+      emailNotificationsPaused: membership.user.emailNotificationsPaused,
       role: membership.role as "OWNER" | "ADMIN" | "TEACHER" | "STUDENT",
       status: membership.status as "ACTIVE" | "SUSPENDED" | "INVITED",
       createdAt: membership.createdAt.toISOString(),
@@ -89,6 +92,8 @@ export class UsersService {
         preferredLanguage: input.preferredLanguage,
         avatarUrl: input.avatarUrl,
         emailScheduleNotifications: input.emailScheduleNotifications,
+        emailEngagementNotifications: input.emailEngagementNotifications,
+        emailNotificationsPaused: input.emailNotificationsPaused,
       },
       include: {
         memberships: true,
@@ -109,6 +114,8 @@ export class UsersService {
       preferredLanguage: user.preferredLanguage,
       deletionRequestedAt: user.deletionRequestedAt?.toISOString() ?? null,
       emailScheduleNotifications: user.emailScheduleNotifications,
+      emailEngagementNotifications: user.emailEngagementNotifications,
+      emailNotificationsPaused: user.emailNotificationsPaused,
       role: membership.role as "OWNER" | "ADMIN" | "TEACHER" | "STUDENT",
       status: membership.status as "ACTIVE" | "SUSPENDED" | "INVITED",
       createdAt: membership.createdAt.toISOString(),

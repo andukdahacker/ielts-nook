@@ -99,6 +99,8 @@ export function ProfilePage() {
     phoneNumber?: string;
     preferredLanguage?: "en" | "vi";
     emailScheduleNotifications?: boolean;
+    emailEngagementNotifications?: boolean;
+    emailNotificationsPaused?: boolean;
   }) => {
     try {
       await updateProfile.mutateAsync(values);
@@ -306,15 +308,29 @@ export function ProfilePage() {
                       : "English"}
                   </p>
                 </div>
-                <div>
+                <div className="space-y-2">
                   <p className="text-sm font-medium text-muted-foreground">
-                    Schedule Email Notifications
+                    Notification Preferences
                   </p>
-                  <p>
-                    {(displayUser as AuthUser).emailScheduleNotifications !== false
-                      ? "Enabled"
-                      : "Disabled"}
-                  </p>
+                  {(displayUser as AuthUser).emailNotificationsPaused && (
+                    <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                      All notifications paused
+                    </p>
+                  )}
+                  <div className={`text-sm space-y-1${(displayUser as AuthUser).emailNotificationsPaused ? " opacity-50" : ""}`}>
+                    <p>
+                      Schedule changes:{" "}
+                      {(displayUser as AuthUser).emailScheduleNotifications !== false
+                        ? "On"
+                        : "Off"}
+                    </p>
+                    <p>
+                      Achievements & streaks:{" "}
+                      {(displayUser as AuthUser).emailEngagementNotifications !== false
+                        ? "On"
+                        : "Off"}
+                    </p>
+                  </div>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Role</p>

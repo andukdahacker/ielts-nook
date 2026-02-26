@@ -14,6 +14,8 @@ export const AuthUserSchema = z.object({
   preferredLanguage: z.string().optional(),
   deletionRequestedAt: z.string().nullable().optional(),
   emailScheduleNotifications: z.boolean().optional(),
+  emailEngagementNotifications: z.boolean().optional(),
+  emailNotificationsPaused: z.boolean().optional(),
   role: UserRoleSchema,
   centerId: z.string().nullable(),
 });

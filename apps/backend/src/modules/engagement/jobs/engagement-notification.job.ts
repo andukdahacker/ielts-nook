@@ -125,6 +125,8 @@ export const engagementNotificationJob = inngest.createFunction(
             name: true,
             preferredLanguage: true,
             parentEmail: true,
+            emailEngagementNotifications: true,
+            emailNotificationsPaused: true,
           },
         });
         if (!user) return null;
@@ -136,6 +138,14 @@ export const engagementNotificationJob = inngest.createFunction(
     });
 
     if (!recipientData?.email) return { status: "no-email" };
+
+    // Check notification preferences
+    if (
+      recipientData.emailNotificationsPaused ||
+      !recipientData.emailEngagementNotifications
+    ) {
+      return { status: "preferences-disabled" };
+    }
 
     // Step 4: Fetch center name (Center is NOT tenanted — use raw prisma)
     const centerName = await step.run("fetch-center", async () => {

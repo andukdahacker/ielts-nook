@@ -64,6 +64,9 @@ describe("Profile Service Tests", () => {
         phoneNumber: "+84123456789",
         preferredLanguage: "vi",
         deletionRequestedAt: null,
+        emailScheduleNotifications: true,
+        emailEngagementNotifications: false,
+        emailNotificationsPaused: true,
         updatedAt: new Date(),
         memberships: [
           {
@@ -81,11 +84,24 @@ describe("Profile Service Tests", () => {
         name: "Updated Name",
         phoneNumber: "+84123456789",
         preferredLanguage: "vi",
+        emailEngagementNotifications: false,
+        emailNotificationsPaused: true,
       });
 
       expect(result.name).toBe("Updated Name");
       expect(result.phoneNumber).toBe("+84123456789");
       expect(result.preferredLanguage).toBe("vi");
+      expect(result.emailScheduleNotifications).toBe(true);
+      expect(result.emailEngagementNotifications).toBe(false);
+      expect(result.emailNotificationsPaused).toBe(true);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            emailEngagementNotifications: false,
+            emailNotificationsPaused: true,
+          }),
+        }),
+      );
     });
 
     it("throws error when user has no membership", async () => {

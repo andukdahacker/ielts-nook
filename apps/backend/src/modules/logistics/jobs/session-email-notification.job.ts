@@ -57,6 +57,7 @@ async function fetchRecipientsForClass(
             email: true,
             name: true,
             emailScheduleNotifications: true,
+            emailNotificationsPaused: true,
             preferredLanguage: true,
           },
         },
@@ -68,6 +69,7 @@ async function fetchRecipientsForClass(
                 email: true,
                 name: true,
                 emailScheduleNotifications: true,
+                emailNotificationsPaused: true,
                 preferredLanguage: true,
               },
             },
@@ -84,7 +86,10 @@ async function fetchRecipientsForClass(
     ];
 
     return all
-      .filter((u) => u.emailScheduleNotifications && u.email)
+      .filter(
+        (u) =>
+          u.emailScheduleNotifications && !u.emailNotificationsPaused && u.email,
+      )
       .map((u) => ({
         id: u.id,
         email: u.email,

@@ -156,7 +156,7 @@ development_status:
   # Status: IN-PROGRESS (first story created 2026-02-26)
   epic-7: in-progress
   7-1-engagement-email-notifications: done
-  7-2-notification-preferences: backlog
+  7-2-notification-preferences: done
   7-3-parent-email-registration: backlog
   epic-7-retrospective: optional
 
