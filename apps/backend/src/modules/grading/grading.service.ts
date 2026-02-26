@@ -798,6 +798,17 @@ export class GradingService {
       });
     });
 
+    // Fire engagement achievement check (fire-and-forget, outside transaction)
+    await inngest.send({
+      name: "engagement/submission.graded",
+      data: {
+        studentId: submission.studentId,
+        centerId,
+        submissionId,
+        score: data.teacherFinalScore ?? feedback?.overallScore ?? null,
+      },
+    });
+
     // Find next submission in the grading queue
     const nextSubmission = await db.submission.findFirst({
       where: {

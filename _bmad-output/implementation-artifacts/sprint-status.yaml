@@ -153,9 +153,9 @@ development_status:
   epic-6-retrospective: optional
 
   # Epic 7: Email Notifications & Parent Communication
-  # Status: BACKLOG (rewritten during course correction 2026-02-11, was Zalo Integration)
-  epic-7: backlog
-  7-1-engagement-email-notifications: backlog
+  # Status: IN-PROGRESS (first story created 2026-02-26)
+  epic-7: in-progress
+  7-1-engagement-email-notifications: done
   7-2-notification-preferences: backlog
   7-3-parent-email-registration: backlog
   epic-7-retrospective: optional
