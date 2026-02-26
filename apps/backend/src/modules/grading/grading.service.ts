@@ -352,7 +352,6 @@ export class GradingService {
       assignment: {
         select: {
           id: true,
-          title: true,
           dueDate: true,
           classId: true,
           class: { select: { name: true } },

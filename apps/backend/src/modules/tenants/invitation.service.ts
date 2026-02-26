@@ -10,7 +10,7 @@ import type { Resend } from "resend";
 export class InvitationService {
   constructor(
     private readonly prisma: PrismaClient,
-    private readonly resend: Resend,
+    private readonly resend: Resend | null,
     private readonly options: { emailFrom: string; webappUrl: string },
   ) {}
 
@@ -73,18 +73,20 @@ export class InvitationService {
       ? `<p style="margin: 16px 0; padding: 12px; background: #f5f5f5; border-radius: 8px;"><em>"${personalMessage}"</em></p>`
       : "";
 
-    await this.resend.emails.send({
-      from: this.options.emailFrom,
-      to: email,
-      subject: "You've been invited to join ClassLite",
-      html: `
-        <h1>You've been invited!</h1>
-        <p>You have been invited to join a center on ClassLite as a <strong>${role.toLowerCase()}</strong>.</p>
-        ${personalMessageHtml}
-        <p>Please click the link below to create your account and join:</p>
-        <a href="${signupUrl}">Join Now</a>
-      `,
-    });
+    if (this.resend) {
+      await this.resend.emails.send({
+        from: this.options.emailFrom,
+        to: email,
+        subject: "You've been invited to join ClassLite",
+        html: `
+          <h1>You've been invited!</h1>
+          <p>You have been invited to join a center on ClassLite as a <strong>${role.toLowerCase()}</strong>.</p>
+          ${personalMessageHtml}
+          <p>Please click the link below to create your account and join:</p>
+          <a href="${signupUrl}">Join Now</a>
+        `,
+      });
+    }
 
     return result;
   }

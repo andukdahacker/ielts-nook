@@ -112,6 +112,7 @@ gradingTest.describe("Grading RBAC", () => {
           .or(page.getByText("Back"))
           .or(page.getByText("Something went wrong"))
           .or(page.getByText("Not Authorized"))
+          .first()
       ).toBeVisible({ timeout: 15000 });
     }
   );

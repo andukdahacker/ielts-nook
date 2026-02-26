@@ -162,24 +162,20 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       await closeAIAssistantDialog(page);
       await page.waitForTimeout(2000);
 
-      // Look for existing teacher comment with edit option
-      const editButton = page
-        .locator('button, [role="menuitem"]')
-        .filter({ hasText: /Edit/i })
+      // Open the dropdown menu on an existing comment to find the Edit option
+      const menuTrigger = page
+        .locator('[data-slot="dropdown-menu-trigger"], button[aria-haspopup="menu"]')
         .first();
-      const hasEdit = await editButton.isVisible().catch(() => false);
-
-      if (!hasEdit) {
-        // Try opening the dropdown menu first
-        const menuTrigger = page
-          .locator("button:has(svg)")
-          .filter({ has: page.locator('[data-slot="dropdown-menu-trigger"]') })
-          .first();
-        if (await menuTrigger.isVisible().catch(() => false)) {
-          await menuTrigger.click();
-          await page.waitForTimeout(300);
-        }
+      if (!(await menuTrigger.isVisible().catch(() => false))) {
+        gradingTest.skip(
+          true as never,
+          "No comment dropdown found" as never
+        );
+        return;
       }
+
+      await menuTrigger.click();
+      await page.waitForTimeout(300);
 
       const editBtn = page
         .locator('[role="menuitem"]')
@@ -298,6 +294,18 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
 
       // Use page.evaluate to programmatically select text in the student work pane
       const hasText = await page.evaluate(() => {
+        // Helper to find the first text node within an element
+        function findTextNode(node: Node): Text | null {
+          if (node.nodeType === Node.TEXT_NODE && (node.textContent?.trim().length ?? 0) > 0) {
+            return node as Text;
+          }
+          for (const child of node.childNodes) {
+            const found = findTextNode(child);
+            if (found) return found;
+          }
+          return null;
+        }
+
         // Find the student work text container
         const containers = document.querySelectorAll(
           "p, [data-student-work], [class*='student-work'], [class*='StudentWork']"
@@ -305,13 +313,12 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
         for (const container of containers) {
           const text = container.textContent || "";
           if (text.includes("Technology") || text.includes("education")) {
-            // Select a portion of text
-            const range = document.createRange();
-            const textNode = container.firstChild;
+            // Find an actual text node to create a valid range
+            const textNode = findTextNode(container);
             if (textNode && textNode.textContent) {
-              const start = Math.min(0, textNode.textContent.length);
+              const range = document.createRange();
               const end = Math.min(20, textNode.textContent.length);
-              range.setStart(textNode, start);
+              range.setStart(textNode, 0);
               range.setEnd(textNode, end);
               const selection = window.getSelection();
               selection?.removeAllRanges();

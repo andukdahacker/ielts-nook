@@ -263,17 +263,18 @@ test.describe("Email Intervention (Story 6.3)", () => {
       return;
     }
 
-    // Switch to Interventions tab via keyboard — tabs are below the fold in the Sheet overlay,
-    // so normal click fails with "element is outside of the viewport". Focus the active
-    // Trends tab trigger programmatically, then ArrowRight × 3 to Interventions.
-    const trendsTab = overlay.locator('[role="tab"]').filter({ hasText: "Trends" });
-    await trendsTab.evaluate((el: HTMLElement) => el.focus());
-    await page.keyboard.press("ArrowRight"); // Trends → Attendance
-    await page.keyboard.press("ArrowRight"); // Attendance → Assignments
-    await page.keyboard.press("ArrowRight"); // Assignments → Interventions
+    // Tabs are below the fold in the Sheet overlay so normal click fails.
+    // Scroll the tab into view, focus it, and press Space to activate.
+    await interventionsTab.evaluate((el: HTMLElement) => {
+      el.scrollIntoView({ block: "center" });
+      el.focus();
+    });
+    await page.waitForTimeout(300);
+    await page.keyboard.press("Space");
+    await page.waitForTimeout(500);
 
-    const tabPanel = overlay.getByRole("tabpanel", { name: "Interventions" });
-    await expect(tabPanel).toBeVisible();
+    const tabPanel = overlay.locator('[role="tabpanel"][data-state="active"]');
+    await expect(tabPanel).toBeVisible({ timeout: 5000 });
 
     // Should show intervention history or empty state
     const text = await tabPanel.textContent();

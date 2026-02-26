@@ -25,8 +25,9 @@ export NODE_ENV="development"
 export FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:${FIREBASE_AUTH_EMULATOR_PORT}"
 export VITE_USE_FIREBASE_EMULATOR="true"
 export DATABASE_URL
-# Disable real email sending during E2E tests — backend jobs skip when unset
-unset RESEND_API_KEY
+# Disable real email sending during E2E tests — backend jobs skip when empty.
+# Use export (not unset) so dotenv won't re-populate from .env files.
+export RESEND_API_KEY=""
 
 # PIDs for cleanup
 FIREBASE_PID=""
@@ -178,7 +179,7 @@ fi
 
 # Step 5: Seed test data
 echo -e "${YELLOW}Step 5: Seeding test data...${NC}"
-if ! pnpm test:e2e:seed; then
+if ! pnpm -w run test:e2e:seed; then
     echo -e "${RED}Failed to seed test data${NC}"
     exit 1
 fi
@@ -190,7 +191,7 @@ echo -e "${YELLOW}Step 6: Running E2E tests...${NC}"
 echo -e "${BLUE}========================================${NC}"
 
 # Run tests (pass any additional arguments to playwright)
-pnpm test:e2e:chromium "$@"
+pnpm -w run test:e2e:chromium "$@"
 TEST_EXIT_CODE=$?
 
 echo ""

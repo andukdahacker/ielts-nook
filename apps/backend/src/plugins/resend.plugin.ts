@@ -1,10 +1,10 @@
-import { FastifyInstance, FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 import { Resend } from "resend";
 
 declare module "fastify" {
   interface FastifyInstance {
-    resend: Resend;
+    resend: Resend | null;
   }
 }
 
@@ -16,6 +16,8 @@ const resendPlugin: FastifyPluginAsync<{ apiKey: string }> = async (
     fastify.log.warn(
       "RESEND_API_KEY not provided. Email functionality will be disabled.",
     );
+    fastify.decorate("resend", null);
+    return;
   }
 
   const resend = new Resend(options.apiKey);

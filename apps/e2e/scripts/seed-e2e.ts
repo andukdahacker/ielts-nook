@@ -317,6 +317,210 @@ async function seedDatabase() {
   }
 }
 
+// Additional students for student health dashboard tests
+const HEALTH_TEST_STUDENTS = [
+  {
+    id: "e2e-student-alice",
+    email: "alice@test.classlite.com",
+    name: "Alice Johnson",
+    parentEmail: "parent-alice@test.classlite.com",
+  },
+  {
+    id: "e2e-student-bob",
+    email: "bob@test.classlite.com",
+    name: "Bob Martinez",
+    parentEmail: "parent-bob@test.classlite.com",
+  },
+  {
+    id: "e2e-student-charlie",
+    email: "charlie@test.classlite.com",
+    name: "Charlie Brown",
+    parentEmail: "parent-charlie@test.classlite.com",
+  },
+];
+
+async function seedStudentHealthData() {
+  console.log("🏥 Seeding student health test data...");
+
+  const centerId = TEST_CENTER.id;
+  const classId = "e2e-test-class";
+  const teacherId = "e2e-teacher";
+  const ownerId = "e2e-owner";
+
+  try {
+    // Create additional student users + enroll in test class
+    for (const student of HEALTH_TEST_STUDENTS) {
+      await prisma.user.upsert({
+        where: { id: student.id },
+        update: { email: student.email, name: student.name, parentEmail: student.parentEmail },
+        create: {
+          id: student.id,
+          email: student.email,
+          name: student.name,
+          parentEmail: student.parentEmail,
+        },
+      });
+      await prisma.centerMembership.upsert({
+        where: { centerId_userId: { centerId, userId: student.id } },
+        update: { role: "STUDENT", status: "ACTIVE" },
+        create: { centerId, userId: student.id, role: "STUDENT", status: "ACTIVE" },
+      });
+      await prisma.classStudent.upsert({
+        where: { classId_studentId: { classId, studentId: student.id } },
+        update: {},
+        create: { classId, studentId: student.id, centerId },
+      });
+      console.log(`   ✓ Created student: ${student.name}`);
+    }
+
+    // Add parentEmail to the existing e2e-student
+    await prisma.user.update({
+      where: { id: "e2e-student" },
+      data: { parentEmail: "parent-student@test.classlite.com" },
+    });
+
+    const allStudentIds = [
+      "e2e-student",
+      "e2e-student-alice",
+      "e2e-student-bob",
+      "e2e-student-charlie",
+    ];
+
+    // Create an Exercise (required FK for assignments)
+    await prisma.exercise.upsert({
+      where: { id_centerId: { id: "e2e-health-exercise", centerId } },
+      update: {},
+      create: {
+        id: "e2e-health-exercise",
+        centerId,
+        title: "E2E Health Test Exercise",
+        skill: "READING",
+        status: "PUBLISHED",
+        createdById: ownerId,
+      },
+    });
+    console.log("   ✓ Created exercise for assignments");
+
+    // Create 10 past class sessions (one per day for the last 10 days)
+    const now = new Date();
+    const sessionIds: string[] = [];
+    for (let i = 1; i <= 10; i++) {
+      const sessionId = `e2e-session-${i}`;
+      sessionIds.push(sessionId);
+
+      const startTime = new Date(now);
+      startTime.setDate(startTime.getDate() - (11 - i));
+      startTime.setHours(9, 0, 0, 0);
+
+      const endTime = new Date(startTime);
+      endTime.setHours(10, 0, 0, 0);
+
+      await prisma.classSession.upsert({
+        where: { id_centerId: { id: sessionId, centerId } },
+        update: { startTime, endTime, status: "COMPLETED" },
+        create: { id: sessionId, classId, startTime, endTime, status: "COMPLETED", centerId },
+      });
+    }
+    console.log("   ✓ Created 10 class sessions");
+
+    // Attendance patterns (number of sessions marked PRESENT out of 10):
+    //   e2e-student:  9/10 = 90%  → on-track
+    //   Alice:       10/10 = 100% → on-track
+    //   Bob:          8/10 = 80%  → warning  (80 < 90)
+    //   Charlie:      5/10 = 50%  → at-risk  (50 < 80)
+    const attendancePatterns: Record<string, number> = {
+      "e2e-student": 9,
+      "e2e-student-alice": 10,
+      "e2e-student-bob": 8,
+      "e2e-student-charlie": 5,
+    };
+
+    for (const studentId of allStudentIds) {
+      const presentCount = attendancePatterns[studentId];
+      for (let i = 0; i < sessionIds.length; i++) {
+        const sessionId = sessionIds[i];
+        const status = i < presentCount ? "PRESENT" : "ABSENT";
+        await prisma.attendance.upsert({
+          where: { sessionId_studentId: { sessionId, studentId } },
+          update: { status },
+          create: { sessionId, studentId, status, markedBy: teacherId, centerId },
+        });
+      }
+    }
+    console.log("   ✓ Created attendance records");
+
+    // Create 4 assignments for the test class (all past due)
+    const assignmentIds: string[] = [];
+    for (let i = 1; i <= 4; i++) {
+      const assignmentId = `e2e-assignment-${i}`;
+      assignmentIds.push(assignmentId);
+
+      const dueDate = new Date(now);
+      dueDate.setDate(dueDate.getDate() - (5 - i));
+      dueDate.setHours(23, 59, 59, 0);
+
+      await prisma.assignment.upsert({
+        where: { id_centerId: { id: assignmentId, centerId } },
+        update: { dueDate, status: "OPEN" },
+        create: {
+          id: assignmentId,
+          centerId,
+          exerciseId: "e2e-health-exercise",
+          classId,
+          dueDate,
+          status: "OPEN",
+          createdById: ownerId,
+        },
+      });
+    }
+    console.log("   ✓ Created 4 assignments");
+
+    // Submission patterns (number of assignments submitted out of 4):
+    //   e2e-student: 4/4 = 100% → on-track
+    //   Alice:       4/4 = 100% → on-track
+    //   Bob:         3/4 = 75%  → on-track  (75 >= 75)
+    //   Charlie:     1/4 = 25%  → at-risk   (25 < 50)
+    const submissionPatterns: Record<string, number> = {
+      "e2e-student": 4,
+      "e2e-student-alice": 4,
+      "e2e-student-bob": 3,
+      "e2e-student-charlie": 1,
+    };
+
+    for (const studentId of allStudentIds) {
+      const submitCount = submissionPatterns[studentId];
+      for (let i = 0; i < assignmentIds.length; i++) {
+        const assignmentId = assignmentIds[i];
+        if (i < submitCount) {
+          await prisma.submission.upsert({
+            where: { assignmentId_studentId: { assignmentId, studentId } },
+            update: { status: "SUBMITTED" },
+            create: {
+              centerId,
+              assignmentId,
+              studentId,
+              status: "SUBMITTED",
+              submittedAt: new Date(),
+            },
+          });
+        }
+      }
+    }
+    console.log("   ✓ Created submission records");
+
+    // Expected health statuses:
+    //   e2e-student (Test Student): on-track  (90% att, 100% assign)
+    //   Alice Johnson:              on-track  (100% att, 100% assign)
+    //   Bob Martinez:               warning   (80% att → warning, 75% assign → on-track)
+    //   Charlie Brown:              at-risk   (50% att → at-risk, 25% assign → at-risk)
+    console.log("\n✅ Student health data seeding complete!");
+    console.log("   Expected: 2 on-track, 1 warning, 1 at-risk");
+  } catch (error) {
+    console.error("❌ Student health data seeding failed:", error);
+    throw error;
+  }
+}
+
 async function verifyFirebaseLogin() {
   const emulatorHost = process.env.FIREBASE_AUTH_EMULATOR_HOST;
   if (!emulatorHost) return;
@@ -358,6 +562,8 @@ async function main() {
     await seedFirebaseUsers();
     console.log("");
     await seedDatabase();
+    console.log("");
+    await seedStudentHealthData();
     console.log("");
     await verifyFirebaseLogin();
   } catch (error) {

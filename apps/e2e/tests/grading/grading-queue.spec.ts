@@ -116,7 +116,10 @@ gradingTest.describe("Grading Queue (Story 5.5)", () => {
         .getByRole("button", { name: /Start Grading|Continue Grading/i })
         .first();
       const hasButton = await gradingButton.isVisible().catch(() => false);
-      if (!hasButton) {
+      const isEnabled = hasButton
+        ? await gradingButton.isEnabled().catch(() => false)
+        : false;
+      if (!hasButton || !isEnabled) {
         // Could also be a link or the row itself is clickable
         const rowLink = page
           .locator("a, [role='link'], tr[role='row']")
@@ -124,7 +127,7 @@ gradingTest.describe("Grading Queue (Story 5.5)", () => {
           .first();
         const hasLink = await rowLink.isVisible().catch(() => false);
         if (!hasLink) {
-          gradingTest.skip(true as never, "No grading button visible" as never);
+          gradingTest.skip(true as never, "No actionable grading button visible" as never);
           return;
         }
         await rowLink.click();

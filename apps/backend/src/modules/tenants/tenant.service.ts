@@ -20,7 +20,7 @@ export class TenantService {
     private readonly prisma: PrismaClient,
     private readonly firebaseAuth: Auth,
     private readonly firebaseStorage: Storage,
-    private readonly resend: Resend,
+    private readonly resend: Resend | null,
     private readonly options: { emailFrom: string; bucketName: string },
   ) {}
 
@@ -232,18 +232,20 @@ export class TenantService {
       const resetLink =
         await this.firebaseAuth.generatePasswordResetLink(ownerEmail);
 
-      await this.resend.emails.send({
-        from: this.options.emailFrom,
-        to: ownerEmail,
-        subject: "Welcome to ClassLite",
-        html: `
-        <h1>Welcome to ClassLite, ${escapeHtml(ownerName)}!</h1>
-        <p>Your center <strong>${escapeHtml(name)}</strong> has been successfully provisioned.</p>
-        <p>Please click the link below to set your password and access your account:</p>
-        <a href="${resetLink}">Set Password & Login</a>
-        <p>If you already have an account, you can just login.</p>
-      `,
-      });
+      if (this.resend) {
+        await this.resend.emails.send({
+          from: this.options.emailFrom,
+          to: ownerEmail,
+          subject: "Welcome to ClassLite",
+          html: `
+          <h1>Welcome to ClassLite, ${escapeHtml(ownerName)}!</h1>
+          <p>Your center <strong>${escapeHtml(name)}</strong> has been successfully provisioned.</p>
+          <p>Please click the link below to set your password and access your account:</p>
+          <a href="${resetLink}">Set Password & Login</a>
+          <p>If you already have an account, you can just login.</p>
+        `,
+        });
+      }
 
       return {
         center: {

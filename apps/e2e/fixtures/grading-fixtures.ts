@@ -517,12 +517,14 @@ async function authenticateSetupPage(page: Page): Promise<void> {
   }
 }
 
-export const gradingTest = baseTest.extend<{ gradingIds: GradingTestIds }>({
-  gradingIds: async ({ browser }, use) => {
+export const gradingTest = baseTest.extend<{}, { gradingIds: GradingTestIds }>({
+  gradingIds: [async ({ browser }, use) => {
     let ids: GradingTestIds | null = null;
 
-    // Retry fixture setup up to 2 times to handle transient backend load
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    // Retry fixture setup up to 3 times to handle transient backend load.
+    // Worker-scoped: data is created once per worker and shared across all
+    // tests in the serial suite, reducing API calls from ~30 to ~3.
+    for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const setupContext = await browser.newContext();
         const setupPage = await setupContext.newPage();
@@ -531,9 +533,9 @@ export const gradingTest = baseTest.extend<{ gradingIds: GradingTestIds }>({
         await setupContext.close();
         break;
       } catch {
-        if (attempt < 2) {
-          // Wait before retrying
-          await new Promise((r) => setTimeout(r, 3000));
+        if (attempt < 3) {
+          // Wait before retrying (longer backoff for later attempts)
+          await new Promise((r) => setTimeout(r, 3000 * attempt));
         }
       }
     }
@@ -551,5 +553,5 @@ export const gradingTest = baseTest.extend<{ gradingIds: GradingTestIds }>({
         // Cleanup failures are non-critical
       }
     }
-  },
+  }, { scope: "worker" }],
 });

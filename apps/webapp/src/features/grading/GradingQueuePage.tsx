@@ -460,22 +460,6 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
     );
   }
 
-  // All analyzing
-  const allAnalyzing = queueItems.every(
-    (item) => item.analysisStatus === "analyzing",
-  );
-  if (allAnalyzing) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="font-medium">AI is analyzing submissions...</p>
-        <p className="text-sm text-muted-foreground">
-          {queueItems.length} submissions analyzing
-        </p>
-      </div>
-    );
-  }
-
   // Breather overlay
   if (showBreather) {
     return (
