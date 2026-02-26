@@ -39,7 +39,7 @@ async function getAuthToken(page: Page): Promise<string> {
 /**
  * Add a section to a DRAFT exercise via backend API.
  */
-async function addSectionViaAPI(
+export async function addSectionViaAPI(
   page: Page,
   exerciseId: string,
   sectionType: string,
@@ -72,7 +72,7 @@ async function addSectionViaAPI(
 /**
  * Add a question to a section via backend API.
  */
-async function addQuestionViaAPI(
+export async function addQuestionViaAPI(
   page: Page,
   exerciseId: string,
   sectionId: string,

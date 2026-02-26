@@ -2,7 +2,22 @@ import { expect } from "@playwright/test";
 import {
   submissionTest as test,
   startSubmissionAsStudent,
+  addSectionViaAPI,
+  addQuestionViaAPI,
 } from "../../fixtures/submission-fixtures";
+import {
+  createExerciseViaAPI,
+  publishExerciseViaAPI,
+  cleanupExercise,
+} from "../../fixtures/exercise-fixtures";
+import {
+  createAssignmentViaAPI,
+  cleanupAssignment,
+} from "../../fixtures/assignment-fixtures";
+import {
+  TEST_USERS,
+  loginAs,
+} from "../../fixtures/auth.fixture";
 
 test.describe("Question Type Rendering", () => {
   test("MCQ renders tap-friendly option buttons and selecting highlights", async ({
@@ -91,9 +106,69 @@ test.describe("Question Type Rendering", () => {
     await context.close();
   });
 
-  test.fixme("writing input renders rich text area", async () => {
-    // Requires WRITING exercise fixture — current test exercise is READING only.
-    // WritingInput.tsx exists but has zero E2E coverage.
-    // Create a dedicated WRITING fixture when writing E2E tests are needed.
+  test("writing input renders textarea with word count", async ({
+    browser,
+  }) => {
+    // Create a WRITING exercise + assignment on the fly (separate from READING fixture)
+    const setupContext = await browser.newContext();
+    const setupPage = await setupContext.newPage();
+    await loginAs(setupPage, TEST_USERS.TEACHER);
+
+    const exercise = await createExerciseViaAPI(setupPage, { skill: "WRITING" });
+    const section = await addSectionViaAPI(
+      setupPage,
+      exercise.id,
+      "W3_TASK2_ESSAY",
+      0,
+      "Write an essay about technology in education."
+    );
+    await addQuestionViaAPI(setupPage, exercise.id, section.id, {
+      questionText: "Discuss the impact of technology on modern education.",
+      questionType: "W3_TASK2_ESSAY",
+      orderIndex: 0,
+      wordLimit: null,
+    });
+    await publishExerciseViaAPI(setupPage, exercise.id);
+    const assignment = await createAssignmentViaAPI(setupPage, {
+      exerciseId: exercise.id,
+      classIds: ["e2e-test-class"],
+    });
+    await setupContext.close();
+
+    // Start submission as student
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    try {
+      await startSubmissionAsStudent(page, assignment.id);
+
+      // WritingInput renders a textarea with "Write your response here..." placeholder
+      const textarea = page.getByPlaceholder("Write your response here...");
+      await expect(textarea).toBeVisible({ timeout: 10000 });
+
+      // Textarea should have min-h-[200px] class
+      await expect(textarea).toHaveClass(/min-h-\[200px\]/);
+
+      // Word count badge should show "0 words" initially
+      const wordBadge = page.locator('[data-slot="badge"]');
+      await expect(wordBadge).toHaveText("0 words");
+
+      // Word range hint should show (min 250 words) for W3_TASK2_ESSAY
+      await expect(page.getByText("(min 250 words)")).toBeVisible();
+
+      // Type some text and verify word count updates
+      await textarea.fill("Technology has transformed education in many ways");
+      await expect(wordBadge).toHaveText("7 words", { timeout: 3000 });
+    } finally {
+      await context.close();
+
+      // Cleanup
+      const cleanupContext = await browser.newContext();
+      const cleanupPage = await cleanupContext.newPage();
+      await loginAs(cleanupPage, TEST_USERS.TEACHER);
+      await cleanupAssignment(cleanupPage, assignment.id);
+      await cleanupExercise(cleanupPage, exercise.id);
+      await cleanupContext.close();
+    }
   });
 });

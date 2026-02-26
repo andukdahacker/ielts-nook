@@ -11,6 +11,7 @@ import {
   finalizeGradingViaAPI,
   createCommentViaAPI,
 } from "../../fixtures/grading-fixtures";
+import { closeAIAssistantDialog } from "../../utils/close-ai-assistant";
 
 gradingTest.describe("Student Feedback View (Story 5.6)", () => {
   gradingTest.describe.configure({ mode: "serial" });
@@ -226,30 +227,32 @@ gradingTest.describe("Student Feedback View (Story 5.6)", () => {
         `/${E2E_CENTER_ID}/dashboard/feedback/${gradingIds.submissionId}`
       );
       await page.waitForLoadState("networkidle");
+
+      // Wait for the page to fully load — success or error state
       await expect(
         page.getByText("Your Response")
           .or(page.getByText("Score"))
-          .or(page.getByRole("button", { name: /Back/i }))
           .or(page.getByText("Something went wrong"))
           .or(page.getByText("Not Authorized"))
           .first()
       ).toBeVisible({ timeout: 15000 });
 
+      // Close AI Assistant dialog if open — it makes the page inert for role-based queries
+      await closeAIAssistantDialog(page);
+
+      // Find the Back button — success state shows "Back", error state shows "Back to Dashboard"
       const backBtn = page
-        .getByRole("button", { name: /Back/i })
+        .locator('button:has-text("Back")')
+        .filter({ hasText: /^Back|Back to Dashboard$/ })
         .first();
-      const hasBack = await backBtn.isVisible().catch(() => false);
-      if (!hasBack) {
-        gradingTest.skip(
-          true as never,
-          "Back button not visible" as never
-        );
-        return;
-      }
+      await expect(backBtn).toBeVisible({ timeout: 5000 });
 
       await backBtn.click();
-      await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+
+      // Should navigate to the dashboard (URL contains /dashboard but NOT /feedback)
+      await page.waitForURL(/.*\/dashboard(?!.*\/feedback)/, { timeout: 10000 });
       expect(page.url()).toContain("/dashboard");
+      expect(page.url()).not.toContain("/feedback");
     }
   );
 

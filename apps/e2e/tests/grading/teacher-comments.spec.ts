@@ -4,7 +4,7 @@ import {
   loginAs,
   getAppUrl,
 } from "../../fixtures/auth.fixture";
-import { gradingTest } from "../../fixtures/grading-fixtures";
+import { gradingTest, createCommentViaAPI } from "../../fixtures/grading-fixtures";
 import { closeAIAssistantDialog } from "../../utils/close-ai-assistant";
 
 gradingTest.describe("Teacher Comments (Story 5.7)", () => {
@@ -154,25 +154,25 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
     "edit comment updates content",
     async ({ page, gradingIds }) => {
       if (!gradingIds.submissionId) { gradingTest.skip(true as never, "Fixture setup failed" as never); return; }
+
+      // Create a comment via API so this test is self-contained
       await loginAs(page, TEST_USERS.OWNER);
+      const commentText = `Edit-target comment ${Date.now()}`;
+      const { commentId } = await createCommentViaAPI(page, gradingIds.submissionId, commentText);
+
       await page.goto(
         getAppUrl(`/dashboard/grading/${gradingIds.submissionId}`)
       );
       await page.waitForLoadState("networkidle");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(2000);
 
-      // Open the dropdown menu on an existing comment to find the Edit option
-      const menuTrigger = page
-        .locator('[data-slot="dropdown-menu-trigger"], button[aria-haspopup="menu"]')
-        .first();
-      if (!(await menuTrigger.isVisible().catch(() => false))) {
-        gradingTest.skip(
-          true as never,
-          "No comment dropdown found" as never
-        );
-        return;
-      }
+      // Wait for the comment we just created to appear
+      await expect(page.getByText(commentText)).toBeVisible({ timeout: 10000 });
+
+      // Use the stable data-card-id selector (won't break when text changes during edit)
+      const commentCard = page.locator(`[data-card-id="${commentId}"]`);
+      const menuTrigger = commentCard.locator('button[aria-haspopup="menu"]').first();
+      await expect(menuTrigger).toBeVisible({ timeout: 5000 });
 
       await menuTrigger.click();
       await page.waitForTimeout(300);
@@ -181,27 +181,21 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
         .locator('[role="menuitem"]')
         .filter({ hasText: /Edit/i })
         .first();
-      if (!(await editBtn.isVisible().catch(() => false))) {
-        gradingTest.skip(
-          true as never,
-          "No editable comment found" as never
-        );
-        return;
-      }
+      await expect(editBtn).toBeVisible({ timeout: 3000 });
 
       await editBtn.click();
       await page.waitForTimeout(300);
 
-      // Edit textarea should appear
-      const editTextarea = page.locator("textarea").last();
+      // Edit textarea should appear with the original comment text
+      const editTextarea = commentCard.locator("textarea");
       await expect(editTextarea).toBeVisible({ timeout: 3000 });
 
       const updatedText = `Updated comment ${Date.now()}`;
-      await editTextarea.clear();
+      // fill() automatically clears existing content before typing
       await editTextarea.fill(updatedText);
 
       // Save — click Save button or Ctrl+Enter
-      const saveBtn = page
+      const saveBtn = commentCard
         .getByRole("button", { name: /Save/i })
         .first();
       if (await saveBtn.isVisible().catch(() => false)) {
@@ -219,35 +213,25 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
     "delete comment removes from feed",
     async ({ page, gradingIds }) => {
       if (!gradingIds.submissionId) { gradingTest.skip(true as never, "Fixture setup failed" as never); return; }
+
+      // Create a comment via API so this test is self-contained
       await loginAs(page, TEST_USERS.OWNER);
+      const commentText = `Delete-target comment ${Date.now()}`;
+      const { commentId } = await createCommentViaAPI(page, gradingIds.submissionId, commentText);
+
       await page.goto(
         getAppUrl(`/dashboard/grading/${gradingIds.submissionId}`)
       );
       await page.waitForLoadState("networkidle");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(2000);
 
-      // Look for any dropdown trigger near teacher comments
-      const commentSection = page.getByText("Teacher Comments").first();
-      const hasComments = await commentSection.isVisible().catch(() => false);
-      if (!hasComments) {
-        gradingTest.skip(
-          true as never,
-          "No teacher comments section" as never
-        );
-        return;
-      }
+      // Wait for the comment we just created to appear
+      await expect(page.getByText(commentText)).toBeVisible({ timeout: 10000 });
 
-      const dropdownBtn = page
-        .locator('[data-slot="dropdown-menu-trigger"], button[aria-haspopup="menu"]')
-        .first();
-      if (!(await dropdownBtn.isVisible().catch(() => false))) {
-        gradingTest.skip(
-          true as never,
-          "No comment dropdown found" as never
-        );
-        return;
-      }
+      // Use the stable data-card-id selector
+      const commentCard = page.locator(`[data-card-id="${commentId}"]`);
+      const dropdownBtn = commentCard.locator('button[aria-haspopup="menu"]').first();
+      await expect(dropdownBtn).toBeVisible({ timeout: 5000 });
 
       await dropdownBtn.click();
       await page.waitForTimeout(300);
@@ -256,27 +240,19 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
         .locator('[role="menuitem"]')
         .filter({ hasText: /Delete/i })
         .first();
-      if (!(await deleteBtn.isVisible().catch(() => false))) {
-        gradingTest.skip(
-          true as never,
-          "No delete option found" as never
-        );
-        return;
-      }
+      await expect(deleteBtn).toBeVisible({ timeout: 3000 });
 
       await deleteBtn.click();
 
       // Confirmation dialog should appear
-      const confirmDialog = page.getByRole("dialog").filter({
-        hasText: /Delete|cannot be undone/i,
-      });
-      if (await confirmDialog.isVisible().catch(() => false)) {
-        await confirmDialog
-          .getByRole("button", { name: /Delete/i })
-          .click();
-      }
+      const confirmDialog = page.getByRole("alertdialog");
+      await expect(confirmDialog).toBeVisible({ timeout: 3000 });
+      await confirmDialog
+        .getByRole("button", { name: /Delete/i })
+        .click();
 
-      await page.waitForTimeout(1000);
+      // Comment should be removed from the feed
+      await expect(page.getByText(commentText)).not.toBeVisible({ timeout: 5000 });
     }
   );
 
