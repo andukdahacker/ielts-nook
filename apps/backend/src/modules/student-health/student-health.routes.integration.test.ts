@@ -613,7 +613,6 @@ describe("Student Health Routes Integration", () => {
           name: "Alice",
           email: "alice@test.com",
           avatarUrl: null,
-          parentEmail: "parent@test.com",
           preferredLanguage: "en",
         },
       });
@@ -624,6 +623,9 @@ describe("Student Health Routes Integration", () => {
       mockDb.assignmentStudent.findMany.mockResolvedValue([]);
       mockPrisma.center = {
         findUnique: vi.fn().mockResolvedValue({ name: "Test Center" }),
+      };
+      mockPrisma.parentEmail = {
+        findMany: vi.fn().mockResolvedValue([{ email: "parent@test.com" }]),
       };
     });
 

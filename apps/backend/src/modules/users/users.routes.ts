@@ -44,6 +44,7 @@ import { authMiddleware } from "../../middlewares/auth.middleware.js";
 import { requireRole } from "../../middlewares/role.middleware.js";
 import { CsvImportController } from "./csv-import.controller.js";
 import { CsvImportService } from "./csv-import.service.js";
+import { parentEmailRoutes } from "./parent-email.routes.js";
 import { UsersController } from "./users.controller.js";
 import { UsersService } from "./users.service.js";
 
@@ -52,6 +53,11 @@ export async function usersRoutes(fastify: FastifyInstance) {
 
   const usersService = new UsersService(fastify.prisma);
   const usersController = new UsersController(usersService);
+
+  // Register parent email routes as child plugin
+  await fastify.register(parentEmailRoutes, {
+    prefix: "/:userId/parent-emails",
+  });
 
   const csvImportService = new CsvImportService(fastify.prisma);
   const csvImportController = new CsvImportController(

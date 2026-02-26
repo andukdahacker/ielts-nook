@@ -742,7 +742,6 @@ export class StudentHealthService {
           select: {
             id: true,
             name: true,
-            parentEmail: true,
             preferredLanguage: true,
           },
         },
@@ -753,6 +752,14 @@ export class StudentHealthService {
     }
 
     const user = membership.user;
+
+    // Fetch parent emails from new model (ParentEmail is NOT tenanted — use raw prisma)
+    const parentEmails = await this.prisma.parentEmail.findMany({
+      where: { userId: studentId, unsubscribed: false },
+      select: { email: true },
+      orderBy: { createdAt: "asc" },
+    });
+    const recipientEmail = parentEmails[0]?.email ?? null;
 
     // Fetch center info for template
     const center = await this.prisma.center.findUnique({
@@ -807,7 +814,7 @@ export class StudentHealthService {
     );
 
     return {
-      recipientEmail: user.parentEmail ?? null,
+      recipientEmail,
       subject,
       body,
       templateUsed,

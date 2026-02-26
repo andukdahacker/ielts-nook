@@ -250,13 +250,42 @@ describe("wasEngagementEmailSentToday", () => {
 });
 
 describe("getParentEmails", () => {
-  it("returns array with parentEmail when present", () => {
-    expect(getParentEmails({ parentEmail: "parent@test.com" })).toEqual([
-      "parent@test.com",
+  it("returns non-unsubscribed parent emails with tokens", async () => {
+    const mockPrisma = {
+      parentEmail: {
+        findMany: vi.fn().mockResolvedValue([
+          { email: "parent1@test.com", unsubscribeToken: "token-1" },
+          { email: "parent2@test.com", unsubscribeToken: "token-2" },
+        ]),
+      },
+    } as never;
+
+    const result = await getParentEmails(mockPrisma, "student-1");
+    expect(result).toEqual([
+      { email: "parent1@test.com", unsubscribeToken: "token-1" },
+      { email: "parent2@test.com", unsubscribeToken: "token-2" },
     ]);
   });
 
-  it("returns empty array when parentEmail is null", () => {
-    expect(getParentEmails({ parentEmail: null })).toEqual([]);
+  it("returns empty array when no parent emails exist", async () => {
+    const mockPrisma = {
+      parentEmail: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    } as never;
+
+    const result = await getParentEmails(mockPrisma, "student-1");
+    expect(result).toEqual([]);
+  });
+
+  it("queries with correct filters", async () => {
+    const findMany = vi.fn().mockResolvedValue([]);
+    const mockPrisma = { parentEmail: { findMany } } as never;
+
+    await getParentEmails(mockPrisma, "student-1");
+    expect(findMany).toHaveBeenCalledWith({
+      where: { userId: "student-1", unsubscribed: false },
+      select: { email: true, unsubscribeToken: true },
+    });
   });
 });

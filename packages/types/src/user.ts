@@ -220,3 +220,18 @@ export const CancelDeletionResponseSchema = z.object({
 });
 
 export type CancelDeletionResponse = z.infer<typeof CancelDeletionResponseSchema>;
+
+// Parent email response schema
+export const ParentEmailSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  unsubscribed: z.boolean(),
+  createdAt: z.string(),
+});
+export type ParentEmail = z.infer<typeof ParentEmailSchema>;
+
+// Add parent email request schema
+export const AddParentEmailSchema = z.object({
+  email: z.string().email("Invalid email format"),
+});
+export type AddParentEmailInput = z.infer<typeof AddParentEmailSchema>;

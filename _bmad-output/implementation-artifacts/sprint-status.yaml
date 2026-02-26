@@ -157,7 +157,7 @@ development_status:
   epic-7: in-progress
   7-1-engagement-email-notifications: done
   7-2-notification-preferences: done
-  7-3-parent-email-registration: backlog
+  7-3-parent-email-registration: done
   epic-7-retrospective: optional
 
   # Epic 9: Billing & Subscription

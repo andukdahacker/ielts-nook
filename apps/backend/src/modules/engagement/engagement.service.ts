@@ -1,3 +1,4 @@
+import type { PrismaClient } from "@workspace/db";
 import type { getTenantedClient } from "@workspace/db";
 
 type DbClient = ReturnType<typeof getTenantedClient>;
@@ -105,10 +106,16 @@ export async function wasEngagementEmailSentToday(
 }
 
 /**
- * Returns parent emails for a student. Encapsulated for Story 7.3 multi-parent refactor.
+ * Returns non-unsubscribed parent emails for a student (from ParentEmail model).
+ * ParentEmail is NOT tenanted — use raw PrismaClient.
  */
-export function getParentEmails(user: {
-  parentEmail: string | null;
-}): string[] {
-  return [user.parentEmail].filter(Boolean) as string[];
+export async function getParentEmails(
+  prisma: PrismaClient,
+  studentId: string,
+): Promise<Array<{ email: string; unsubscribeToken: string }>> {
+  const records = await prisma.parentEmail.findMany({
+    where: { userId: studentId, unsubscribed: false },
+    select: { email: true, unsubscribeToken: true },
+  });
+  return records;
 }

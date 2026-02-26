@@ -16,6 +16,7 @@ interface InterventionEmailParams {
   healthStatus: "at-risk" | "warning" | "on-track";
   classes: string[];
   locale: "en" | "vi";
+  unsubscribeUrl?: string;
 }
 
 type ColorScheme = { bg: string; border: string };
@@ -237,6 +238,11 @@ export function buildInterventionEmailBody(
           <tr>
             <td style="padding:16px 32px;background-color:#f4f4f5;border-top:1px solid #e4e4e7;">
               <p style="margin:0;font-size:12px;color:#a1a1aa;text-align:center;">${footerText}</p>
+${params.unsubscribeUrl ? `              <p style="margin:8px 0 0;font-size:12px;color:#a1a1aa;text-align:center;">
+                <a href="${escapeHtml(params.unsubscribeUrl)}" style="color:#a1a1aa;text-decoration:underline;">
+                  ${locale === "vi" ? "Huy dang ky nhan thong bao" : "Unsubscribe from these notifications"}
+                </a>
+              </p>` : ""}
             </td>
           </tr>
         </table>

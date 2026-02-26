@@ -9,6 +9,7 @@ interface EngagementEmailParams {
   score?: number | null;
   dashboardUrl: string;
   locale: "en" | "vi";
+  unsubscribeUrl?: string;
 }
 
 export function buildEngagementEmail(
@@ -58,6 +59,11 @@ export function buildEngagementEmail(
           <tr>
             <td style="padding:16px 32px;background-color:#f4f4f5;border-top:1px solid #e4e4e7;">
               <p style="margin:0;font-size:12px;color:#a1a1aa;text-align:center;">${footer}</p>
+${params.unsubscribeUrl ? `              <p style="margin:8px 0 0;font-size:12px;color:#a1a1aa;text-align:center;">
+                <a href="${escapeHtml(params.unsubscribeUrl)}" style="color:#a1a1aa;text-decoration:underline;">
+                  ${locale === "vi" ? "Huy dang ky nhan thong bao" : "Unsubscribe from these notifications"}
+                </a>
+              </p>` : ""}
             </td>
           </tr>
         </table>

@@ -124,13 +124,12 @@ export const engagementNotificationJob = inngest.createFunction(
             email: true,
             name: true,
             preferredLanguage: true,
-            parentEmail: true,
             emailEngagementNotifications: true,
             emailNotificationsPaused: true,
           },
         });
         if (!user) return null;
-        const parentEmails = getParentEmails(user);
+        const parentEmails = await getParentEmails(prisma, studentId);
         return { ...user, parentEmails };
       } finally {
         await prisma.$disconnect();
@@ -221,17 +220,29 @@ export const engagementNotificationJob = inngest.createFunction(
       });
     }
 
-    // Step 6+: Send to each parent email
-    for (const parentEmail of recipientData.parentEmails) {
+    // Step 6+: Send to each parent email (with per-parent unsubscribe link)
+    const backendUrl = process.env.BACKEND_URL || "http://localhost:4000";
+    for (const parent of recipientData.parentEmails) {
       if (resendApiKey) {
-        const safeStepId = parentEmail.replace(/[^a-zA-Z0-9@._-]/g, "_");
-        await step.run(`send-email-parent-${safeStepId}`, () =>
+        const pEmail = String(parent.email);
+        const pToken = String(parent.unsubscribeToken);
+        const unsubscribeUrl = `${backendUrl}/api/v1/unsubscribe/${pToken}`;
+        const parentEmail = buildEngagementEmail({
+          studentName,
+          centerName,
+          achievementType,
+          score,
+          dashboardUrl,
+          locale,
+          unsubscribeUrl,
+        });
+        await step.run(`send-email-parent-${pToken}`, () =>
           sendAndLogEmail({
-            to: parentEmail,
+            to: pEmail,
             studentId,
             centerId,
-            subject,
-            html,
+            subject: parentEmail.subject,
+            html: parentEmail.html,
             emailFrom,
             resendApiKey,
           }),

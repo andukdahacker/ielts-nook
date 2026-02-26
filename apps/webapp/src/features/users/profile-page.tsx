@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { ProfileEditForm } from "./components/ProfileEditForm";
 import { PasswordChangeForm } from "./components/PasswordChangeForm";
 import { DeleteAccountModal } from "./components/DeleteAccountModal";
+import { ParentEmailSection } from "./components/ParentEmailSection";
 import type { AuthUser } from "@workspace/types";
 
 export function ProfilePage() {
@@ -341,6 +342,13 @@ export function ProfilePage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Parent Email Section - Only for OWNER/ADMIN viewing a STUDENT */}
+      {isViewingOther &&
+        (currentUser?.role === "OWNER" || currentUser?.role === "ADMIN") &&
+        displayUser.role === "STUDENT" && (
+          <ParentEmailSection userId={displayUser.id} />
+        )}
 
       {/* Password Change Section - Only for own profile */}
       {isOwnProfile && (

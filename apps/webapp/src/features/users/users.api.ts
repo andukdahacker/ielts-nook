@@ -11,6 +11,7 @@ import type {
   CsvRetryRequest,
   CsvValidationResult,
   InvitationListResponse,
+  ParentEmail,
   UpdateProfileInput,
   UserListQuery,
   UserListResponse,
@@ -396,6 +397,89 @@ export function useUploadAvatar() {
       queryClient.setQueryData(["auth-user"], (old: unknown) => {
         if (!old) return old;
         return { ...(old as object), avatarUrl: data?.data?.avatarUrl };
+      });
+    },
+  });
+}
+
+// ============================================================
+// Parent Email API
+// ============================================================
+
+export const parentEmailKeys = {
+  all: (userId: string) => ["parent-emails", userId] as const,
+};
+
+export function useParentEmails(userId: string) {
+  return useQuery({
+    queryKey: parentEmailKeys.all(userId),
+    queryFn: async (): Promise<ParentEmail[]> => {
+      const result = await client.GET(
+        "/api/v1/users/{userId}/parent-emails/",
+        { params: { path: { userId } } },
+      );
+      if (result.error) {
+        throw new Error(result.error.message || "Failed to fetch parent emails");
+      }
+      return result.data.data;
+    },
+  });
+}
+
+export function useAddParentEmail() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      email,
+    }: {
+      userId: string;
+      email: string;
+    }): Promise<ParentEmail> => {
+      const result = await client.POST(
+        "/api/v1/users/{userId}/parent-emails/",
+        {
+          params: { path: { userId } },
+          body: { email },
+        },
+      );
+      if (result.error) {
+        throw new Error(result.error.message || "Failed to add parent email");
+      }
+      return result.data.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: parentEmailKeys.all(variables.userId),
+      });
+    },
+  });
+}
+
+export function useRemoveParentEmail() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      parentEmailId,
+    }: {
+      userId: string;
+      parentEmailId: string;
+    }) => {
+      const result = await client.DELETE(
+        "/api/v1/users/{userId}/parent-emails/{parentEmailId}",
+        { params: { path: { userId, parentEmailId } } },
+      );
+      if (result.error) {
+        throw new Error(
+          result.error.message || "Failed to remove parent email",
+        );
+      }
+      return result.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: parentEmailKeys.all(variables.userId),
       });
     },
   });

@@ -34,7 +34,7 @@ vi.mock("../engagement.service.js", () => ({
   checkStreak: vi.fn(),
   checkPersonalBest: vi.fn(),
   wasEngagementEmailSentToday: vi.fn(),
-  getParentEmails: vi.fn(() => []),
+  getParentEmails: vi.fn(async () => []),
 }));
 
 vi.mock("../emails/engagement-notification.template.js", () => ({
@@ -69,7 +69,6 @@ function makeStep(overrides: Record<string, unknown> = {}) {
       email: "student@test.com",
       name: "Test Student",
       preferredLanguage: "en",
-      parentEmail: null,
       emailEngagementNotifications: true,
       emailNotificationsPaused: false,
       parentEmails: [],
@@ -97,7 +96,6 @@ describe("engagementNotificationJob — preference enforcement", () => {
         email: "student@test.com",
         name: "Test",
         preferredLanguage: "en",
-        parentEmail: null,
         emailEngagementNotifications: true,
         emailNotificationsPaused: true,
         parentEmails: [],
@@ -117,7 +115,6 @@ describe("engagementNotificationJob — preference enforcement", () => {
         email: "student@test.com",
         name: "Test",
         preferredLanguage: "en",
-        parentEmail: null,
         emailEngagementNotifications: false,
         emailNotificationsPaused: false,
         parentEmails: [],
@@ -155,5 +152,55 @@ describe("engagementNotificationJob — preference enforcement", () => {
 
     const result = await state.handler!({ event: baseEvent, step });
     expect(result).toEqual({ status: "batch-limited" });
+  });
+
+  it("sends emails to each parent when parentEmails are present", async () => {
+    process.env.RESEND_API_KEY = "re_test_key";
+    const step = makeStep({
+      "fetch-student": {
+        id: "student-1",
+        email: "student@test.com",
+        name: "Test Student",
+        preferredLanguage: "en",
+        emailEngagementNotifications: true,
+        emailNotificationsPaused: false,
+        parentEmails: [
+          { email: "parent1@test.com", unsubscribeToken: "tok-1" },
+          { email: "parent2@test.com", unsubscribeToken: "tok-2" },
+        ],
+      },
+    });
+
+    const result = await state.handler!({ event: baseEvent, step });
+    const stepNames = step.run.mock.calls.map((c: unknown[]) => c[0]);
+
+    // Should send to student + both parents
+    expect(stepNames).toContain("send-email-student");
+    expect(stepNames).toContain("send-email-parent-tok-1");
+    expect(stepNames).toContain("send-email-parent-tok-2");
+    expect(result).toEqual({ status: "sent", achievementType: "streak" });
+  });
+
+  it("skips parent emails when RESEND_API_KEY is not set", async () => {
+    // No RESEND_API_KEY set
+    const step = makeStep({
+      "fetch-student": {
+        id: "student-1",
+        email: "student@test.com",
+        name: "Test Student",
+        preferredLanguage: "en",
+        emailEngagementNotifications: true,
+        emailNotificationsPaused: false,
+        parentEmails: [
+          { email: "parent1@test.com", unsubscribeToken: "tok-1" },
+        ],
+      },
+    });
+
+    await state.handler!({ event: baseEvent, step });
+    const stepNames = step.run.mock.calls.map((c: unknown[]) => c[0]);
+
+    // Should not have parent send steps (no API key)
+    expect(stepNames).not.toContain("send-email-parent-tok-1");
   });
 });

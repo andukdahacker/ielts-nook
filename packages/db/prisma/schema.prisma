@@ -19,8 +19,6 @@ model User {
   emailScheduleNotifications   Boolean   @default(true) @map("email_schedule_notifications")
   emailEngagementNotifications Boolean   @default(true) @map("email_engagement_notifications")
   emailNotificationsPaused     Boolean   @default(false) @map("email_notifications_paused")
-  parentEmail                  String?   @map("parent_email")
-
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -34,6 +32,7 @@ model User {
   attendanceMarked  Attendance[]       @relation("AttendanceMarker")
   emailLogs         EmailLog[]
   exercises         Exercise[]         @relation("ExerciseCreator")
+  parentEmails      ParentEmail[]
   createdMockTests    MockTest[]         @relation("MockTestCreatedBy")
   createdAssignments  Assignment[]       @relation("AssignmentCreator")
   studentAssignments  AssignmentStudent[] @relation("AssignmentStudents")
@@ -46,6 +45,21 @@ model User {
   flagsResolved         StudentFlag[]     @relation("FlagResolver")
 
   @@map("user")
+}
+
+model ParentEmail {
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  email            String
+  unsubscribed     Boolean  @default(false)
+  unsubscribeToken String   @unique @default(cuid()) @map("unsubscribe_token")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, email])
+  @@index([userId])
+  @@map("parent_email_entry")
 }
 
 model AuthAccount {

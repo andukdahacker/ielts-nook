@@ -27,6 +27,7 @@ import { assignmentsRoutes } from "./modules/assignments/assignments.routes.js";
 import { studentAssignmentsRoutes } from "./modules/assignments/student-assignments.routes.js";
 import { notificationsRoutes } from "./modules/notifications/notifications.routes.js";
 import { usersRoutes } from "./modules/users/users.routes.js";
+import { unsubscribeRoutes } from "./modules/users/unsubscribe.routes.js";
 import { submissionsRoutes } from "./modules/submissions/submissions.routes.js";
 import { gradingRoutes } from "./modules/grading/grading.routes.js";
 import { studentHealthRoutes } from "./modules/student-health/index.js";
@@ -242,6 +243,9 @@ export const buildApp = async () => {
   await app.register(studentHealthRoutes, { prefix: "/api/v1/student-health" });
   await app.register(notificationsRoutes, { prefix: "/api/v1/notifications" });
   await app.register(usersRoutes, { prefix: "/api/v1/users" });
+
+  // Public unsubscribe routes (no auth required)
+  await app.register(unsubscribeRoutes, { prefix: "/api/v1/unsubscribe" });
 
   // Inngest background job routes (no prefix - uses /api/inngest)
   await app.register(inngestRoutes);

@@ -2,6 +2,7 @@ import { inngest } from "../../inngest/client.js";
 import { getTenantedClient } from "@workspace/db";
 import { createPrisma } from "../../../plugins/create-prisma.js";
 import { Resend } from "resend";
+import { escapeHtml } from "../../logistics/emails/format-utils.js";
 
 export type InterventionEmailEvent = {
   name: "student-health/intervention.send";
@@ -50,6 +51,39 @@ export const interventionEmailJob = inngest.createFunction(
       return { status: "skipped", reason: "no-api-key" };
     }
 
+    // Look up unsubscribe token for this parent email
+    const unsubscribeUrl = await step.run("lookup-unsubscribe", async () => {
+      const prisma = createPrisma();
+      try {
+        // Fetch studentId from intervention log
+        const db = getTenantedClient(prisma, centerId);
+        const intervention = await db.interventionLog.findUnique({
+          where: { id: interventionLogId },
+          select: { studentId: true },
+        });
+        if (!intervention) return null;
+
+        // ParentEmail is NOT tenanted — use raw prisma
+        const parentEmailRecord = await prisma.parentEmail.findFirst({
+          where: { userId: intervention.studentId, email: recipientEmail },
+          select: { unsubscribeToken: true },
+        });
+        if (!parentEmailRecord) return null;
+
+        const backendUrl = process.env.BACKEND_URL || "http://localhost:4000";
+        return `${backendUrl}/api/v1/unsubscribe/${parentEmailRecord.unsubscribeToken}`;
+      } finally {
+        await prisma.$disconnect();
+      }
+    });
+
+    // Inject unsubscribe link into body HTML if available
+    let finalBody = body;
+    if (unsubscribeUrl) {
+      const unsubLink = `<p style="margin:8px 0 0;font-size:12px;color:#a1a1aa;text-align:center;"><a href="${escapeHtml(unsubscribeUrl)}" style="color:#a1a1aa;text-decoration:underline;">Unsubscribe from these notifications</a></p>`;
+      finalBody = body.replace("</body>", `${unsubLink}</body>`);
+    }
+
     // Send email via Resend
     const sendResult = await step.run("send-email", async () => {
       const resend = new Resend(resendApiKey);
@@ -60,7 +94,7 @@ export const interventionEmailJob = inngest.createFunction(
           from: emailFrom,
           to: recipientEmail,
           subject,
-          html: body,
+          html: finalBody,
         });
         return { sent: true, error: null };
       } catch (err) {

@@ -1055,7 +1055,7 @@ describe("StudentHealthService", () => {
     const studentId = "s1";
 
     const setupPreviewMocks = (
-      parentEmail: string | null,
+      parentEmailAddr: string | null,
       attendanceRate: number,
       completionRate: number,
     ) => {
@@ -1070,7 +1070,6 @@ describe("StudentHealthService", () => {
           name: "Alice Smith",
           email: "alice@test.com",
           avatarUrl: null,
-          parentEmail,
           preferredLanguage: "en",
         },
       });
@@ -1131,6 +1130,13 @@ describe("StudentHealthService", () => {
         findUnique: vi
           .fn()
           .mockResolvedValue({ name: "Test Center" }),
+      };
+      mockPrisma.parentEmail = {
+        findMany: vi.fn().mockResolvedValue(
+          parentEmailAddr
+            ? [{ email: parentEmailAddr }]
+            : [],
+        ),
       };
     };
 
