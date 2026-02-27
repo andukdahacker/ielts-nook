@@ -20,10 +20,7 @@ export class BillingService {
       where: { role: "STUDENT", status: "ACTIVE" },
     });
 
-    const monthlyEstimateCents = calculateMonthlyEstimate(
-      subscription.tier,
-      enrolledStudents,
-    );
+    const monthlyEstimateCents = calculateMonthlyEstimate(subscription.tier);
 
     const portalUrl = await this.getCustomerPortalUrl(centerId);
 

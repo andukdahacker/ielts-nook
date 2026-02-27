@@ -154,7 +154,7 @@ describe("BillingService", () => {
 
       expect(result.subscription.tier).toBe("starter");
       expect(result.usage.enrolledStudents).toBe(10);
-      expect(result.usage.monthlyEstimateCents).toBe(5000); // 10 students * 500 cents
+      expect(result.usage.monthlyEstimateCents).toBe(2000); // starter flat $20/mo
       expect(result.subscription.currentPeriodEnd).toBe("2026-04-01T00:00:00.000Z");
     });
 

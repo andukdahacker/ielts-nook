@@ -471,3 +471,4 @@ Claude Opus 4.6
 ## Change Log
 - 2026-02-27: Story 9.3 implementation complete — billing reminders (AC1, AC2), grace period flow (AC3), grace period banner (AC4), enrollment restriction (AC5), payment restores access (AC6). 26 new tests added. All 1015 backend tests pass.
 - 2026-02-27: Code review fixes applied — 8 issues fixed (1 HIGH, 3 MEDIUM, 4 LOW). 4 new integration tests. All 1019 backend tests pass.
+- 2026-02-27: Pricing model changed from per-student to flat monthly. Starter $20/mo, Growth $50/mo, Enterprise $100/mo. Updated billing.constants.ts (perStudentCents → flatPriceCents), billing.service.ts, and billing.service.test.ts. Polar products should be set to match these prices.
