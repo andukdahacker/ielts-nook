@@ -8,7 +8,7 @@ export function GracePeriodBanner() {
   const { data } = useBillingOverview({ staleTime: 5 * 60 * 1000 });
 
   const centerId = user?.centerId;
-  if (!data || !centerId) return null;
+  if (!data?.subscription || !centerId) return null;
 
   const { status, gracePeriodDaysRemaining } = data.subscription;
 

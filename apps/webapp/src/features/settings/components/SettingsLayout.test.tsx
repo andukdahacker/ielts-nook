@@ -47,10 +47,11 @@ describe("SettingsLayout", () => {
     expect(screen.getAllByText("Billing")).toHaveLength(2);
   });
 
-  it("shows Coming Soon badge on Billing tab", () => {
+  it("renders Billing tab without Coming Soon badge", () => {
     renderWithRouter();
 
-    expect(screen.getAllByText("Coming Soon")).toHaveLength(2); // Desktop + mobile
+    expect(screen.getAllByText("Billing")).toHaveLength(2); // Desktop + mobile
+    expect(screen.queryByText("Coming Soon")).not.toBeInTheDocument();
   });
 
   it("highlights General tab on settings root", () => {
@@ -86,12 +87,12 @@ describe("SettingsLayout", () => {
     expect(screen.getByText("Users Content")).toBeInTheDocument();
   });
 
-  it("Billing tab is disabled", () => {
+  it("Billing tab is enabled", () => {
     renderWithRouter();
 
     const billingButtons = screen.getAllByRole("button", { name: /billing/i });
     billingButtons.forEach((button) => {
-      expect(button).toBeDisabled();
+      expect(button).not.toBeDisabled();
     });
   });
 });
