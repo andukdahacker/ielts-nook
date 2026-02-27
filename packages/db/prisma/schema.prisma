@@ -94,8 +94,11 @@ model Center {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  memberships    CenterMembership[]
-  csvImportLogs  CsvImportLog[]
+  memberships           CenterMembership[]
+  csvImportLogs         CsvImportLog[]
+  subscription          Subscription?
+  billingEvents         BillingEvent[]
+  studentCountSnapshots StudentCountSnapshot[]
 
   @@map("center")
 }
@@ -930,4 +933,57 @@ model EmailLog {
   @@index([recipientId])
   @@index([type, sentAt])
   @@map("email_log")
+}
+
+// ─── Billing & Subscription (Epic 9) ─────────────────────────────────
+
+model Subscription {
+  id                  String    @id @default(cuid())
+  centerId            String    @unique @map("center_id")
+  polarSubscriptionId String?   @unique @map("polar_subscription_id")
+  polarCustomerId     String?   @map("polar_customer_id")
+  status              String    @default("pilot") // pilot, active, past_due, canceled, grace_period, inactive
+  tier                String    @default("pilot") // pilot, starter, growth, enterprise
+  currentPeriodStart  DateTime? @map("current_period_start")
+  currentPeriodEnd    DateTime? @map("current_period_end")
+  cancelAtPeriodEnd   Boolean   @default(false) @map("cancel_at_period_end")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  center Center @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@map("subscription")
+}
+
+model BillingEvent {
+  id           String   @id @default(cuid())
+  centerId     String   @map("center_id")
+  type         String   // payment, refund, credit
+  amount       Int      // cents
+  currency     String   @default("USD")
+  status       String   // paid, failed, pending, refunded
+  description  String?
+  polarOrderId String?  @unique @map("polar_order_id")
+  invoiceUrl   String?  @map("invoice_url")
+  occurredAt   DateTime @map("occurred_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  center Center @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@index([centerId])
+  @@map("billing_event")
+}
+
+model StudentCountSnapshot {
+  id        String   @id @default(cuid())
+  centerId  String   @map("center_id")
+  count     Int
+  month     DateTime // First day of month (e.g., 2026-02-01T00:00:00Z)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  center Center @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@unique([centerId, month])
+  @@index([centerId])
+  @@map("student_count_snapshot")
 }

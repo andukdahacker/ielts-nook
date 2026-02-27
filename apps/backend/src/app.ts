@@ -32,6 +32,7 @@ import { submissionsRoutes } from "./modules/submissions/submissions.routes.js";
 import { gradingRoutes } from "./modules/grading/grading.routes.js";
 import { studentHealthRoutes } from "./modules/student-health/index.js";
 import { inngestRoutes } from "./modules/inngest/inngest.routes.js";
+import { billingRoutes } from "./modules/billing/billing.routes.js";
 import { healthRoutes } from "./modules/health/health.routes.js";
 import firebasePlugin from "./plugins/firebase.plugin.js";
 import prismaPlugin from "./plugins/prisma.plugin.js";
@@ -243,6 +244,7 @@ export const buildApp = async () => {
   await app.register(studentHealthRoutes, { prefix: "/api/v1/student-health" });
   await app.register(notificationsRoutes, { prefix: "/api/v1/notifications" });
   await app.register(usersRoutes, { prefix: "/api/v1/users" });
+  await app.register(billingRoutes, { prefix: "/api/v1/billing" });
 
   // Public unsubscribe routes (no auth required)
   await app.register(unsubscribeRoutes, { prefix: "/api/v1/unsubscribe" });

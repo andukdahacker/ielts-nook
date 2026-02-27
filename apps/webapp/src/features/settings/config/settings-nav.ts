@@ -14,5 +14,5 @@ export const settingsTabs: SettingsTabConfig[] = [
   { id: "tags", label: "Tags", path: "tags", order: 2.7 },
   { id: "integrations", label: "Integrations", path: "integrations", order: 3 },
   { id: "privacy", label: "Privacy", path: "privacy", order: 4 },
-  { id: "billing", label: "Billing", path: "billing", order: 5, disabled: true, badge: "Coming Soon" },
+  { id: "billing", label: "Billing", path: "billing", order: 5 },
 ];

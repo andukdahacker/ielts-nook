@@ -84,11 +84,12 @@ test.describe("Settings Layout & Navigation", () => {
     ).not.toHaveAttribute("aria-current", "page");
   });
 
-  test("Billing tab is disabled with Coming Soon badge", async ({ page }) => {
+  test("Billing tab is enabled and navigable", async ({ page }) => {
     const nav = await getVisibleSettingsNav(page);
     const billingBtn = nav.getByRole("button", { name: /Billing/ });
-    await expect(billingBtn).toBeDisabled();
-    await expect(billingBtn.getByText("Coming Soon")).toBeVisible();
+    await expect(billingBtn).toBeEnabled();
+    await billingBtn.click();
+    await expect(page.getByText(/Billing/)).toBeVisible();
   });
 
   test("placeholder pages show Coming Soon", async ({ page }) => {

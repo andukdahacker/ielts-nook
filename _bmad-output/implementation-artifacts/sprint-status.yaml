@@ -161,10 +161,10 @@ development_status:
   epic-7-retrospective: optional
 
   # Epic 9: Billing & Subscription
-  # Status: BACKLOG (created during course correction 2026-02-11)
+  # Status: IN-PROGRESS (first story created 2026-02-27)
   # Scope: Polar.sh integration, billing dashboard, usage metering, grace period
-  epic-9: backlog
-  9-1-billing-dashboard: backlog
+  epic-9: in-progress
+  9-1-billing-dashboard: done
   9-2-polar-integration-payment-processing: backlog
   9-3-billing-reminders-grace-period: backlog
   9-4-subscription-tier-management: backlog

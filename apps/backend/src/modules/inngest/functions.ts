@@ -11,6 +11,7 @@ import { analyzeSubmissionJob } from "../grading/jobs/analyze-submission.job.js"
 import { interventionEmailJob } from "../student-health/jobs/intervention-email.job.js";
 import { engagementNotificationJob } from "../engagement/jobs/engagement-notification.job.js";
 import { parentWelcomeEmailJob } from "../users/jobs/parent-welcome-email.job.js";
+import { snapshotStudentCountJob } from "../billing/jobs/snapshot-student-count.job.js";
 
 // Export functions array - all Inngest functions must be registered here
 export const functions: ReturnType<typeof inngest.createFunction>[] = [
@@ -24,4 +25,5 @@ export const functions: ReturnType<typeof inngest.createFunction>[] = [
   interventionEmailJob,
   engagementNotificationJob,
   parentWelcomeEmailJob,
+  snapshotStudentCountJob,
 ];
