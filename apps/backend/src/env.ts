@@ -13,6 +13,13 @@ type Env = {
   EMAIL_FROM?: string;
   GEMINI_API_KEY?: string;
   GEMINI_MODEL?: string;
+  POLAR_ACCESS_TOKEN?: string;
+  POLAR_WEBHOOK_SECRET?: string;
+  POLAR_PRODUCT_ID_STARTER?: string;
+  POLAR_PRODUCT_ID_GROWTH?: string;
+  POLAR_PRODUCT_ID_ENTERPRISE?: string;
+  POLAR_MODE?: string;
+  FRONTEND_URL?: string;
 };
 
 export default Env;

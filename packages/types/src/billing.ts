@@ -18,6 +18,7 @@ export const BillingOverviewSchema = z.object({
     currentPeriodEnd: z.string().nullable(),
     cancelAtPeriodEnd: z.boolean(),
     polarCustomerId: z.string().nullable(),
+    gracePeriodDaysRemaining: z.number().nullable(),
   }),
   usage: z.object({
     enrolledStudents: z.number(),
@@ -63,3 +64,28 @@ export const UsageHistorySchema = z.object({
   currentCount: z.number(),
 });
 export type UsageHistory = z.infer<typeof UsageHistorySchema>;
+
+// Checkout request (Story 9.2)
+export const CheckoutRequestSchema = z.object({
+  tier: z.enum(["starter", "growth", "enterprise"]),
+});
+export type CheckoutRequest = z.infer<typeof CheckoutRequestSchema>;
+
+// Checkout response (Story 9.2)
+export const CheckoutResponseSchema = z.object({
+  checkoutUrl: z.string(),
+});
+export type CheckoutResponse = z.infer<typeof CheckoutResponseSchema>;
+
+// Webhook event types (Story 9.2)
+export const WebhookEventTypeSchema = z.enum([
+  "subscription.created",
+  "subscription.active",
+  "subscription.updated",
+  "subscription.canceled",
+  "subscription.uncanceled",
+  "subscription.revoked",
+  "subscription.past_due",
+  "order.paid",
+]);
+export type WebhookEventType = z.infer<typeof WebhookEventTypeSchema>;

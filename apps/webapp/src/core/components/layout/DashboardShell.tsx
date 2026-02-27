@@ -26,6 +26,7 @@ import {
 import { Separator } from "@workspace/ui/components/separator";
 import { MobileNavOverflow } from "./MobileNavOverflow";
 import { Breadcrumbs } from "./Breadcrumbs";
+import { GracePeriodBanner } from "@/features/settings/components/GracePeriodBanner";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [isAISidebarOpen, setIsAISidebarOpen] = useState(true);
@@ -81,6 +82,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
             </header>
+            {user?.role === "OWNER" && <GracePeriodBanner />}
             <main className="flex-1 overflow-y-auto relative">
               <div className="container mx-auto max-w-7xl px-4 py-6 pb-24 md:pb-6">
                 {children}

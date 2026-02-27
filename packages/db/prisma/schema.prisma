@@ -947,6 +947,7 @@ model Subscription {
   currentPeriodStart  DateTime? @map("current_period_start")
   currentPeriodEnd    DateTime? @map("current_period_end")
   cancelAtPeriodEnd   Boolean   @default(false) @map("cancel_at_period_end")
+  gracePeriodStartedAt DateTime? @map("grace_period_started_at")
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
 

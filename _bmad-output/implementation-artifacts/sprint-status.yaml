@@ -165,8 +165,8 @@ development_status:
   # Scope: Polar.sh integration, billing dashboard, usage metering, grace period
   epic-9: in-progress
   9-1-billing-dashboard: done
-  9-2-polar-integration-payment-processing: backlog
-  9-3-billing-reminders-grace-period: backlog
+  9-2-polar-integration-payment-processing: done
+  9-3-billing-reminders-grace-period: done
   9-4-subscription-tier-management: backlog
   epic-9-retrospective: optional
 

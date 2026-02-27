@@ -34,7 +34,8 @@ import { Button } from "@workspace/ui/components/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createInvitation } from "../invitation.api";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, AlertTriangle } from "lucide-react";
+import { useBillingOverview } from "@/features/settings/billing.api";
 
 interface InviteUserModalProps {
   onSuccess?: () => void;
@@ -43,6 +44,7 @@ interface InviteUserModalProps {
 export function InviteUserModal({ onSuccess }: InviteUserModalProps = {}) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { data: billingData } = useBillingOverview({ staleTime: 5 * 60 * 1000 });
 
   const form = useForm<CreateInvitationRequest>({
     resolver: zodResolver(CreateInvitationRequestSchema),
@@ -161,8 +163,24 @@ export function InviteUserModal({ onSuccess }: InviteUserModalProps = {}) {
                 </FormItem>
               )}
             />
+            {billingData?.subscription.status === "inactive" &&
+              form.watch("role") === "STUDENT" && (
+                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                  <p className="text-sm text-amber-800">
+                    New student enrollments are paused. Please update your billing to invite students.
+                  </p>
+                </div>
+              )}
             <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={mutation.isPending}>
+              <Button
+                type="submit"
+                disabled={
+                  mutation.isPending ||
+                  (billingData?.subscription.status === "inactive" &&
+                    form.watch("role") === "STUDENT")
+                }
+              >
                 {mutation.isPending ? "Sending..." : "Send Invitation"}
               </Button>
             </div>

@@ -33,10 +33,12 @@ import { gradingRoutes } from "./modules/grading/grading.routes.js";
 import { studentHealthRoutes } from "./modules/student-health/index.js";
 import { inngestRoutes } from "./modules/inngest/inngest.routes.js";
 import { billingRoutes } from "./modules/billing/billing.routes.js";
+import { billingWebhookRoutes } from "./modules/billing/billing.webhook.routes.js";
 import { healthRoutes } from "./modules/health/health.routes.js";
 import firebasePlugin from "./plugins/firebase.plugin.js";
 import prismaPlugin from "./plugins/prisma.plugin.js";
 import resendPlugin from "./plugins/resend.plugin.js";
+import rawBody from "fastify-raw-body";
 import multipart from "@fastify/multipart";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
@@ -107,6 +109,27 @@ export const buildApp = async () => {
           type: "string",
         },
         GEMINI_MODEL: {
+          type: "string",
+        },
+        POLAR_ACCESS_TOKEN: {
+          type: "string",
+        },
+        POLAR_WEBHOOK_SECRET: {
+          type: "string",
+        },
+        POLAR_PRODUCT_ID_STARTER: {
+          type: "string",
+        },
+        POLAR_PRODUCT_ID_GROWTH: {
+          type: "string",
+        },
+        POLAR_PRODUCT_ID_ENTERPRISE: {
+          type: "string",
+        },
+        POLAR_MODE: {
+          type: "string",
+        },
+        FRONTEND_URL: {
           type: "string",
         },
       },
@@ -219,6 +242,9 @@ export const buildApp = async () => {
 
   await app.register(fastifyCookie);
 
+  // Raw body support for webhook signature verification (global: false = per-route opt-in)
+  await app.register(rawBody, { global: false, runFirst: true });
+
   // Health check (no auth required)
   await app.register(healthRoutes, { prefix: "/api/v1" });
 
@@ -248,6 +274,9 @@ export const buildApp = async () => {
 
   // Public unsubscribe routes (no auth required)
   await app.register(unsubscribeRoutes, { prefix: "/api/v1/unsubscribe" });
+
+  // Public webhook routes (no auth — Polar.sh verifies via webhook signature)
+  await app.register(billingWebhookRoutes, { prefix: "/api/v1/billing/webhooks/polar" });
 
   // Inngest background job routes (no prefix - uses /api/inngest)
   await app.register(inngestRoutes);

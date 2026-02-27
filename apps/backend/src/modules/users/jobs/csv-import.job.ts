@@ -8,6 +8,7 @@ import {
 } from "@workspace/db";
 import { createPrisma } from "../../../plugins/create-prisma.js";
 import { Resend } from "resend";
+import { BillingService } from "../../billing/billing.service.js";
 
 // Event type for CSV import batch processing
 export type CsvImportBatchEvent = {
@@ -116,6 +117,20 @@ export const csvImportJob = inngest.createFunction(
       };
     }
 
+    // Check enrollment restriction only if batch contains STUDENT rows
+    const hasStudentRows = rowsToProcess.some((row) => row.role === "STUDENT");
+    const enrollmentAllowed = hasStudentRows
+      ? await step.run("check-enrollment", async () => {
+          const prisma = createPrisma();
+          try {
+            const billingService = new BillingService(prisma);
+            return billingService.checkEnrollmentAllowed(centerId);
+          } finally {
+            await prisma.$disconnect();
+          }
+        })
+      : { allowed: true as const };
+
     // Get center info for emails
     const centerInfo = await step.run("fetch-center", async () => {
       const prisma = createPrisma();
@@ -130,8 +145,63 @@ export const csvImportJob = inngest.createFunction(
       }
     });
 
+    // Filter out STUDENT rows if enrollment is restricted
+    let filteredRows = rowsToProcess;
+    if (!enrollmentAllowed.allowed) {
+      filteredRows = rowsToProcess.filter((row) => row.role !== "STUDENT");
+      // Mark skipped STUDENT rows
+      const skippedStudentRows = rowsToProcess.filter((row) => row.role === "STUDENT");
+      if (skippedStudentRows.length > 0) {
+        await step.run("mark-restricted-students", async () => {
+          const prisma = createPrisma();
+          try {
+            const db = getTenantedClient(prisma, centerId);
+            for (const row of skippedStudentRows) {
+              await db.csvImportRowLog.update({
+                where: { id: row.id },
+                data: {
+                  status: CsvImportRowStatus.SKIPPED,
+                  errorMessage: enrollmentAllowed.reason ?? "Enrollment restricted — subscription inactive",
+                },
+              });
+            }
+          } finally {
+            await prisma.$disconnect();
+          }
+        });
+      }
+    }
+
+    if (filteredRows.length === 0 && rowsToProcess.length > 0) {
+      // All rows were student rows and enrollment is restricted
+      await step.run("finalize-restricted-import", async () => {
+        const prisma = createPrisma();
+        try {
+          const db = getTenantedClient(prisma, centerId);
+          await db.csvImportLog.update({
+            where: { id: importLogId },
+            data: {
+              status: CsvImportStatus.FAILED,
+              failedRows: { increment: rowsToProcess.length },
+              completedAt: new Date(),
+            },
+          });
+        } finally {
+          await prisma.$disconnect();
+        }
+      });
+
+      return {
+        status: "enrollment_restricted",
+        message: enrollmentAllowed.reason,
+        importedRows: 0,
+        failedRows: rowsToProcess.length,
+        totalProcessed: rowsToProcess.length,
+      };
+    }
+
     // Chunk rows into batches
-    const batches = chunk(rowsToProcess, BATCH_SIZE);
+    const batches = chunk(filteredRows, BATCH_SIZE);
     let importedCount = 0;
     let failedCount = 0;
 

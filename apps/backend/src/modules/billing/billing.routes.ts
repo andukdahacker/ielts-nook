@@ -9,6 +9,8 @@ import {
   BillingOverviewSchema,
   PaymentHistorySchema,
   UsageHistorySchema,
+  CheckoutRequestSchema,
+  CheckoutResponseSchema,
   ErrorResponseSchema,
 } from "@workspace/types";
 
@@ -98,6 +100,37 @@ export async function billingRoutes(fastify: FastifyInstance) {
         return reply.status(400).send({ message: "No center associated" });
       }
       const result = await controller.getUsageHistory(payload.centerId);
+      return reply.send(result);
+    },
+  );
+
+  // POST /api/v1/billing/checkout — Create Polar.sh checkout session
+  api.post(
+    "/checkout",
+    {
+      schema: {
+        body: CheckoutRequestSchema,
+        response: {
+          200: z.object({
+            data: CheckoutResponseSchema,
+            message: z.string(),
+          }),
+          400: ErrorResponseSchema,
+        },
+      },
+      preHandler: [requireRole(["OWNER"])],
+    },
+    async (request, reply) => {
+      const payload = request.jwtPayload!;
+      if (!payload.centerId) {
+        return reply.status(400).send({ message: "No center associated" });
+      }
+      const { tier } = request.body;
+      const result = await controller.createCheckout(
+        payload.centerId,
+        payload.email,
+        tier,
+      );
       return reply.send(result);
     },
   );

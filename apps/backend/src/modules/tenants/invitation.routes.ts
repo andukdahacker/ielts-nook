@@ -11,6 +11,7 @@ import { authMiddleware } from "../../middlewares/auth.middleware.js";
 import { requireRole } from "../../middlewares/role.middleware.js";
 import { InvitationController } from "./invitation.controller.js";
 import { InvitationService } from "./invitation.service.js";
+import { BillingService } from "../billing/billing.service.js";
 
 export async function invitationRoutes(fastify: FastifyInstance) {
   const env = fastify.getEnvs<Env>();
@@ -43,6 +44,17 @@ export async function invitationRoutes(fastify: FastifyInstance) {
     preHandler: [authMiddleware, requireRole(["OWNER", "ADMIN"])],
     handler: async (request: FastifyRequest<{ Body: CreateInvitationRequest }>, reply: FastifyReply) => {
       try {
+        // Check enrollment restriction for STUDENT invites
+        if (request.body.role === "STUDENT" && request.jwtPayload!.centerId) {
+          const billingService = new BillingService(fastify.prisma);
+          const { allowed, reason } = await billingService.checkEnrollmentAllowed(
+            request.jwtPayload!.centerId,
+          );
+          if (!allowed) {
+            return reply.status(403).send({ message: reason });
+          }
+        }
+
         const result = await invitationController.inviteUser(request.body, request.jwtPayload!);
         return reply.status(201).send(result);
       } catch (error: unknown) {

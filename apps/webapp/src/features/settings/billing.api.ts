@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { client } from "@/core/client";
 
 // Query key factory
@@ -9,7 +9,7 @@ export const billingKeys = {
   usage: () => [...billingKeys.all, "usage"] as const,
 };
 
-export function useBillingOverview() {
+export function useBillingOverview(options?: { staleTime?: number }) {
   return useQuery({
     queryKey: billingKeys.overview(),
     queryFn: async () => {
@@ -17,6 +17,7 @@ export function useBillingOverview() {
       if (error) throw error;
       return data!.data;
     },
+    ...options,
   });
 }
 
@@ -40,6 +41,21 @@ export function useUsageHistory() {
       const { data, error } = await client.GET("/api/v1/billing/usage");
       if (error) throw error;
       return data!.data;
+    },
+  });
+}
+
+export function useCreateCheckout() {
+  return useMutation({
+    mutationFn: async (tier: "starter" | "growth" | "enterprise") => {
+      const { data, error } = await client.POST("/api/v1/billing/checkout", {
+        body: { tier },
+      });
+      if (error) throw new Error((error as { message?: string }).message || "Failed to create checkout");
+      return data!.data;
+    },
+    onSuccess: (data) => {
+      window.open(data.checkoutUrl, "_blank");
     },
   });
 }

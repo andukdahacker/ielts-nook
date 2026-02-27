@@ -1,10 +1,26 @@
 import Fastify, { FastifyInstance } from "fastify";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { billingRoutes } from "./billing.routes.js";
 import {
   serializerCompiler,
   validatorCompiler,
 } from "fastify-type-provider-zod";
+
+// Mock the polar client module
+vi.mock("./polar.client.js", () => ({
+  getPolarClient: vi.fn().mockReturnValue({
+    checkouts: {
+      create: vi.fn().mockResolvedValue({
+        url: "https://checkout.polar.sh/test-checkout",
+      }),
+    },
+    customerSessions: {
+      create: vi.fn().mockResolvedValue({
+        customerPortalUrl: "https://polar.sh/portal/test-session",
+      }),
+    },
+  }),
+}));
 
 describe("Billing Routes Integration", () => {
   let app: FastifyInstance;
@@ -32,6 +48,7 @@ describe("Billing Routes Integration", () => {
         cancelAtPeriodEnd: false,
         polarCustomerId: null,
       }),
+      findUnique: vi.fn().mockResolvedValue(null),
     },
     studentCountSnapshot: {
       upsert: vi.fn().mockResolvedValue({ id: "snap-1" }),
@@ -47,9 +64,15 @@ describe("Billing Routes Integration", () => {
     }),
   };
 
+  const originalEnv = { ...process.env };
+
   beforeEach(async () => {
     vi.clearAllMocks();
     mockPrisma.$extends.mockReturnValue(mockDb);
+    process.env.POLAR_PRODUCT_ID_STARTER = "prod-starter-id";
+    process.env.POLAR_PRODUCT_ID_GROWTH = "prod-growth-id";
+    process.env.POLAR_PRODUCT_ID_ENTERPRISE = "prod-enterprise-id";
+    process.env.FRONTEND_URL = "https://my.classlite.app";
 
     app = Fastify();
     app.setValidatorCompiler(validatorCompiler);
@@ -62,6 +85,10 @@ describe("Billing Routes Integration", () => {
 
     await app.register(billingRoutes, { prefix: "/api/v1/billing" });
     await app.ready();
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
   });
 
   describe("GET /api/v1/billing", () => {
@@ -156,6 +183,72 @@ describe("Billing Routes Integration", () => {
       expect(body.data).toHaveProperty("currentCount");
       expect(body.data.snapshots).toEqual([]);
       expect(body.data.currentCount).toBe(5);
+    });
+  });
+
+  describe("POST /api/v1/billing/checkout", () => {
+    it("should return 200 with checkout URL for OWNER", async () => {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/billing/checkout",
+        headers: {
+          authorization: "Bearer valid-token",
+          "content-type": "application/json",
+        },
+        payload: JSON.stringify({ tier: "starter" }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.data.checkoutUrl).toBe("https://checkout.polar.sh/test-checkout");
+      expect(body.message).toBe("Checkout session created");
+    });
+
+    it("should return 401 without auth", async () => {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/billing/checkout",
+        headers: { "content-type": "application/json" },
+        payload: JSON.stringify({ tier: "starter" }),
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    it("should return 403 for non-OWNER role", async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValueOnce({
+        uid: "firebase-teacher-1",
+        email: "teacher@test.com",
+        role: "TEACHER",
+        center_id: "center-1",
+      });
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/billing/checkout",
+        headers: {
+          authorization: "Bearer valid-token",
+          "content-type": "application/json",
+        },
+        payload: JSON.stringify({ tier: "starter" }),
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it("should reject invalid tier value", async () => {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/billing/checkout",
+        headers: {
+          authorization: "Bearer valid-token",
+          "content-type": "application/json",
+        },
+        payload: JSON.stringify({ tier: "pilot" }),
+      });
+
+      // Zod validation rejects "pilot" (not in enum)
+      expect(response.statusCode).toBe(400);
     });
   });
 });

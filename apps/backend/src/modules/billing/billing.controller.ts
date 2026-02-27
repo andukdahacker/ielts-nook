@@ -17,4 +17,9 @@ export class BillingController {
     const data = await this.service.getUsageHistory(centerId);
     return { data, message: "Usage history retrieved" };
   }
+
+  async createCheckout(centerId: string, ownerEmail: string, tier: string) {
+    const data = await this.service.createCheckoutSession(centerId, ownerEmail, tier);
+    return { data, message: "Checkout session created" };
+  }
 }

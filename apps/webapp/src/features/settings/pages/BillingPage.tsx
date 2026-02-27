@@ -1,9 +1,11 @@
 import { useEffect } from "react";
+import { useSearchParams } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useBillingOverview, usePaymentHistory, useUsageHistory } from "../billing.api";
+import { useBillingOverview, usePaymentHistory, useUsageHistory, useCreateCheckout, billingKeys } from "../billing.api";
 import { BillingMetricCards } from "../components/BillingMetricCards";
 import { UsageChart } from "../components/UsageChart";
 import { PaymentHistoryTable } from "../components/PaymentHistoryTable";
@@ -17,14 +19,88 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  active: { label: "Active", className: "bg-green-100 text-green-800" },
+  past_due: { label: "Payment Failed", className: "bg-red-100 text-red-800" },
+  canceled: { label: "Canceled", className: "bg-gray-100 text-gray-600" },
+  pilot: { label: "Free Pilot", className: "bg-blue-100 text-blue-800" },
+  inactive: { label: "Inactive", className: "bg-gray-100 text-gray-600" },
+  grace_period: { label: "Grace Period", className: "bg-amber-100 text-amber-800" },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const { label, className } = STATUS_CONFIG[status] ?? {
+    label: status,
+    className: "bg-gray-100 text-gray-600",
+  };
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${className}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+function SubscriptionAction({
+  status,
+  portalUrl,
+  onSubscribe,
+  isCheckoutPending,
+}: {
+  status: string;
+  portalUrl: string | null;
+  onSubscribe: () => void;
+  isCheckoutPending: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <StatusBadge status={status} />
+      {status === "pilot" ? (
+        <Button onClick={onSubscribe} disabled={isCheckoutPending}>
+          {isCheckoutPending ? "Creating checkout..." : "Subscribe"}
+        </Button>
+      ) : status === "past_due" || status === "grace_period" || status === "inactive" ? (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => portalUrl && window.open(portalUrl, "_blank")}
+          disabled={!portalUrl}
+        >
+          Update Payment Method
+        </Button>
+      ) : (
+        <Button
+          variant="outline"
+          onClick={() => portalUrl && window.open(portalUrl, "_blank")}
+          disabled={!portalUrl}
+        >
+          Manage Subscription
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function BillingPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const { data: overview, isLoading: overviewLoading, isError: overviewError } = useBillingOverview();
   const { data: payments, isLoading: paymentsLoading, isError: paymentsError } = usePaymentHistory();
   const { data: usage, isLoading: usageLoading, isError: usageError } = useUsageHistory();
+  const checkout = useCreateCheckout();
 
   useEffect(() => {
     if (overviewError) toast.error("Failed to load billing overview");
   }, [overviewError]);
+
+  useEffect(() => {
+    if (searchParams.get("checkout") === "success") {
+      queryClient.invalidateQueries({ queryKey: billingKeys.all });
+      toast.success("Subscription activated! Welcome aboard.");
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, queryClient, setSearchParams]);
 
   return (
     <div className="space-y-6">
@@ -53,17 +129,12 @@ export function BillingPage() {
             currentPeriodEnd={overview.subscription.currentPeriodEnd}
           />
 
-          <Button
-            variant="outline"
-            disabled={!overview.portalUrl}
-            onClick={() => {
-              if (overview.portalUrl) {
-                window.open(overview.portalUrl, "_blank");
-              }
-            }}
-          >
-            {overview.portalUrl ? "Manage Subscription" : "Free during pilot"}
-          </Button>
+          <SubscriptionAction
+            status={overview.subscription.status}
+            portalUrl={overview.portalUrl}
+            onSubscribe={() => checkout.mutate("starter")}
+            isCheckoutPending={checkout.isPending}
+          />
         </>
       ) : null}
 
