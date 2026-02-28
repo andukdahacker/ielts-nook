@@ -1,12 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useBillingOverview, usePaymentHistory, useUsageHistory, useCreateCheckout, billingKeys } from "../billing.api";
+import { useBillingOverview, usePaymentHistory, useUsageHistory, useCreateCheckout, useTiers, billingKeys } from "../billing.api";
 import { BillingMetricCards } from "../components/BillingMetricCards";
+import { TierComparisonTable } from "../components/TierComparisonTable";
+import { DowngradeConfirmDialog } from "../components/DowngradeConfirmDialog";
 import { UsageChart } from "../components/UsageChart";
 import { PaymentHistoryTable } from "../components/PaymentHistoryTable";
 
@@ -45,22 +47,14 @@ function StatusBadge({ status }: { status: string }) {
 function SubscriptionAction({
   status,
   portalUrl,
-  onSubscribe,
-  isCheckoutPending,
 }: {
   status: string;
   portalUrl: string | null;
-  onSubscribe: () => void;
-  isCheckoutPending: boolean;
 }) {
   return (
     <div className="flex items-center gap-3">
       <StatusBadge status={status} />
-      {status === "pilot" ? (
-        <Button onClick={onSubscribe} disabled={isCheckoutPending}>
-          {isCheckoutPending ? "Creating checkout..." : "Subscribe"}
-        </Button>
-      ) : status === "past_due" || status === "grace_period" || status === "inactive" ? (
+      {(status === "past_due" || status === "grace_period" || status === "inactive") && (
         <Button
           variant="outline"
           size="sm"
@@ -69,13 +63,14 @@ function SubscriptionAction({
         >
           Update Payment Method
         </Button>
-      ) : (
+      )}
+      {status !== "pilot" && status !== "past_due" && status !== "grace_period" && status !== "inactive" && (
         <Button
           variant="outline"
           onClick={() => portalUrl && window.open(portalUrl, "_blank")}
           disabled={!portalUrl}
         >
-          Manage Subscription
+          Change Plan
         </Button>
       )}
     </div>
@@ -86,9 +81,15 @@ export function BillingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { data: overview, isLoading: overviewLoading, isError: overviewError } = useBillingOverview();
+  const { data: tiers, isLoading: tiersLoading } = useTiers();
   const { data: payments, isLoading: paymentsLoading, isError: paymentsError } = usePaymentHistory();
   const { data: usage, isLoading: usageLoading, isError: usageError } = useUsageHistory();
   const checkout = useCreateCheckout();
+
+  const [downgradeTarget, setDowngradeTarget] = useState<{
+    tierName: string;
+    maxStudents: number;
+  } | null>(null);
 
   useEffect(() => {
     if (overviewError) toast.error("Failed to load billing overview");
@@ -98,7 +99,17 @@ export function BillingPage() {
     if (searchParams.get("checkout") === "success") {
       queryClient.invalidateQueries({ queryKey: billingKeys.all });
       toast.success("Subscription activated! Welcome aboard.");
-      setSearchParams({}, { replace: true });
+      const next = new URLSearchParams(searchParams);
+      next.delete("checkout");
+      setSearchParams(next, { replace: true });
+    }
+    // Dormant: fires when Polar portal return URL includes ?plan_changed=true
+    if (searchParams.get("plan_changed") === "true") {
+      queryClient.invalidateQueries({ queryKey: billingKeys.all });
+      toast.success("Plan updated successfully.");
+      const next = new URLSearchParams(searchParams);
+      next.delete("plan_changed");
+      setSearchParams(next, { replace: true });
     }
   }, [searchParams, queryClient, setSearchParams]);
 
@@ -132,11 +143,61 @@ export function BillingPage() {
           <SubscriptionAction
             status={overview.subscription.status}
             portalUrl={overview.portalUrl}
-            onSubscribe={() => checkout.mutate("starter")}
-            isCheckoutPending={checkout.isPending}
           />
         </>
       ) : null}
+
+      {tiersLoading ? (
+        <Skeleton className="h-64 rounded-lg" />
+      ) : tiers && overview ? (
+        <TierComparisonTable
+          tiers={tiers.tiers}
+          currentTier={tiers.currentTier}
+          enrolledStudents={tiers.enrolledStudents}
+          portalUrl={overview.portalUrl}
+          currency={overview.usage.currency}
+          onCheckout={(tier) => {
+            const popup = window.open("about:blank", "_blank");
+            checkout.mutate(tier, {
+              onSuccess: (data) => {
+                if (popup && !popup.closed) {
+                  popup.location.href = data.checkoutUrl;
+                } else {
+                  window.location.href = data.checkoutUrl;
+                }
+              },
+              onError: () => {
+                popup?.close();
+              },
+            });
+          }}
+          isCheckoutPending={checkout.isPending}
+          onDowngradeConfirm={(tier) => {
+            if (tier.maxStudents !== null) {
+              setDowngradeTarget({
+                tierName: tier.displayName,
+                maxStudents: tier.maxStudents,
+              });
+            }
+          }}
+        />
+      ) : null}
+
+      {downgradeTarget && tiers && overview?.portalUrl && (
+        <DowngradeConfirmDialog
+          open={!!downgradeTarget}
+          onOpenChange={(open) => {
+            if (!open) setDowngradeTarget(null);
+          }}
+          onConfirm={() => {
+            window.open(overview.portalUrl!, "_blank");
+            setDowngradeTarget(null);
+          }}
+          tierName={downgradeTarget.tierName}
+          maxStudents={downgradeTarget.maxStudents}
+          enrolledStudents={tiers.enrolledStudents}
+        />
+      )}
 
       {usageLoading ? (
         <Skeleton className="h-48 rounded-lg" />

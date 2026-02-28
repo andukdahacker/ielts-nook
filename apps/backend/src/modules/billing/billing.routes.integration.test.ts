@@ -91,6 +91,71 @@ describe("Billing Routes Integration", () => {
     process.env = { ...originalEnv };
   });
 
+  describe("GET /api/v1/billing/tiers", () => {
+    it("should return 200 with tier comparison for OWNER", async () => {
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/v1/billing/tiers",
+        headers: { authorization: "Bearer valid-token" },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.data).toHaveProperty("tiers");
+      expect(body.data).toHaveProperty("currentTier");
+      expect(body.data).toHaveProperty("enrolledStudents");
+      expect(body.data.tiers).toHaveLength(3);
+      expect(body.data.tiers[0].name).toBe("starter");
+      expect(body.data.tiers[1].name).toBe("growth");
+      expect(body.data.tiers[2].name).toBe("enterprise");
+      expect(body.data.enrolledStudents).toBe(5);
+      expect(body.message).toBe("Tier comparison retrieved");
+    });
+
+    it("should return 403 for non-OWNER role", async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValueOnce({
+        uid: "firebase-teacher-1",
+        email: "teacher@test.com",
+        role: "TEACHER",
+        center_id: "center-1",
+      });
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/v1/billing/tiers",
+        headers: { authorization: "Bearer valid-token" },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it("should return correct isCurrent based on subscription state", async () => {
+      mockPrisma.subscription.upsert.mockResolvedValueOnce({
+        id: "sub-1",
+        centerId: "center-1",
+        status: "active",
+        tier: "starter",
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        polarCustomerId: "polar-cust-1",
+      });
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/v1/billing/tiers",
+        headers: { authorization: "Bearer valid-token" },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.data.currentTier).toBe("starter");
+      const starterTier = body.data.tiers.find((t: { name: string }) => t.name === "starter");
+      expect(starterTier.isCurrent).toBe(true);
+      const growthTier = body.data.tiers.find((t: { name: string }) => t.name === "growth");
+      expect(growthTier.isCurrent).toBe(false);
+    });
+  });
+
   describe("GET /api/v1/billing", () => {
     it("should return 200 with billing overview", async () => {
       const response = await app.inject({

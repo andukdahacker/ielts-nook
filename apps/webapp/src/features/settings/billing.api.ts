@@ -5,6 +5,7 @@ import { client } from "@/core/client";
 export const billingKeys = {
   all: ["billing"] as const,
   overview: () => [...billingKeys.all, "overview"] as const,
+  tiers: () => [...billingKeys.all, "tiers"] as const,
   payments: (page: number, limit: number) => [...billingKeys.all, "payments", page, limit] as const,
   usage: () => [...billingKeys.all, "usage"] as const,
 };
@@ -18,6 +19,17 @@ export function useBillingOverview(options?: { staleTime?: number }) {
       return data!.data;
     },
     ...options,
+  });
+}
+
+export function useTiers() {
+  return useQuery({
+    queryKey: billingKeys.tiers(),
+    queryFn: async () => {
+      const { data, error } = await client.GET("/api/v1/billing/tiers");
+      if (error) throw error;
+      return data!.data;
+    },
   });
 }
 
@@ -53,9 +65,6 @@ export function useCreateCheckout() {
       });
       if (error) throw new Error((error as { message?: string }).message || "Failed to create checkout");
       return data!.data;
-    },
-    onSuccess: (data) => {
-      window.open(data.checkoutUrl, "_blank");
     },
   });
 }

@@ -190,6 +190,54 @@ describe("BillingService", () => {
     });
   });
 
+  describe("getTierComparison", () => {
+    it("should return 3 paid tiers excluding pilot", async () => {
+      const result = await service.getTierComparison(centerId);
+
+      expect(result.tiers).toHaveLength(3);
+      expect(result.tiers.map((t) => t.name)).toEqual(["starter", "growth", "enterprise"]);
+      expect(result.tiers.find((t) => (t.name as string) === "pilot")).toBeUndefined();
+    });
+
+    it("should mark isCurrent correctly for active subscription tier", async () => {
+      mockPrisma.subscription.upsert.mockResolvedValue({
+        id: "sub-1",
+        centerId,
+        status: "active",
+        tier: "growth",
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        polarCustomerId: "polar-cust-1",
+      });
+
+      const result = await service.getTierComparison(centerId);
+
+      expect(result.tiers.find((t) => t.name === "growth")?.isCurrent).toBe(true);
+      expect(result.tiers.find((t) => t.name === "starter")?.isCurrent).toBe(false);
+      expect(result.tiers.find((t) => t.name === "enterprise")?.isCurrent).toBe(false);
+      expect(result.currentTier).toBe("growth");
+    });
+
+    it("should return correct enrolledStudents count", async () => {
+      mockDb.centerMembership.count.mockResolvedValue(42);
+
+      const result = await service.getTierComparison(centerId);
+
+      expect(result.enrolledStudents).toBe(42);
+      expect(mockDb.centerMembership.count).toHaveBeenCalledWith({
+        where: { role: "STUDENT", status: "ACTIVE" },
+      });
+    });
+
+    it("should have no isCurrent tier for pilot subscription", async () => {
+      // Default mock returns pilot tier — no paid tier should be marked current
+      const result = await service.getTierComparison(centerId);
+
+      expect(result.tiers.every((t) => t.isCurrent === false)).toBe(true);
+      expect(result.currentTier).toBe("pilot");
+    });
+  });
+
   describe("getPaymentHistory", () => {
     it("should return empty payment history", async () => {
       const result = await service.getPaymentHistory(centerId, 1, 10);

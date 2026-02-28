@@ -167,7 +167,7 @@ development_status:
   9-1-billing-dashboard: done
   9-2-polar-integration-payment-processing: done
   9-3-billing-reminders-grace-period: done
-  9-4-subscription-tier-management: backlog
+  9-4-subscription-tier-management: done
   epic-9-retrospective: optional
 
   # Epic 8: Platform Compliance & Methodology

@@ -17299,6 +17299,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/billing/tiers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                tiers: {
+                                    /** @enum {string} */
+                                    name: "starter" | "growth" | "enterprise";
+                                    displayName: string;
+                                    flatPriceCents: number;
+                                    maxStudents: number | null;
+                                    isCurrent: boolean;
+                                }[];
+                                currentTier: string;
+                                enrolledStudents: number;
+                            };
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/billing/": {
         parameters: {
             query?: never;

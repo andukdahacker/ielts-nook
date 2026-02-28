@@ -3,6 +3,11 @@ import { BillingService } from "./billing.service.js";
 export class BillingController {
   constructor(private readonly service: BillingService) {}
 
+  async getTiers(centerId: string) {
+    const data = await this.service.getTierComparison(centerId);
+    return { data, message: "Tier comparison retrieved" };
+  }
+
   async getBillingOverview(centerId: string) {
     const data = await this.service.getBillingInfo(centerId);
     return { data, message: "Billing overview retrieved" };

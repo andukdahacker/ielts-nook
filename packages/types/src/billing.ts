@@ -77,6 +77,23 @@ export const CheckoutResponseSchema = z.object({
 });
 export type CheckoutResponse = z.infer<typeof CheckoutResponseSchema>;
 
+// Tier comparison info (Story 9.4)
+export const TierInfoSchema = z.object({
+  name: z.enum(["starter", "growth", "enterprise"]),
+  displayName: z.string(),
+  flatPriceCents: z.number(),
+  maxStudents: z.number().nullable(),
+  isCurrent: z.boolean(),
+});
+export type TierInfo = z.infer<typeof TierInfoSchema>;
+
+export const TiersResponseSchema = z.object({
+  tiers: z.array(TierInfoSchema),
+  currentTier: z.string(),
+  enrolledStudents: z.number(),
+});
+export type TiersResponse = z.infer<typeof TiersResponseSchema>;
+
 // Webhook event types (Story 9.2)
 export const WebhookEventTypeSchema = z.enum([
   "subscription.created",

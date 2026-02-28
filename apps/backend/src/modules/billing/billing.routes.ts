@@ -11,6 +11,7 @@ import {
   UsageHistorySchema,
   CheckoutRequestSchema,
   CheckoutResponseSchema,
+  TiersResponseSchema,
   ErrorResponseSchema,
 } from "@workspace/types";
 
@@ -23,6 +24,31 @@ export async function billingRoutes(fastify: FastifyInstance) {
   // Instantiate service → controller
   const service = new BillingService(fastify.prisma);
   const controller = new BillingController(service);
+
+  // GET /api/v1/billing/tiers — Tier comparison
+  api.get(
+    "/tiers",
+    {
+      schema: {
+        response: {
+          200: z.object({
+            data: TiersResponseSchema,
+            message: z.string(),
+          }),
+          400: ErrorResponseSchema,
+        },
+      },
+      preHandler: [requireRole(["OWNER"])],
+    },
+    async (request, reply) => {
+      const payload = request.jwtPayload!;
+      if (!payload.centerId) {
+        return reply.status(400).send({ message: "No center associated" });
+      }
+      const result = await controller.getTiers(payload.centerId);
+      return reply.send(result);
+    },
+  );
 
   // GET /api/v1/billing — Billing overview
   api.get(

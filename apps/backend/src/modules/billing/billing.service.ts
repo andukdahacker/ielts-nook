@@ -1,6 +1,6 @@
 import { PrismaClient } from "@workspace/db";
 import { getTenantedClient } from "@workspace/db";
-import { calculateMonthlyEstimate } from "./billing.constants.js";
+import { TIERS, calculateMonthlyEstimate } from "./billing.constants.js";
 import { getPolarClient } from "./polar.client.js";
 
 export class BillingService {
@@ -51,6 +51,38 @@ export class BillingService {
         currency: "USD",
       },
       portalUrl,
+    };
+  }
+
+  async getTierComparison(centerId: string) {
+    // Get-or-create subscription (pilot default)
+    const subscription = await this.prisma.subscription.upsert({
+      where: { centerId },
+      create: { centerId, status: "pilot", tier: "pilot" },
+      update: {},
+    });
+
+    // Count enrolled students (active STUDENT members) — tenanted query
+    const db = getTenantedClient(this.prisma, centerId);
+    const enrolledStudents = await db.centerMembership.count({
+      where: { role: "STUDENT", status: "ACTIVE" },
+    });
+
+    // Build tier comparison from TIERS constant, excluding pilot
+    const tiers = Object.values(TIERS)
+      .filter((t) => t.name !== "pilot")
+      .map((t) => ({
+        name: t.name as "starter" | "growth" | "enterprise",
+        displayName: t.displayName,
+        flatPriceCents: t.flatPriceCents,
+        maxStudents: t.maxStudents,
+        isCurrent: t.name === subscription.tier,
+      }));
+
+    return {
+      tiers,
+      currentTier: subscription.tier,
+      enrolledStudents,
     };
   }
 
