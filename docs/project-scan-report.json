@@ -1,0 +1,59 @@
+{
+  "workflow_version": "1.2.0",
+  "timestamps": {
+    "started": "2026-03-20T00:00:00Z",
+    "last_updated": "2026-03-20T00:16:00Z",
+    "completed": "2026-03-20T00:16:00Z"
+  },
+  "mode": "initial_scan",
+  "scan_level": "exhaustive",
+  "project_root": "/Users/ducdo/Desktop/code/personal/classlite",
+  "output_folder": "/Users/ducdo/Desktop/code/personal/classlite/docs",
+  "completed_steps": [
+    {"step": "step_1", "status": "completed", "timestamp": "2026-03-20T00:01:00Z", "summary": "Classified as monorepo with 9 parts (4 apps, 5 packages)"},
+    {"step": "step_2", "status": "completed", "timestamp": "2026-03-20T00:02:00Z", "summary": "Found 9 existing docs + 4 planning artifacts"},
+    {"step": "step_3", "status": "completed", "timestamp": "2026-03-20T00:03:00Z", "summary": "Tech stack: Fastify+React+Prisma+Firebase on TypeScript"},
+    {"step": "step_4", "status": "completed", "timestamp": "2026-03-20T00:08:00Z", "summary": "Exhaustive scan: 150+ backend files, 200+ webapp files, 45+ DB models, 40+ UI components"},
+    {"step": "step_5", "status": "completed", "timestamp": "2026-03-20T00:09:00Z", "summary": "Source tree documented with annotations"},
+    {"step": "step_6", "status": "completed", "timestamp": "2026-03-20T00:10:00Z", "summary": "Dev/deployment guides written"},
+    {"step": "step_7", "status": "completed", "timestamp": "2026-03-20T00:11:00Z", "summary": "Integration architecture documented with 5 data flow patterns"},
+    {"step": "step_8", "status": "completed", "timestamp": "2026-03-20T00:12:00Z", "summary": "Architecture document written"},
+    {"step": "step_9", "status": "completed", "timestamp": "2026-03-20T00:13:00Z", "summary": "All supporting docs written (8 files)"},
+    {"step": "step_10", "status": "completed", "timestamp": "2026-03-20T00:14:00Z", "summary": "Master index generated"},
+    {"step": "step_11", "status": "completed", "timestamp": "2026-03-20T00:15:00Z", "summary": "Validation and review complete"},
+    {"step": "step_12", "status": "completed", "timestamp": "2026-03-20T00:16:00Z", "summary": "Workflow complete"}
+  ],
+  "current_step": "completed",
+  "findings": {
+    "project_classification": "Monorepo (pnpm + Turborepo), SaaS B2B IELTS LMS, multi-tenant",
+    "technology_stack": "Fastify 5, React 19, Prisma 7, Firebase Auth, TanStack Query 5, Inngest, Gemini AI",
+    "api_count": "100+ endpoints across 12 route groups",
+    "table_count": "45+ database models (33 tenanted)",
+    "component_count": "40+ shared UI + 100+ feature components"
+  },
+  "project_types": [
+    {"part_id": "backend", "project_type_id": "backend", "display_name": "Fastify API Backend"},
+    {"part_id": "webapp", "project_type_id": "web", "display_name": "React Web App"},
+    {"part_id": "website", "project_type_id": "web", "display_name": "Astro Marketing Site"},
+    {"part_id": "e2e", "project_type_id": "library", "display_name": "Playwright E2E Tests"},
+    {"part_id": "db", "project_type_id": "library", "display_name": "Prisma DB Package"},
+    {"part_id": "types", "project_type_id": "library", "display_name": "Shared Zod Types"},
+    {"part_id": "ui", "project_type_id": "library", "display_name": "Shadcn UI Library"},
+    {"part_id": "eslint-config", "project_type_id": "library", "display_name": "ESLint Config"},
+    {"part_id": "typescript-config", "project_type_id": "library", "display_name": "TS Config"}
+  ],
+  "outputs_generated": [
+    "project-scan-report.json",
+    "project-overview.md",
+    "architecture.md",
+    "source-tree-analysis.md",
+    "api-contracts.md",
+    "data-models.md",
+    "development-guide.md",
+    "deployment-guide.md",
+    "integration-architecture.md",
+    "component-inventory.md",
+    "index.md"
+  ],
+  "resume_instructions": "Workflow complete. All 10 documentation files generated."
+}
