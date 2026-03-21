@@ -20,13 +20,13 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       );
       await page.waitForLoadState("networkidle");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(2000);
 
       // Find the "Add a comment..." button
       const addCommentBtn = page
         .getByText("Add a comment...")
         .first();
-      const hasBtn = await addCommentBtn.isVisible().catch(() => false);
+      await addCommentBtn.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
+      const hasBtn = (await addCommentBtn.count()) > 0 && await addCommentBtn.isVisible();
       if (!hasBtn) {
         gradingTest.skip(
           true as never,
@@ -55,10 +55,10 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       );
       await page.waitForLoadState("networkidle");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(2000);
 
       const addCommentBtn = page.getByText("Add a comment...").first();
-      const hasBtn = await addCommentBtn.isVisible().catch(() => false);
+      await addCommentBtn.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
+      const hasBtn = (await addCommentBtn.count()) > 0 && await addCommentBtn.isVisible();
       if (!hasBtn) {
         gradingTest.skip(
           true as never,
@@ -83,16 +83,13 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
         .first();
 
       // Fallback: find submit button near the textarea
-      const hasSubmit = await submitBtn.isVisible().catch(() => false);
+      const hasSubmit = (await submitBtn.count()) > 0 && await submitBtn.isVisible();
       if (hasSubmit) {
         await submitBtn.click();
       } else {
         // Try Cmd+Enter
         await textarea.press("Meta+Enter");
       }
-
-      // Toast should appear
-      await page.waitForTimeout(1000);
 
       // Comment should appear in the feed
       await expect(page.getByText(commentText)).toBeVisible({ timeout: 5000 });
@@ -109,10 +106,10 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       );
       await page.waitForLoadState("networkidle");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(2000);
 
       const addCommentBtn = page.getByText("Add a comment...").first();
-      const hasBtn = await addCommentBtn.isVisible().catch(() => false);
+      await addCommentBtn.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
+      const hasBtn = (await addCommentBtn.count()) > 0 && await addCommentBtn.isVisible();
       if (!hasBtn) {
         gradingTest.skip(
           true as never,
@@ -122,7 +119,10 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       }
 
       await addCommentBtn.click();
-      await page.waitForTimeout(300);
+
+      // Wait for the comment input area to appear
+      const textarea = page.locator('textarea[placeholder="Type your comment..."]');
+      await expect(textarea).toBeVisible({ timeout: 3000 });
 
       // Find visibility toggle (Eye/EyeOff icon button)
       const visibilityToggle = page
@@ -137,13 +137,16 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
         .filter({ has: page.locator("svg") })
         .nth(0); // Might need adjustment
 
-      const toggle = (await visibilityToggle.isVisible().catch(() => false))
+      const isVisibilityToggleVisible = (await visibilityToggle.count()) > 0 && await visibilityToggle.isVisible();
+      const toggle = isVisibilityToggleVisible
         ? visibilityToggle
         : fallbackToggle;
 
-      if (await toggle.isVisible().catch(() => false)) {
+      const isToggleVisible = (await toggle.count()) > 0 && await toggle.isVisible();
+      if (isToggleVisible) {
         await toggle.click();
-        await page.waitForTimeout(300);
+        // Wait for the toggle state to change before clicking again
+        await expect(toggle).toBeVisible({ timeout: 3000 });
         // Toggle again to verify it switches back
         await toggle.click();
       }
@@ -175,7 +178,6 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       await expect(menuTrigger).toBeVisible({ timeout: 5000 });
 
       await menuTrigger.click();
-      await page.waitForTimeout(300);
 
       const editBtn = page
         .locator('[role="menuitem"]')
@@ -184,7 +186,6 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       await expect(editBtn).toBeVisible({ timeout: 3000 });
 
       await editBtn.click();
-      await page.waitForTimeout(300);
 
       // Edit textarea should appear with the original comment text
       const editTextarea = commentCard.locator("textarea");
@@ -198,13 +199,13 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       const saveBtn = commentCard
         .getByRole("button", { name: /Save/i })
         .first();
-      if (await saveBtn.isVisible().catch(() => false)) {
+      const hasSaveBtn = (await saveBtn.count()) > 0 && await saveBtn.isVisible();
+      if (hasSaveBtn) {
         await saveBtn.click();
       } else {
         await editTextarea.press("Control+Enter");
       }
 
-      await page.waitForTimeout(1000);
       await expect(page.getByText(updatedText)).toBeVisible({ timeout: 5000 });
     }
   );
@@ -234,7 +235,6 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       await expect(dropdownBtn).toBeVisible({ timeout: 5000 });
 
       await dropdownBtn.click();
-      await page.waitForTimeout(300);
 
       const deleteBtn = page
         .locator('[role="menuitem"]')
@@ -266,7 +266,9 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       );
       await page.waitForLoadState("networkidle");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(2000);
+
+      // Wait for student work content to be present before selecting text
+      await page.locator("p, [data-student-work], [class*='student-work'], [class*='StudentWork']").first().waitFor({ state: "visible", timeout: 5000 });
 
       // Use page.evaluate to programmatically select text in the student work pane
       const hasText = await page.evaluate(() => {
@@ -319,11 +321,11 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       }
 
       // Wait for comment popover to appear
-      await page.waitForTimeout(500);
       const popover = page.locator(
         'textarea[placeholder="Add your comment..."]'
       );
-      const hasPopover = await popover.isVisible().catch(() => false);
+      await popover.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
+      const hasPopover = (await popover.count()) > 0 && await popover.isVisible();
       // Popover may not appear if text selection detection doesn't fire
       // This is a best-effort test
       expect(hasPopover || true).toBeTruthy();
@@ -340,11 +342,11 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       );
       await page.waitForLoadState("networkidle");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(2000);
 
       // Open the general comment input
       const addCommentBtn = page.getByText("Add a comment...").first();
-      const hasBtn = await addCommentBtn.isVisible().catch(() => false);
+      await addCommentBtn.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
+      const hasBtn = (await addCommentBtn.count()) > 0 && await addCommentBtn.isVisible();
       if (!hasBtn) {
         gradingTest.skip(
           true as never,
@@ -366,7 +368,6 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       // Submit via Ctrl+Enter
       await textarea.press("Control+Enter");
 
-      await page.waitForTimeout(1000);
       await expect(page.getByText(commentText)).toBeVisible({ timeout: 5000 });
     }
   );
@@ -381,10 +382,10 @@ gradingTest.describe("Teacher Comments (Story 5.7)", () => {
       );
       await page.waitForLoadState("networkidle");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(2000);
 
       const addCommentBtn = page.getByText("Add a comment...").first();
-      const hasBtn = await addCommentBtn.isVisible().catch(() => false);
+      await addCommentBtn.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
+      const hasBtn = (await addCommentBtn.count()) > 0 && await addCommentBtn.isVisible();
       if (!hasBtn) {
         gradingTest.skip(
           true as never,

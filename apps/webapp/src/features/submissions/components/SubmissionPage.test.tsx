@@ -50,10 +50,12 @@ vi.mock("sonner", () => ({
   toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
 }));
 
-let mockOnlineManagerIsOnline = true;
+const { mockIsOnline } = vi.hoisted(() => ({
+  mockIsOnline: vi.fn().mockReturnValue(true),
+}));
 vi.mock("@tanstack/react-query", () => ({
   onlineManager: {
-    isOnline: () => mockOnlineManagerIsOnline,
+    isOnline: mockIsOnline,
   },
 }));
 
@@ -119,7 +121,7 @@ beforeEach(() => {
   mockPersistSubmitPending.mockResolvedValue(undefined);
   mockLoadSubmitPending.mockResolvedValue(false);
   mockClearSubmitPending.mockResolvedValue(undefined);
-  mockOnlineManagerIsOnline = true;
+  mockIsOnline.mockReturnValue(true);
 
   mockUseAutoSave.mockReturnValue({
     saveStatus: "idle",
@@ -275,7 +277,7 @@ describe("SubmissionPage", () => {
   describe("Offline submit flow", () => {
     it("shows warning toast when submitting while offline", async () => {
       // Set offline state
-      mockOnlineManagerIsOnline = false;
+      mockIsOnline.mockReturnValue(false);
       mockUseAutoSave.mockReturnValue({
         saveStatus: "offline",
         lastSavedAt: null,
@@ -318,7 +320,7 @@ describe("SubmissionPage", () => {
     });
 
     it("does NOT navigate to SubmissionCompletePage when offline", async () => {
-      mockOnlineManagerIsOnline = false;
+      mockIsOnline.mockReturnValue(false);
       mockUseAutoSave.mockReturnValue({
         saveStatus: "offline",
         lastSavedAt: null,

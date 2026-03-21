@@ -68,7 +68,8 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
       if (await retryBtn.isVisible().catch(() => false)) {
         if (attempt < 3) {
           await retryBtn.click();
-          await page.waitForTimeout(3000);
+          // Wait for content to re-render after retry
+          await page.waitForLoadState("domcontentloaded");
           continue;
         }
         return false;
@@ -166,9 +167,23 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
       await page.goto(
         getAppUrl(`/dashboard/grading/${gradingIds.submissionId}`)
       );
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("domcontentloaded");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(2000);
+
+      // Wait for workbench content to render
+      await page.waitForFunction(
+        () => {
+          const body = document.body.textContent || "";
+          return (
+            body.includes("Your Response") ||
+            body.includes("Band Score") ||
+            body.includes("Teacher Comments") ||
+            body.includes("Test Student") ||
+            body.includes("Something went wrong")
+          );
+        },
+        { timeout: 15000 }
+      );
 
       // Click Queue/Back button
       const queueBtn = page
@@ -211,9 +226,8 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
       await page.goto(
         getAppUrl(`/dashboard/grading/${gradingIds.submissionId}`)
       );
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("domcontentloaded");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(3000);
 
       // AI feedback should show Band Score and feedback items
       await expect(page.getByText("Band Score")).toBeVisible({ timeout: 10000 });
@@ -242,9 +256,11 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
       await page.goto(
         getAppUrl(`/dashboard/grading/${gradingIds.submissionId}`)
       );
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("domcontentloaded");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(3000);
+
+      // Wait for AI feedback content to render
+      await expect(page.getByText("Band Score")).toBeVisible({ timeout: 15000 });
 
       // Find an approve button (Check icon button)
       const approveBtn = page
@@ -262,9 +278,8 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
       }
 
       await approveBtn.click();
-      await page.waitForTimeout(500);
 
-      // Visual state should change (green background or class)
+      // Wait for visual state change (green background or class)
       const parent = approveBtn.locator("..");
       const classes = await parent.getAttribute("class");
       // After approval, the card should have a green indicator
@@ -301,9 +316,11 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
       await page.goto(
         getAppUrl(`/dashboard/grading/${gradingIds.submissionId}`)
       );
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("domcontentloaded");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(3000);
+
+      // Wait for AI feedback content to render
+      await expect(page.getByText("Band Score")).toBeVisible({ timeout: 15000 });
 
       // Find a reject button (X icon button)
       const rejectBtn = page
@@ -319,7 +336,6 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
       }
 
       await rejectBtn.click();
-      await page.waitForTimeout(500);
     }
   );
 
@@ -345,9 +361,11 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
       await page.goto(
         getAppUrl(`/dashboard/grading/${gradingIds.submissionId}`)
       );
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("domcontentloaded");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(3000);
+
+      // Wait for AI feedback content to render
+      await expect(page.getByText("Band Score")).toBeVisible({ timeout: 15000 });
 
       const bulkBtn = page
         .getByRole("button", { name: /Approve All|Approve Remaining/i })
@@ -362,7 +380,6 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
       }
 
       await bulkBtn.click();
-      await page.waitForTimeout(1000);
 
       // After bulk approve, the "reviewed" counter should show all reviewed
       const text = await page.textContent("body");
@@ -394,9 +411,11 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
       await page.goto(
         getAppUrl(`/dashboard/grading/${gradingIds.submissionId}`)
       );
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("domcontentloaded");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(3000);
+
+      // Wait for AI feedback content to render
+      await expect(page.getByText("Band Score")).toBeVisible({ timeout: 15000 });
 
       // Bulk approve all first
       const bulkBtn = page
@@ -404,7 +423,10 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
         .first();
       if (await bulkBtn.isVisible().catch(() => false)) {
         await bulkBtn.click();
-        await page.waitForTimeout(500);
+        // Wait for bulk approval to complete
+        await expect(
+          page.getByRole("button", { name: /Approve & Next|Finalize/i }).first()
+        ).toBeVisible({ timeout: 10000 });
       }
 
       // Click finalize button
@@ -420,8 +442,14 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
         return;
       }
 
-      await finalizeBtn.click();
-      await page.waitForTimeout(2000);
+      // Wait for the finalize API response
+      await Promise.all([
+        page.waitForResponse(
+          (resp) => resp.url().includes("/grading") && resp.request().method() !== "GET",
+          { timeout: 15000 }
+        ).catch(() => null),
+        finalizeBtn.click(),
+      ]);
 
       // Should show stamped animation or "Graded" badge
       const text = await page.textContent("body");
@@ -450,9 +478,23 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
       await page.goto(
         getAppUrl(`/dashboard/grading/${gradingIds.submissionId}`)
       );
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("domcontentloaded");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(2000);
+
+      // Wait for workbench content to render
+      await page.waitForFunction(
+        () => {
+          const body = document.body.textContent || "";
+          return (
+            body.includes("Graded") ||
+            body.includes("Your Response") ||
+            body.includes("Band Score") ||
+            body.includes("AI Analysis Failed") ||
+            body.includes("Something went wrong")
+          );
+        },
+        { timeout: 30000 }
+      );
 
       // Should show "Graded" badge
       const hasGraded = await page
@@ -493,12 +535,13 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
       await page.goto(
         getAppUrl(`/dashboard/grading/${gradingIds.submissionId}`)
       );
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("domcontentloaded");
       await closeAIAssistantDialog(page);
-      await page.waitForTimeout(3000);
 
       // Find the Band Score section and click the score to edit
       const bandScore = page.getByText("Band Score").first();
+      // Wait for Band Score to appear (AI feedback rendered)
+      await expect(bandScore).toBeVisible({ timeout: 15000 }).catch(() => {});
       const hasBand = await bandScore.isVisible().catch(() => false);
       if (!hasBand) {
         gradingTest.skip(
@@ -517,16 +560,17 @@ gradingTest.describe("Grading Workbench (Stories 5.1, 5.2, 5.3, 5.4)", () => {
       const hasScore = await scoreDisplay.isVisible().catch(() => false);
       if (hasScore) {
         await scoreDisplay.click();
-        await page.waitForTimeout(300);
 
-        // Look for the number input that appears
+        // Wait for the number input to appear after clicking
         const scoreInput = page.locator(
           'input[type="number"][step="0.5"]'
         );
+        await expect(scoreInput).toBeVisible({ timeout: 5000 }).catch(() => {});
         if (await scoreInput.isVisible().catch(() => false)) {
           await scoreInput.fill("7");
           await scoreInput.blur();
-          await page.waitForTimeout(500);
+          // Wait for the score value to update in the DOM
+          await expect(scoreDisplay).toBeVisible({ timeout: 5000 }).catch(() => {});
         }
       }
     }

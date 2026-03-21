@@ -69,7 +69,7 @@ test.describe("Protected Routes", () => {
       await page.goto(getAppUrl("/settings/users"));
 
       // Should be able to access users page
-      await expect(page.url()).toContain("users");
+      expect(page.url()).toContain("users");
     });
 
     test("owner can access settings", async ({ page }) => {
@@ -77,7 +77,7 @@ test.describe("Protected Routes", () => {
       await page.goto(getAppUrl("/settings"));
 
       // Should be able to access settings
-      await expect(page.url()).toContain("settings");
+      expect(page.url()).toContain("settings");
     });
   });
 
@@ -94,7 +94,7 @@ test.describe("Protected Routes", () => {
       await loginAs(page, TEST_USERS.ADMIN);
       await page.goto(getAppUrl("/settings/users"));
 
-      await expect(page.url()).toContain("users");
+      expect(page.url()).toContain("users");
     });
   });
 
@@ -112,11 +112,10 @@ test.describe("Protected Routes", () => {
       await page.goto(getAppUrl("/settings/users"));
 
       // Should be redirected (settings requires OWNER or ADMIN)
-      await page.waitForLoadState("networkidle");
-      const url = page.url();
+      await page.waitForURL((url) => !url.pathname.includes("settings/users"));
 
       // Teacher should be redirected away from settings
-      expect(url.includes("settings/users")).toBeFalsy();
+      expect(page.url().includes("settings/users")).toBeFalsy();
     });
   });
 
@@ -134,11 +133,10 @@ test.describe("Protected Routes", () => {
       await page.goto(getAppUrl("/settings/users"));
 
       // Should be redirected (settings requires OWNER or ADMIN)
-      await page.waitForLoadState("networkidle");
-      const url = page.url();
+      await page.waitForURL((url) => !url.pathname.includes("settings/users"));
 
       // Student should be redirected away from settings
-      expect(url.includes("settings/users")).toBeFalsy();
+      expect(page.url().includes("settings/users")).toBeFalsy();
     });
 
     test("student cannot access courses management", async ({ page }) => {
@@ -146,11 +144,10 @@ test.describe("Protected Routes", () => {
       await page.goto(getAppUrl("/courses"));
 
       // Should be redirected (courses requires OWNER, ADMIN, or TEACHER)
-      await page.waitForLoadState("networkidle");
-      const url = page.url();
+      await page.waitForURL((url) => !url.pathname.includes("/courses"));
 
       // Student should be redirected away from courses
-      expect(url.includes("/courses")).toBeFalsy();
+      expect(page.url().includes("/courses")).toBeFalsy();
     });
   });
 

@@ -9,7 +9,6 @@ import { closeAIAssistantDialog } from "../../utils/close-ai-assistant";
 async function gotoSchedule(page: import("@playwright/test").Page, user: (typeof TEST_USERS)[keyof typeof TEST_USERS]) {
   await loginAs(page, user);
   await page.goto(getAppUrl("/schedule"));
-  await page.waitForLoadState("networkidle");
   await closeAIAssistantDialog(page);
   // Wait for the page to finish rendering (heading appears once loading is done)
   await page.getByRole("heading", { name: "Schedule" }).first().waitFor({ timeout: 15000 });
@@ -89,12 +88,11 @@ test.describe("Schedule - Calendar Navigation", () => {
     // Click next week button (the button right before "Today")
     const nextButton = page.locator("button:has(svg.lucide-chevron-right)").first();
     await nextButton.click();
-    await page.waitForTimeout(500);
 
     // Click previous week button to go back
     const prevButton = page.locator("button:has(svg.lucide-chevron-left)").first();
+    await prevButton.waitFor({ state: "visible" });
     await prevButton.click();
-    await page.waitForTimeout(500);
 
     // Today button should still be visible (we're back to current week)
     await expect(todayButton).toBeVisible();
@@ -104,15 +102,15 @@ test.describe("Schedule - Calendar Navigation", () => {
     // Navigate away from current week
     const nextButton = page.locator("button:has(svg.lucide-chevron-right)").first();
     await nextButton.click();
-    await page.waitForTimeout(500);
+    await nextButton.waitFor({ state: "visible" });
     await nextButton.click();
-    await page.waitForTimeout(500);
 
     // Click Today to return
-    await page.getByRole("button", { name: "Today" }).first().click();
-    await page.waitForTimeout(500);
+    const todayButton = page.getByRole("button", { name: "Today" }).first();
+    await todayButton.waitFor({ state: "visible" });
+    await todayButton.click();
 
-    await expect(page.getByRole("button", { name: "Today" }).first()).toBeVisible();
+    await expect(todayButton).toBeVisible();
   });
 });
 
@@ -121,10 +119,9 @@ test.describe("Schedule - Create Session Dialog", () => {
     await gotoSchedule(page, TEST_USERS.OWNER);
 
     await page.getByRole("button", { name: "Add Session" }).first().click();
-    await page.waitForTimeout(300);
 
     const dialog = page.locator('[role="dialog"]');
-    await expect(dialog).toBeVisible();
+    await dialog.waitFor({ state: "visible" });
     // Use heading role to avoid matching both title and button
     await expect(dialog.getByRole("heading", { name: "Create Session" })).toBeVisible();
 

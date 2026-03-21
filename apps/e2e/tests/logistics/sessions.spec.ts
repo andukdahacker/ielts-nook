@@ -9,7 +9,6 @@ import { closeAIAssistantDialog } from "../../utils/close-ai-assistant";
 async function gotoSchedule(page: import("@playwright/test").Page) {
   await loginAs(page, TEST_USERS.OWNER);
   await page.goto(getAppUrl("/schedule"));
-  await page.waitForLoadState("networkidle");
   await closeAIAssistantDialog(page);
   await page.getByRole("heading", { name: "Schedule" }).first().waitFor({ timeout: 15000 });
 }
@@ -21,10 +20,9 @@ test.describe("Session CRUD", () => {
     await gotoSchedule(page);
 
     await page.getByRole("button", { name: "Add Session" }).first().click();
-    await page.waitForTimeout(300);
 
     const dialog = page.locator('[role="dialog"]');
-    await expect(dialog).toBeVisible();
+    await dialog.waitFor({ state: "visible" });
     await expect(dialog.getByRole("heading", { name: "Create Session" })).toBeVisible();
 
     // All form fields present
@@ -46,10 +44,10 @@ test.describe("Session CRUD", () => {
     // Class dropdown should have options from seeded data
     const classSelect = dialog.locator('[role="combobox"]').first();
     await classSelect.click();
-    await page.waitForTimeout(500);
 
     // Should have at least the E2E Test Class
     const options = page.locator('[role="option"]');
+    await options.first().waitFor({ state: "visible" });
     expect(await options.count()).toBeGreaterThanOrEqual(1);
 
     // Close dropdown
@@ -65,12 +63,13 @@ test.describe("Session CRUD", () => {
 
     // Recurrence field should have None, Weekly, Bi-weekly options
     const recurrenceSelect = dialog.getByText("Recurrence", { exact: true }).locator("..").locator('[role="combobox"]');
-    if (await recurrenceSelect.isVisible().catch(() => false)) {
+    if ((await recurrenceSelect.count()) > 0 && await recurrenceSelect.isVisible()) {
       await recurrenceSelect.click();
-      await page.waitForTimeout(300);
+      // Wait for dropdown options to appear
+      await page.locator('[role="option"]').first().waitFor({ state: "visible" });
       // Should show recurrence options
-      const hasNone = await page.locator('[role="option"]').filter({ hasText: /none/i }).isVisible().catch(() => false);
-      const hasWeekly = await page.locator('[role="option"]').filter({ hasText: /weekly/i }).isVisible().catch(() => false);
+      const hasNone = (await page.locator('[role="option"]').filter({ hasText: /none/i }).count()) > 0;
+      const hasWeekly = (await page.locator('[role="option"]').filter({ hasText: /weekly/i }).count()) > 0;
       expect(hasNone || hasWeekly).toBeTruthy();
       await page.keyboard.press("Escape");
     }
@@ -83,11 +82,11 @@ test.describe("Session CRUD", () => {
     await expect(generateBtn).toBeVisible();
 
     await generateBtn.click();
-    await page.waitForTimeout(300);
 
     // A dialog or form should appear for generating recurring sessions
     const dialog = page.locator('[role="dialog"]');
-    const hasDialog = await dialog.isVisible().catch(() => false);
+    // Wait briefly for dialog to potentially appear
+    const hasDialog = await dialog.waitFor({ state: "visible", timeout: 3000 }).then(() => true).catch(() => false);
     // Either dialog or inline form
     expect(hasDialog || page.url().includes("schedule")).toBeTruthy();
   });
@@ -101,7 +100,7 @@ test.describe("Session CRUD", () => {
 
     // Cancel or close the dialog
     const cancelBtn = dialog.getByRole("button", { name: /cancel|close/i });
-    if (await cancelBtn.isVisible().catch(() => false)) {
+    if ((await cancelBtn.count()) > 0 && await cancelBtn.isVisible()) {
       await cancelBtn.click();
     } else {
       await page.keyboard.press("Escape");
@@ -134,10 +133,10 @@ test.describe("Conflict Detection", () => {
     // Navigate to the week with seeded sessions
     const prevButton = page.locator("button:has(svg.lucide-chevron-left)").first();
     await prevButton.click();
-    await page.waitForTimeout(500);
 
-    // The calendar should render any existing sessions as blocks
+    // Wait for the calendar to render day columns after navigation
     const dayColumns = page.getByText(/Mon|Tue|Wed|Thu|Fri|Sat|Sun/);
+    await dayColumns.first().waitFor({ state: "visible" });
     expect(await dayColumns.count()).toBeGreaterThanOrEqual(7);
   });
 });
