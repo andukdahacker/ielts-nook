@@ -2,7 +2,8 @@
 
 ## File
 
-- **`classlite-manual-test-cases.xlsx`** — 448 test cases across 10 sheets (one per epic)
+- **`classlite-manual-test-cases.xlsx`** — 305 test cases across 9 sheets (one per epic)
+- **`generate-test-cases.py`** — Python script to regenerate the Excel (requires `openpyxl`)
 
 ## Structure
 
@@ -14,7 +15,7 @@ Each sheet has these columns:
 | Story | Links to the story file (e.g., `1.2` = Story 1.2 in `_bmad-output/implementation-artifacts/`) |
 | Feature | Feature area within the story |
 | Scenario | What is being tested |
-| Role | OWNER, ADMIN, TEACHER, STUDENT, ALL, SYSTEM, or PUBLIC |
+| Role | OWNER, ADMIN, TEACHER, STUDENT, ALL, or PUBLIC |
 | Preconditions | What must be true before testing |
 | Test Steps | Step-by-step instructions |
 | Expected Result | What should happen |
@@ -48,15 +49,14 @@ Each sheet has these columns:
 
 | Sheet | Epic | Cases |
 |-------|------|-------|
-| Epic 1 - Tenant & Users | Registration, Branding, RBAC, Login, Profile, CSV Import, Nav | 108 |
-| Epic 2 - Scheduling | Courses, Scheduler, Conflicts, Attendance, Sessions, Notifications | 68 |
-| Epic 3 - Exercise Builder | 16 question types, Answer Keys, Timer, Tags, AI Gen, Mock Tests, Library, Assignments | 80 |
-| Epic 3.5 - Infrastructure | Docker, CI/CD, Migrations, Error Boundaries, E2E | 8 |
-| Epic 4 - Submissions | Mobile UI, Auto-save, Offline Safeguards | 29 |
-| Epic 5 - AI Grading | AI Analysis, Split Screen, Anchoring, Approval, Queue, Feedback, Comments | 57 |
-| Epic 6 - Student Health | Traffic Light, Profile Overlay, Interventions, Teacher View, Flags | 36 |
-| Epic 7 - Notifications | Engagement Emails, Preferences, Parent Emails | 23 |
-| Epic 9 - Billing | Dashboard, Polar Integration, Grace Period, Tier Management | 28 |
+| Epic 1 - Tenant & Users | Registration, Branding, RBAC, Login, Profile, CSV Import, Nav | 78 |
+| Epic 2 - Scheduling | Courses, Scheduler, Conflicts, Attendance, Sessions | 44 |
+| Epic 3 - Exercise Builder | Question types, Passage, Audio, Assignments, Mock Tests, Tags | 60 |
+| Epic 4 - Submissions | Submission UI, Auto-save, Offline, Timer, Mobile | 24 |
+| Epic 5 - AI Grading | AI Analysis, Split Screen, Approval, Queue, Feedback, Comments | 31 |
+| Epic 6 - Student Health | Traffic Light, Filters, Profile Overlay, Interventions | 19 |
+| Epic 7 - Notifications | Engagement Emails, Preferences, In-App Notifications | 15 |
+| Epic 9 - Billing | Dashboard, Status Badges, Tier Management | 20 |
 | Epic 10 - Marketing | Landing Page, SEO, Responsive, Performance | 14 |
 
 ## Role Testing Order
