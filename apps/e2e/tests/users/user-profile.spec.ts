@@ -55,7 +55,7 @@ test.describe("Profile Page — Display", () => {
       "Name",
       "Phone Number",
       "Preferred Language",
-      "Schedule Email Notifications",
+      "Notification Preferences",
       "Role",
     ];
     for (const label of labels) {
@@ -87,7 +87,7 @@ test.describe("Profile Edit — Form & Validation", () => {
     await expect(page.getByLabel("Phone Number")).toBeVisible();
     await expect(page.getByLabel("Preferred Language")).toBeVisible();
     await expect(
-      page.getByLabel(/Email me schedule changes/i)
+      page.getByLabel(/Schedule changes/i)
     ).toBeVisible();
 
     // Save and Cancel buttons

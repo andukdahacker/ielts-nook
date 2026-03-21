@@ -89,7 +89,7 @@ test.describe("Settings Layout & Navigation", () => {
     const billingBtn = nav.getByRole("button", { name: /Billing/ });
     await expect(billingBtn).toBeEnabled();
     await billingBtn.click();
-    await expect(page.getByText(/Billing/)).toBeVisible();
+    await expect(page.getByText(/Billing/).first()).toBeVisible();
   });
 
   test("placeholder pages show Coming Soon", async ({ page }) => {

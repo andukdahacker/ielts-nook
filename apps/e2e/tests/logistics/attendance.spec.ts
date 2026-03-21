@@ -38,7 +38,7 @@ test.describe("Attendance Tracking", () => {
   });
 
   test("TC 2.4-004: attendance status buttons are touch-friendly", async ({ page }) => {
-    test.use({ viewport: { width: 375, height: 667 } });
+    await page.setViewportSize({ width: 375, height: 667 });
     await gotoSchedule(page, TEST_USERS.TEACHER);
 
     // Navigate to find a past session with attendance

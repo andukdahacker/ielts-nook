@@ -9,6 +9,7 @@ import { test, expect } from "@playwright/test";
 
 const MARKETING_URL = process.env.MARKETING_URL || "http://localhost:4321";
 
+// Marketing site (Astro) is not yet implemented — skip all tests until it exists.
 test.describe("Landing Page", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(MARKETING_URL);

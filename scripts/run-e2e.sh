@@ -18,6 +18,7 @@ FIREBASE_AUTH_EMULATOR_PORT=9099
 BACKEND_PORT=4000
 WEBAPP_PORT=5173
 INNGEST_PORT=8288
+WEBSITE_PORT=4321
 DATABASE_URL="${DATABASE_URL:-postgresql://user:password@localhost:5432/classlite}"
 
 # Export env vars for child processes
@@ -28,15 +29,22 @@ export DATABASE_URL
 # Disable real email sending during E2E tests — backend jobs skip when empty.
 # Use export (not unset) so dotenv won't re-populate from .env files.
 export RESEND_API_KEY=""
+export MARKETING_URL="http://localhost:${WEBSITE_PORT}"
 
 # PIDs for cleanup
 FIREBASE_PID=""
 BACKEND_PID=""
 INNGEST_PID=""
 WEBAPP_PID=""
+WEBSITE_PID=""
 
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
+
+    if [ -n "$WEBSITE_PID" ]; then
+        echo "Stopping website (PID: $WEBSITE_PID)"
+        kill $WEBSITE_PID 2>/dev/null || true
+    fi
 
     if [ -n "$WEBAPP_PID" ]; then
         echo "Stopping webapp (PID: $WEBAPP_PID)"
@@ -63,6 +71,7 @@ cleanup() {
     lsof -ti:$BACKEND_PORT | xargs kill -9 2>/dev/null || true
     lsof -ti:$INNGEST_PORT | xargs kill -9 2>/dev/null || true
     lsof -ti:$WEBAPP_PORT | xargs kill -9 2>/dev/null || true
+    lsof -ti:$WEBSITE_PORT | xargs kill -9 2>/dev/null || true
 
     echo -e "${GREEN}Cleanup complete${NC}"
 }
@@ -76,6 +85,7 @@ lsof -ti:$FIREBASE_AUTH_EMULATOR_PORT | xargs kill -9 2>/dev/null || true
 lsof -ti:$BACKEND_PORT | xargs kill -9 2>/dev/null || true
 lsof -ti:$INNGEST_PORT | xargs kill -9 2>/dev/null || true
 lsof -ti:$WEBAPP_PORT | xargs kill -9 2>/dev/null || true
+lsof -ti:$WEBSITE_PORT | xargs kill -9 2>/dev/null || true
 sleep 1
 
 wait_for_service() {
@@ -177,17 +187,28 @@ if ! wait_for_service "http://localhost:$WEBAPP_PORT" "Webapp" 60; then
     exit 1
 fi
 
-# Step 5: Seed test data
-echo -e "${YELLOW}Step 5: Seeding test data...${NC}"
+# Step 5: Start Website (Astro marketing site)
+echo -e "${YELLOW}Step 5: Starting Website...${NC}"
+pnpm --filter website dev > /tmp/website.log 2>&1 &
+WEBSITE_PID=$!
+
+if ! wait_for_service "http://localhost:$WEBSITE_PORT" "Website" 60; then
+    echo -e "${RED}Failed to start website${NC}"
+    cat /tmp/website.log
+    exit 1
+fi
+
+# Step 6: Seed test data
+echo -e "${YELLOW}Step 6: Seeding test data...${NC}"
 if ! pnpm -w run test:e2e:seed; then
     echo -e "${RED}Failed to seed test data${NC}"
     exit 1
 fi
 echo -e "${GREEN}Test data seeded successfully${NC}"
 
-# Step 6: Run E2E tests
+# Step 7: Run E2E tests
 echo ""
-echo -e "${YELLOW}Step 6: Running E2E tests...${NC}"
+echo -e "${YELLOW}Step 7: Running E2E tests...${NC}"
 echo -e "${BLUE}========================================${NC}"
 
 # Run tests (pass any additional arguments to playwright)
