@@ -352,13 +352,18 @@ async function seedStudentHealthData() {
     for (const student of HEALTH_TEST_STUDENTS) {
       await prisma.user.upsert({
         where: { id: student.id },
-        update: { email: student.email, name: student.name, parentEmail: student.parentEmail },
+        update: { email: student.email, name: student.name },
         create: {
           id: student.id,
           email: student.email,
           name: student.name,
-          parentEmail: student.parentEmail,
         },
+      });
+      // Create parent email entry in the ParentEmail table
+      await prisma.parentEmail.upsert({
+        where: { userId_email: { userId: student.id, email: student.parentEmail } },
+        update: {},
+        create: { userId: student.id, email: student.parentEmail },
       });
       await prisma.centerMembership.upsert({
         where: { centerId_userId: { centerId, userId: student.id } },
@@ -373,10 +378,11 @@ async function seedStudentHealthData() {
       console.log(`   ✓ Created student: ${student.name}`);
     }
 
-    // Add parentEmail to the existing e2e-student
-    await prisma.user.update({
-      where: { id: "e2e-student" },
-      data: { parentEmail: "parent-student@test.classlite.com" },
+    // Add parentEmail to the existing e2e-student via the ParentEmail table
+    await prisma.parentEmail.upsert({
+      where: { userId_email: { userId: "e2e-student", email: "parent-student@test.classlite.com" } },
+      update: {},
+      create: { userId: "e2e-student", email: "parent-student@test.classlite.com" },
     });
 
     const allStudentIds = [
