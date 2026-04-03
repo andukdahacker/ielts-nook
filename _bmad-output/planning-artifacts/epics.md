@@ -17,8 +17,10 @@ stepsCompleted:
     step-14-stories-refinement,
     step-15-completeness-review,
   ]
-lastEdited: "2026-02-17"
+lastEdited: "2026-04-03"
 editHistory:
+  - date: "2026-04-03"
+    changes: "Added Epics 11-19 from user feedback backlog (44 items). Epic 11: Critical Bug Fixes (A1-A7), Epic 12: Exercise Editor UX (B1-B13, C1), Epic 13: Grading & Feedback (D1-D3), Epic 14: Session & Schedule Redesign (E1-E4), Epic 15: RBAC Audit (F1-F4), Epic 16: Dashboard Redesign (G1-G3), Epic 17: UI Polish & Quick Wins (H1-H12), Epic 18: Knowledge Hub (I1-I2), Epic 19: Course Redesign (J1-J3). Updated FR Coverage Map and Epic List sections."
   - date: "2026-01-29"
     changes: "Added 15 new stories and updated 5 existing stories to close gaps: Login/Auth (1.6-1.7), User Management (1.8-1.10), Navigation (1.11), Session CRUD (2.5), Email Notifications (2.6), Exercise Library (3.4-3.5), Grading Queue (5.5), Student Feedback View (5.6), Teacher Health View (6.4), Zalo Linking (7.3), i18n (8.4), Golden Sample UI (8.5)."
   - date: "2026-01-29"
@@ -133,6 +135,15 @@ This document defines the high-level Epics and granular User Stories for ClassLi
 | **Epic 8** | Platform Compliance & Methodology     | FR32, FR33, FR36                                   |
 | **Epic 9** | Billing & Subscription                | FR43, FR44, FR45, FR46, FR47, FR48                 |
 | **Epic 10** | Public Website                       | — (Marketing/credibility, no PRD FRs)              |
+| **Epic 11** | Critical Bug Fixes                   | — (User feedback: A1–A7)                           |
+| **Epic 12** | Exercise Editor UX                   | — (User feedback: B1–B13, C1)                      |
+| **Epic 13** | Grading & Feedback Improvements      | — (User feedback: D1–D3)                           |
+| **Epic 14** | Session & Schedule Redesign          | — (User feedback: E1–E4)                           |
+| **Epic 15** | RBAC Audit & Permissions             | — (User feedback: F1–F4)                           |
+| **Epic 16** | Dashboard Redesign                   | — (User feedback: G1–G3)                           |
+| **Epic 17** | UI Polish & Quick Wins               | — (User feedback: H1–H12)                          |
+| **Epic 18** | Knowledge Hub                        | — (User feedback: I1–I2)                           |
+| **Epic 19** | Course Redesign                      | — (User feedback: J1–J3)                           |
 
 ---
 
@@ -177,6 +188,42 @@ This document defines the high-level Epics and granular User Stories for ClassLi
 ### Epic 10: Public Website
 
 **Summary:** A minimal credibility landing page at classlite.app to establish professional presence for pilot outreach. Single page, brand-consistent, no fluff — just enough to answer "what is ClassLite?" for anyone who finds us.
+
+### Epic 11: Critical Bug Fixes
+
+**Summary:** Urgent fixes for bugs that block core workflows or cause data loss. Covers course navigation, option saving, question preview rendering, matching headings, unsaved changes indicator, breadcrumbs, and post-submit locking.
+
+### Epic 12: Exercise Editor UX
+
+**Summary:** UX improvements for the exercise builder and editor experience. Addresses input lag, sticky toolbar, auto-scroll, post-publish flow, validation warnings, placeholder formatting, naming, correct answer discoverability, mock test drag, edit-after-publish, and section navigation.
+
+### Epic 13: Grading & Feedback Improvements
+
+**Summary:** Enhancements to the grading workflow including click-to-scroll comments, Google Docs-style inline comments, and manual grading discoverability.
+
+### Epic 14: Session & Schedule Redesign
+
+**Summary:** Major rework of session generation and management. Auto-generated sessions from recurrence rules, individual session editing/cancellation, rescheduling, and recurrence pattern updates.
+
+### Epic 15: RBAC Audit & Permissions
+
+**Summary:** Full audit and redesign of role boundaries. Owner as god mode, clearer role distinctions, and proper permission filtering in the UI.
+
+### Epic 16: Dashboard Redesign
+
+**Summary:** Per-role dashboards with real-time widgets, differentiated from the student list page. Includes owner test management.
+
+### Epic 17: UI Polish & Quick Wins
+
+**Summary:** Small fixes, feature hiding, responsive improvements, and QoL enhancements. Remove unused features, extend login, add tooltips, improve responsive layouts.
+
+### Epic 18: Knowledge Hub
+
+**Summary:** New document library module for centers. Upload PDFs, books, slides with tag-based grouping, search, and golden sample linking.
+
+### Epic 19: Course Redesign
+
+**Summary:** Separates Course as a reusable, standalone entity with its own page. Courses can template multiple class instances and link to Knowledge Hub.
 
 ---
 
@@ -999,3 +1046,590 @@ This document defines the high-level Epics and granular User Stories for ClassLi
 - **AC6:** Footer with contact email and copyright.
 - **AC7:** Webapp brand palette (Primary #2563EB, white bg, dark navy text). Responsive to 375px.
 - **AC8:** No pricing, testimonials, dark mode, blog, or team section.
+
+---
+
+### Epic 11: Critical Bug Fixes
+
+**Summary:** Urgent fixes for bugs that block core workflows or cause data loss. These were surfaced from user feedback and must be resolved before any other feature work. Covers course navigation, option saving, question preview rendering, matching headings, unsaved changes indicator, breadcrumbs, and post-submit locking.
+
+#### Story 11.1: Course Detail Next Button Fix (A1)
+
+**As a** Teacher editing a course,
+**I want** pressing "Next" to save changes, close the sidebar, AND show the next screen,
+**So that** I can progress through course setup without getting stuck.
+
+- **AC1:** Pressing "Next" in the course detail sidebar saves any pending changes.
+- **AC2:** The sidebar closes after save completes.
+- **AC3:** The next screen/step in the course setup flow is displayed.
+- **AC4:** If save fails, an error message is shown and the user remains on the current screen.
+
+#### Story 11.2: Option Not Saved on Add (A2)
+
+**As a** Teacher adding answer options to a question,
+**I want** the option text to be captured even if I click "Add Option" without first blurring the input,
+**So that** my options are never silently lost.
+
+- **AC1:** Clicking "Add Option" commits the current input value regardless of blur state.
+- **AC2:** The newly added option appears in the list immediately.
+- **AC3:** If the input is empty when "Add Option" is clicked, no empty option is created.
+
+#### Story 11.3: Question Text Missing in Preview (A3)
+
+**As a** Teacher previewing an exercise,
+**I want** to see question text rendered for Note Completion, Table Completion, Flowchart, Matching Headings, and Matching Sentence Endings,
+**So that** I can verify my exercise looks correct before publishing.
+
+- **AC1:** Note Completion question text renders correctly in preview mode.
+- **AC2:** Table Completion question text renders correctly in preview mode.
+- **AC3:** Flowchart question text renders correctly in preview mode.
+- **AC4:** Matching Headings question text renders correctly in preview mode.
+- **AC5:** Matching Sentence Endings question text renders correctly in preview mode.
+
+#### Story 11.4: Matching Headings Space Bug (A4)
+
+**As a** Teacher creating a Matching Headings exercise,
+**I want** headings with spaces to match correctly with paragraphs,
+**So that** the exercise functions as intended.
+
+- **AC1:** Headings containing space characters are accepted without error.
+- **AC2:** Matching logic correctly pairs headings with paragraphs regardless of whitespace.
+- **AC3:** Existing exercises with spaces in headings continue to work after the fix.
+
+#### Story 11.5: Unsaved Changes False Positive (A5)
+
+**As a** Teacher editing an exercise,
+**I want** the "Unsaved changes" indicator to disappear after I successfully save a draft,
+**So that** I'm not confused about the save state.
+
+- **AC1:** After a successful "Save Draft" operation, the unsaved changes indicator is cleared.
+- **AC2:** The indicator reappears only when new edits are made after saving.
+- **AC3:** The form's dirty state is properly reset on save completion.
+
+#### Story 11.6: Exercise Edit Breadcrumbs (A6)
+
+**As a** Teacher editing an exercise,
+**I want** breadcrumb links to navigate to the correct pages (exercise list, class, course),
+**So that** I can navigate back without going through the dashboard.
+
+- **AC1:** Each breadcrumb segment links to its corresponding page (not the dashboard).
+- **AC2:** Breadcrumb hierarchy reflects: Dashboard > [Class/Course] > Exercise List > Exercise Edit.
+- **AC3:** All breadcrumb links are functional and load the correct content.
+
+#### Story 11.7: Lock Submitted Exercises (A7)
+
+**As a** Teacher,
+**I want** submitted exercises to be locked from further student edits,
+**So that** grading integrity is maintained.
+
+- **AC1:** After a student submits an exercise, all answer inputs become read-only for that student.
+- **AC2:** The student sees a clear "Submitted" state indicator.
+- **AC3:** A teacher can unlock a specific student's submission to allow re-submission.
+- **AC4:** Re-submission resets the grading status for that student.
+
+---
+
+### Epic 12: Exercise Editor UX
+
+**Summary:** UX improvements for the exercise builder and editor experience. Addresses input lag, sticky toolbar, auto-scroll, post-publish flow, validation warnings, blank placeholder formatting, naming consistency, writing exercise cleanup, correct answer discoverability, mock test drag, edit-after-publish rules, and section navigation.
+
+#### Story 12.1: Input Lag — Matching Headings (B1)
+
+**As a** Teacher editing a Matching Headings exercise,
+**I want** instructions, paragraphs, and heading inputs to be responsive without lag,
+**So that** I can author content efficiently.
+
+- **AC1:** Typing in instructions, paragraphs, and headings fields has no perceptible lag (< 100ms input-to-render).
+- **AC2:** Debounce or optimization strategy is applied to prevent re-renders on every keystroke.
+- **AC3:** No regression in save behavior or data integrity.
+
+#### Story 12.2: Input Lag — True/False/Not Given (B2)
+
+**As a** Teacher editing a T/F/NG exercise,
+**I want** answer inputs to be responsive without lag,
+**So that** I can author questions efficiently.
+
+- **AC1:** Typing in T/F/NG answer fields has no perceptible lag (< 100ms input-to-render).
+- **AC2:** Optimization approach is consistent with Story 12.1.
+
+#### Story 12.3: Sticky Toolbar (B3)
+
+**As a** Teacher editing a long exercise,
+**I want** the toolbar and action buttons to stay visible (sticky/pinned) as I scroll,
+**So that** I can always access tools without scrolling back to the top.
+
+- **AC1:** The exercise editor toolbar remains fixed/sticky at the top of the viewport when scrolling.
+- **AC2:** Action buttons (Save Draft, Publish, etc.) remain accessible without scrolling.
+- **AC3:** Sticky behavior works correctly on all supported viewport sizes.
+
+#### Story 12.4: Auto-Scroll to New Section (B4)
+
+**As a** Teacher adding a new section to an exercise (manually or via AI),
+**I want** the screen to auto-scroll to the newly created section,
+**So that** I can immediately start editing it.
+
+- **AC1:** When a new section is created manually, the viewport scrolls to bring it into view.
+- **AC2:** When AI generates a new section, the viewport scrolls to the new content.
+- **AC3:** Scroll animation is smooth (not jarring).
+
+#### Story 12.5: Stay on Page After Publish (B5)
+
+**As a** Teacher who just published an exercise,
+**I want** to stay on the edit page instead of being redirected,
+**So that** I can assign or continue reviewing immediately.
+
+- **AC1:** After publishing, user remains on the exercise edit page.
+- **AC2:** An "Assign" button appears once the exercise is in published state.
+- **AC3:** The "Assign" button is disabled/hidden when the exercise is still in draft state.
+- **AC4:** A success toast confirms the publish action.
+
+#### Story 12.6: Matching Headings Duplicate Warning (B6)
+
+**As a** Teacher creating a Matching Headings exercise,
+**I want** a validation warning if two paragraphs share the same heading,
+**So that** I can catch unintentional duplicates before publishing.
+
+- **AC1:** When two or more paragraphs are assigned the same heading, a warning message is displayed.
+- **AC2:** The warning identifies which paragraphs have duplicate headings.
+- **AC3:** The warning is non-blocking (teacher can still save/publish if intentional).
+
+#### Story 12.7: Blank Placeholder Format (B7)
+
+**As a** Teacher creating fill-in-the-blank exercises,
+**I want** blank placeholders displayed as `(1)` or `{1}` instead of `__1__`,
+**So that** the formatting is cleaner and more recognizable.
+
+- **AC1:** All exercise types render blank placeholders using the new format (e.g., `(1)`, `(2)`).
+- **AC2:** Existing exercises with `__1__` format are migrated or rendered in the new format.
+- **AC3:** Preview mode uses the new format consistently.
+
+#### Story 12.8: Rename "Categories" to "Features" (B8)
+
+**As a** Teacher creating a Matching Feature exercise,
+**I want** the label "Categories" changed to "Features",
+**So that** the terminology matches the IELTS question type name.
+
+- **AC1:** All UI labels reading "Categories" in the Matching Feature exercise type are changed to "Features".
+- **AC2:** No change to the underlying data model field names (cosmetic only).
+
+#### Story 12.9: Writing Exercise — Remove Redundant Fields (B9)
+
+**As a** Teacher creating a Writing exercise,
+**I want** the `section` and `questionText` fields hidden,
+**So that** I'm not confused by redundant fields when `writingPrompt` and `instructions` cover the same need.
+
+- **AC1:** The `section` field is hidden in the Writing exercise editor.
+- **AC2:** The `questionText` field is hidden in the Writing exercise editor.
+- **AC3:** Existing Writing exercises with data in those fields are unaffected (data preserved, just hidden).
+
+#### Story 12.10: Correct Answer Discoverability (B10)
+
+**As a** Teacher setting correct answers for Note/Table/Flowchart/Word Bank questions,
+**I want** the correct answer UI to be easily discoverable,
+**So that** I don't miss setting answers.
+
+- **AC1:** A visual cue (icon, highlight, or label) indicates where to set correct answers.
+- **AC2:** The answer-setting panel is always visible or easily accessible (not hidden behind a non-obvious toggle).
+- **AC3:** Works consistently across Note Completion, Table Completion, Flowchart, and Word Bank types.
+
+#### Story 12.11: Mock Test Drag Fix (B11)
+
+**As a** Teacher reordering exercises in a mock test,
+**I want** drag handles to actually work for reordering,
+**So that** I can arrange exercises in my desired sequence.
+
+- **AC1:** Drag handles on exercises in mock test view are functional.
+- **AC2:** Dragging an exercise reorders it in the list and persists the new order.
+- **AC3:** No visual glitches during drag operations.
+
+#### Story 12.12: Edit After Publish — Before Submissions Only (B12)
+
+**As a** Teacher who published an exercise,
+**I want** to edit it only if no student has submitted yet,
+**So that** grading fairness is maintained for students who already submitted.
+
+- **AC1:** Published exercises with zero submissions can be edited normally.
+- **AC2:** Once the first student submission exists, the edit button is disabled with a tooltip explaining why.
+- **AC3:** Teacher can still view the exercise in read-only mode after submissions exist.
+
+#### Story 12.13: Section Navigation for Long Exercises (B13)
+
+**As a** Teacher editing a Reading or Listening exercise with many sections,
+**I want** an outline or minimap sidebar for quick navigation between sections,
+**So that** I don't have to scroll through the entire exercise.
+
+- **AC1:** An outline/minimap sidebar appears for exercises with 3+ sections.
+- **AC2:** Clicking an item in the outline scrolls to that section.
+- **AC3:** The current section is highlighted in the outline as the user scrolls.
+
+#### Story 12.14: Table Overflow with Sidebar (C1)
+
+**As a** Teacher viewing the exercise list with the sidebar open,
+**I want** the table to fit within the page width with horizontal scroll if needed,
+**So that** the layout doesn't break.
+
+- **AC1:** Exercise list table does not overflow the viewport when the sidebar is open.
+- **AC2:** If content exceeds available width, a horizontal scrollbar appears on the table.
+- **AC3:** Table remains usable and readable at all supported viewport widths.
+
+---
+
+### Epic 13: Grading & Feedback Improvements
+
+**Summary:** Enhancements to the grading workflow including click-to-scroll comment navigation, Google Docs-style inline comments, and improved manual grading discoverability.
+
+#### Story 13.1: Click-to-Scroll Comments (D1)
+
+**As a** Teacher in the grading queue,
+**I want** to click a comment to scroll to it (instead of hover-to-scroll),
+**So that** navigation is intentional and not accidentally triggered.
+
+- **AC1:** Clicking a comment in the sidebar scrolls the student work panel to the anchored text.
+- **AC2:** Hover no longer triggers scroll behavior.
+- **AC3:** The anchored text is highlighted briefly after scrolling to it.
+
+#### Story 13.2: Google Docs-Style Comments (D2)
+
+**As a** Teacher grading student work,
+**I want** Google Docs-style inline highlight + sidebar comments instead of line-based anchoring,
+**So that** feedback is precisely attached to the relevant text.
+
+- **AC1:** Teacher can select arbitrary text in student work to create a comment.
+- **AC2:** Selected text is highlighted with a visual indicator.
+- **AC3:** Comments appear in a sidebar panel, linked to their highlighted text.
+- **AC4:** Clicking a sidebar comment highlights and scrolls to the anchored text.
+- **AC5:** Multiple overlapping highlights are visually distinguishable.
+- **AC6:** Comments can be edited and deleted from the sidebar.
+
+#### Story 13.3: Manual Grading Discoverability (D3)
+
+**As a** Teacher who wants to grade manually,
+**I want** a clearer entry point to manual grading,
+**So that** I can find and use it without confusion.
+
+- **AC1:** A visible "Grade Manually" button or tab is present in the grading interface.
+- **AC2:** If the teacher has never used manual grading, a brief onboarding hint or tooltip appears.
+- **AC3:** Manual grading flow is accessible within 2 clicks from the grading queue.
+
+---
+
+### Epic 14: Session & Schedule Redesign
+
+**Summary:** Major rework of how sessions are generated and managed. Introduces auto-generated sessions from recurrence rules, individual session editing/cancellation, rescheduling, and recurrence pattern updates.
+
+#### Story 14.1: Auto-Generate Sessions from Recurrence (E1)
+
+**As a** Teacher/Admin with a recurring class schedule,
+**I want** sessions to be automatically generated from the recurrence rule and end date,
+**So that** I don't have to manually create each session.
+
+- **AC1:** When a class has a recurring schedule + end date, all sessions are auto-populated on save.
+- **AC2:** No manual "Generate Sessions" button is needed.
+- **AC3:** If no end date is set, sessions are generated on a rolling window (e.g., 3 months ahead).
+- **AC4:** Existing manually-created sessions are preserved and not duplicated.
+
+#### Story 14.2: Edit/Cancel Individual Sessions (E2)
+
+**As a** Teacher,
+**I want** to edit or cancel a single session occurrence,
+**So that** I can handle exceptions without affecting the entire series.
+
+- **AC1:** Teacher can select a single session and choose "Edit" or "Cancel".
+- **AC2:** Cancelled sessions are visually marked (strikethrough or badge) but not deleted.
+- **AC3:** Editing a single session creates an exception — it no longer follows the series rule.
+- **AC4:** Students are notified of cancellations.
+
+#### Story 14.3: Reschedule Single Occurrence (E3)
+
+**As a** Teacher,
+**I want** to reschedule a single session by dragging or editing,
+**So that** I can move one class without affecting the rest of the series.
+
+- **AC1:** Teacher can drag a session to a new time/date on the weekly scheduler.
+- **AC2:** Only the moved session is affected; all other series sessions remain unchanged.
+- **AC3:** Conflict detection runs on the new time slot.
+- **AC4:** Students are notified of the reschedule.
+
+#### Story 14.4: Update Recurrence Rule (E4)
+
+**As a** Teacher/Admin,
+**I want** to change the recurrence pattern and apply it to future sessions only,
+**So that** past sessions remain accurate while future ones reflect the new schedule.
+
+- **AC1:** Teacher can edit the recurrence rule (day, time, frequency) for a class.
+- **AC2:** Changes apply to future sessions only — past sessions are untouched.
+- **AC3:** Previously created exceptions (edits/cancellations) are preserved.
+- **AC4:** A confirmation dialog shows which future sessions will be affected.
+
+---
+
+### Epic 15: RBAC Audit & Permissions
+
+**Summary:** Full audit and redesign of role boundaries. Ensures Owner/Admin/Teacher/Student see and access only what they should, with Owner as god mode and clearer role distinctions in the UI.
+
+#### Story 15.1: RBAC Audit (F1)
+
+**As a** Product Owner,
+**I want** a complete audit mapping what each role (Owner/Admin/Teacher/Student) should and shouldn't access,
+**So that** we have a definitive permissions matrix to implement against.
+
+- **AC1:** Permissions matrix document is created covering all routes and UI sections.
+- **AC2:** Each role has explicit "allow" and "deny" entries for every feature area.
+- **AC3:** The matrix is reviewed and approved before implementation begins.
+
+#### Story 15.2: Admin — Remove Grading/Assignment Views (F2)
+
+**As an** Admin,
+**I should not** see grading queue or exercise assignment views,
+**So that** the UI reflects my actual responsibilities (management, not teaching).
+
+- **AC1:** Grading queue is hidden from Admin sidebar and routes.
+- **AC2:** Exercise assignment management is hidden from Admin sidebar and routes.
+- **AC3:** Direct URL access to these routes by Admin returns a 403 or redirect.
+
+#### Story 15.3: Owner = God Mode (F3)
+
+**As a** Center Owner,
+**I want** access to everything in the platform,
+**So that** I can oversee all operations without restrictions.
+
+- **AC1:** Owner role has access to all routes, features, and data within their tenant.
+- **AC2:** Sidebar shows a nested/structured navigation that organizes the full feature set.
+- **AC3:** Owner-only sections (billing, center settings) are clearly labeled.
+
+#### Story 15.4: Clearer Role Distinction in UI (F4)
+
+**As a** User,
+**I want** visual indicators showing my role and what I can access,
+**So that** I understand my permissions without confusion.
+
+- **AC1:** The user's role is displayed in the sidebar or top bar (e.g., "Teacher" badge).
+- **AC2:** Navigation items are filtered by role — users only see what they can access.
+- **AC3:** If a user attempts an unauthorized action, the error message references their role.
+
+---
+
+### Epic 16: Dashboard Redesign
+
+**Summary:** Per-role dashboards with real-time data, differentiated from the student list page. Includes role-specific widgets and owner test management.
+
+#### Story 16.1: Differentiate Dashboard vs Students Page (G1)
+
+**As a** Teacher/Admin,
+**I want** the dashboard to be distinct from the Students page,
+**So that** I have a useful landing page and a separate student management view.
+
+- **AC1:** Dashboard shows role-specific summary widgets (not a student list).
+- **AC2:** Students page remains a dedicated list/table for student management.
+- **AC3:** Sidebar clearly distinguishes between "Dashboard" and "Students" navigation items.
+
+#### Story 16.2: Real-Time Dashboard Widgets (G2)
+
+**As a** Teacher/Admin/Owner,
+**I want** real-time widgets on my dashboard showing today's sessions, at-risk students, and late assignments,
+**So that** I can prioritize my work at a glance.
+
+- **AC1:** "Sessions Today" widget shows count and upcoming session times.
+- **AC2:** "At-Risk Students" widget shows students flagged red/yellow from health dashboard.
+- **AC3:** "Late Assignments" widget shows overdue submissions with student name and exercise.
+- **AC4:** Widgets refresh automatically or on page load.
+
+#### Story 16.3: Owner Test Management (G3)
+
+**As a** Center Owner,
+**I want** to create and manage test dates (entry, exit, midterm) and view scores,
+**So that** I can track center-wide academic milestones.
+
+- **AC1:** Owner can create test events with name, date, and type (entry/exit/midterm).
+- **AC2:** Test scores can be recorded per student.
+- **AC3:** Owner can view aggregated score summaries per test event.
+
+---
+
+### Epic 17: UI Polish & Quick Wins
+
+**Summary:** Small fixes, feature hiding, responsive improvements, and quality-of-life enhancements. Includes removing unused features, extending login sessions, adding tooltips, and improving responsive layouts.
+
+#### Story 17.1: Remove AI Assistant (H1)
+
+**As a** Developer,
+**I want** to remove the AI Assistant feature from the app and all E2E tests,
+**So that** unused code is cleaned up.
+
+- **AC1:** AI Assistant UI component is removed from the application.
+- **AC2:** AI Assistant sidebar/panel is no longer accessible.
+- **AC3:** All E2E tests referencing AI Assistant are removed or updated.
+- **AC4:** No dead code or orphaned imports remain.
+
+#### Story 17.2: Hide Language Toggle (H2)
+
+**As a** Developer,
+**I want** to hide the language switcher,
+**So that** users aren't confused by a non-functional feature.
+
+- **AC1:** Language toggle is hidden from the UI (settings, top bar, profile).
+- **AC2:** The component code is preserved (commented or feature-flagged) for future use.
+
+#### Story 17.3: Hide Achievement & Streak (H3)
+
+**As a** Developer,
+**I want** to hide the achievement and streak sections,
+**So that** users don't see empty/non-functional features.
+
+- **AC1:** Achievement section is hidden from the student dashboard.
+- **AC2:** Streak section is hidden from the student dashboard.
+- **AC3:** Underlying data models and logic are preserved for future activation.
+
+#### Story 17.4: Hide Already-Added Students in Roster (H4)
+
+**As a** Teacher adding students to a class roster,
+**I want** students already in the class to be filtered out of the selection list,
+**So that** I don't accidentally try to add duplicates.
+
+- **AC1:** The "Add Student" modal/dropdown filters out students already enrolled in the class.
+- **AC2:** If all students are already added, a message indicates this.
+
+#### Story 17.5: Add Exercise Modal — Responsive (H5)
+
+**As a** Teacher on a smaller screen,
+**I want** the Add Exercise modal to display correctly,
+**So that** I can create exercises from any device.
+
+- **AC1:** Add Exercise modal is fully usable at viewport widths down to 375px.
+- **AC2:** Form fields stack vertically on narrow viewports.
+- **AC3:** Modal is scrollable if content exceeds viewport height.
+
+#### Story 17.6: Mark Attendance — Responsive + Padding (H6)
+
+**As a** Teacher marking attendance on a tablet or phone,
+**I want** the attendance view to have proper responsive layout and padding,
+**So that** it's usable on smaller screens.
+
+- **AC1:** Attendance marking view is responsive down to 375px.
+- **AC2:** Adequate padding/spacing between elements for touch targets.
+
+#### Story 17.7: Delete Session — Responsive (H7)
+
+**As a** Teacher deleting a session on a smaller screen,
+**I want** the delete confirmation dialog to display correctly,
+**So that** I can manage sessions from any device.
+
+- **AC1:** Delete session dialog is responsive down to 375px.
+- **AC2:** Buttons are properly sized and spaced for touch interaction.
+
+#### Story 17.8: Google Account Avatar (H8)
+
+**As a** User who logged in with Google,
+**I want** my Google profile picture used as my avatar,
+**So that** the platform feels personalized.
+
+- **AC1:** On Google OAuth login, the user's Google profile photo is stored and displayed.
+- **AC2:** Avatar appears in the top bar, sidebar, and profile page.
+- **AC3:** If no Google photo exists, a default avatar/initials are shown.
+
+#### Story 17.9: Collapsed Navbar Tooltips (H9)
+
+**As a** User with a collapsed navigation bar,
+**I want** tooltips to appear on hover over nav icons,
+**So that** I know what each icon represents.
+
+- **AC1:** Hovering over a collapsed nav item shows a tooltip with the item's label.
+- **AC2:** Tooltips appear after a brief delay (200-300ms) and dismiss on mouse leave.
+
+#### Story 17.10: Selectable Timezone in Settings (H10)
+
+**As a** Center Owner configuring timezone,
+**I want** a dropdown to select my timezone instead of typing it manually,
+**So that** I don't make typos or pick invalid values.
+
+- **AC1:** Timezone field in center settings is a searchable dropdown.
+- **AC2:** Dropdown lists all IANA timezone identifiers.
+- **AC3:** Current timezone is pre-selected.
+
+#### Story 17.11: Light/Dark Mode Toggle (H11)
+
+**As a** User,
+**I want** to toggle between light and dark mode,
+**So that** I can use the platform comfortably in different lighting conditions.
+
+- **AC1:** A theme toggle is available in the user menu or settings.
+- **AC2:** Dark mode applies a consistent dark palette across all pages.
+- **AC3:** Theme preference is persisted (localStorage or user profile).
+- **AC4:** System preference is respected as default.
+
+#### Story 17.12: Extend Login Session (H12)
+
+**As a** User,
+**I want** my login session to last longer (up to 3 months) or have a "Keep me logged in" option,
+**So that** I don't have to log in repeatedly.
+
+- **AC1:** A "Keep me logged in" checkbox is available on the login page.
+- **AC2:** When checked, session/refresh token is extended to 90 days.
+- **AC3:** When unchecked, existing session duration applies.
+
+---
+
+### Epic 18: Knowledge Hub
+
+**Summary:** New module: a document library for centers to upload and organize PDFs, books, and slides with tag-based grouping and search. Connects to the golden sample feature.
+
+#### Story 18.1: Knowledge Hub MVP (I1)
+
+**As a** Teacher/Admin,
+**I want** to upload and organize documents (PDFs, books, slides) in a searchable library,
+**So that** teaching materials are centralized and easy to find.
+
+- **AC1:** Upload documents (PDF, DOCX, PPTX) with a max file size of 50MB.
+- **AC2:** Documents are stored with metadata: title, tags, upload date, uploader.
+- **AC3:** Tag-based grouping allows organizing documents by topic, skill, or custom tags.
+- **AC4:** Full-text search across document titles and tags.
+- **AC5:** Documents can be previewed inline (PDF viewer) or downloaded.
+- **AC6:** RBAC: Teachers and Admins can upload; Students can view if granted access.
+
+#### Story 18.2: Link to Golden Samples (I2)
+
+**As a** Center Owner,
+**I want** to connect Knowledge Hub documents to the golden sample feature,
+**So that** AI grading can reference my center's preferred feedback style from uploaded samples.
+
+- **AC1:** A document in the Knowledge Hub can be marked as a "Golden Sample".
+- **AC2:** Golden Samples appear in the AI grading configuration as selectable references.
+- **AC3:** Linking/unlinking a golden sample is done from the Knowledge Hub document detail view.
+
+---
+
+### Epic 19: Course Redesign
+
+**Summary:** Separates Course as a reusable, standalone entity with its own page, timeline, exercises, samples, and documents. Courses can be reused across multiple class instances and linked to the Knowledge Hub.
+
+#### Story 19.1: Course as Standalone Page (J1)
+
+**As a** Teacher/Admin,
+**I want** courses to have their own dedicated page with timeline, exercises, samples, and documents,
+**So that** course content is managed independently from classes.
+
+- **AC1:** Courses have a dedicated page at `/:centerId/courses/:courseId`.
+- **AC2:** Course page shows: description, timeline/syllabus, linked exercises, linked documents, golden samples.
+- **AC3:** Course can be created and edited independently of any class.
+- **AC4:** Course list page shows all courses with search and filter.
+
+#### Story 19.2: Reusable Course → Class (J2)
+
+**As a** Admin,
+**I want** to create multiple class instances from a single course template,
+**So that** I don't have to recreate course content for each new term or group.
+
+- **AC1:** When creating a class, Admin can select an existing course as a template.
+- **AC2:** The class inherits the course's exercises, schedule template, and document links.
+- **AC3:** Changes to the course template do NOT retroactively affect existing classes.
+- **AC4:** A course shows how many classes are linked to it.
+
+#### Story 19.3: Course ↔ Knowledge Hub Link (J3)
+
+**As a** Teacher,
+**I want** to link Knowledge Hub documents to a course,
+**So that** students and teachers in that course can access relevant materials.
+
+- **AC1:** Course page has a "Documents" section that can link to Knowledge Hub items.
+- **AC2:** Linking is done via a search/select modal from the Knowledge Hub.
+- **AC3:** Linked documents appear on the course page and are accessible to course participants.

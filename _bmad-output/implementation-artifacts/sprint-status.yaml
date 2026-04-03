@@ -31,6 +31,17 @@
 #
 # CHANGE LOG:
 # ===========
+# 2026-04-03: Added Epics 11-19 from user feedback backlog (44 items)
+#   - Epic 11: Critical Bug Fixes (7 stories) — Sprint N priority
+#   - Epic 12: Exercise Editor UX (14 stories) — Sprint N + N+1
+#   - Epic 13: Grading & Feedback Improvements (3 stories) — Sprint N + N+3
+#   - Epic 14: Session & Schedule Redesign (4 stories) — Sprint N+1
+#   - Epic 15: RBAC Audit & Permissions (4 stories) — Sprint N+1
+#   - Epic 16: Dashboard Redesign (3 stories) — Sprint N+4
+#   - Epic 17: UI Polish & Quick Wins (12 stories) — Sprint N + N+3
+#   - Epic 18: Knowledge Hub (2 stories) — Sprint N+2
+#   - Epic 19: Course Redesign (3 stories) — Sprint N+2
+#   - Source: user-feedback-backlog-2026-04-03.md
 # 2026-02-11: Course correction - Zalo removal, billing addition
 #   - Story 6-3: Renamed from zalo-intervention-loop to email-intervention-loop
 #   - Epic 7: Rewritten from "Zalo Integration" to "Email Notifications & Parent Communication"
@@ -58,6 +69,7 @@
 #   - Epic 8: Added 8.4-8.5 (i18n, golden sample UI)
 
 generated: 2026-01-29
+last_updated: 2026-04-03T00:00:00
 project: classlite
 project_key: classlite
 tracking_system: file-system
@@ -185,3 +197,115 @@ development_status:
   epic-10: in-progress
   10-1-credibility-landing-page: done
   epic-10-retrospective: optional
+
+  # ============================================================
+  # USER FEEDBACK EPICS (Added 2026-04-03)
+  # Source: user-feedback-backlog-2026-04-03.md
+  # Sprint sequence: N → N+1 → N+2 → N+3 → N+4
+  # ============================================================
+
+  # Epic 11: Critical Bug Fixes
+  # Status: BACKLOG — Sprint N priority (P0 + P1 bugs)
+  # Scope: Course nav, option save, preview render, matching headings, unsaved indicator, breadcrumbs, submit lock
+  epic-11: in-progress
+  11-1-course-detail-next-button-fix: ready-for-dev
+  11-2-option-not-saved-on-add: backlog
+  11-3-question-text-missing-in-preview: backlog
+  11-4-matching-headings-space-bug: backlog
+  11-5-unsaved-changes-false-positive: backlog
+  11-6-exercise-edit-breadcrumbs: backlog
+  11-7-lock-submitted-exercises: backlog
+  epic-11-retrospective: optional
+
+  # Epic 12: Exercise Editor UX
+  # Status: BACKLOG — Sprint N + N+1
+  # Scope: Input lag, sticky toolbar, auto-scroll, post-publish, validation, placeholders, drag, edit rules, nav
+  epic-12: backlog
+  12-1-input-lag-matching-headings: backlog
+  12-2-input-lag-true-false-not-given: backlog
+  12-3-sticky-toolbar: backlog
+  12-4-auto-scroll-to-new-section: backlog
+  12-5-stay-on-page-after-publish: backlog
+  12-6-matching-headings-duplicate-warning: backlog
+  12-7-blank-placeholder-format: backlog
+  12-8-rename-categories-to-features: backlog
+  12-9-writing-exercise-remove-redundant-fields: backlog
+  12-10-correct-answer-discoverability: backlog
+  12-11-mock-test-drag-fix: backlog
+  12-12-edit-after-publish-before-submissions-only: backlog
+  12-13-section-navigation-for-long-exercises: backlog
+  12-14-table-overflow-with-sidebar: backlog
+  epic-12-retrospective: optional
+
+  # Epic 13: Grading & Feedback Improvements
+  # Status: BACKLOG — Sprint N (D1) + Sprint N+3 (D2, D3)
+  # Scope: Click-to-scroll, Google Docs comments, manual grading discoverability
+  epic-13: backlog
+  13-1-click-to-scroll-comments: backlog
+  13-2-google-docs-style-comments: backlog
+  13-3-manual-grading-discoverability: backlog
+  epic-13-retrospective: optional
+
+  # Epic 14: Session & Schedule Redesign
+  # Status: BACKLOG — Sprint N+1
+  # Scope: Auto-generate sessions, edit/cancel individual, reschedule, update recurrence
+  epic-14: backlog
+  14-1-auto-generate-sessions-from-recurrence: backlog
+  14-2-edit-cancel-individual-sessions: backlog
+  14-3-reschedule-single-occurrence: backlog
+  14-4-update-recurrence-rule: backlog
+  epic-14-retrospective: optional
+
+  # Epic 15: RBAC Audit & Permissions
+  # Status: BACKLOG — Sprint N+1
+  # Scope: Permissions matrix, admin view cleanup, owner god mode, role distinction UI
+  epic-15: backlog
+  15-1-rbac-audit: backlog
+  15-2-admin-remove-grading-assignment-views: backlog
+  15-3-owner-god-mode: backlog
+  15-4-clearer-role-distinction-in-ui: backlog
+  epic-15-retrospective: optional
+
+  # Epic 16: Dashboard Redesign
+  # Status: BACKLOG — Sprint N+4
+  # Scope: Differentiate dashboard, real-time widgets, owner test management
+  epic-16: backlog
+  16-1-differentiate-dashboard-vs-students-page: backlog
+  16-2-real-time-dashboard-widgets: backlog
+  16-3-owner-test-management: backlog
+  epic-16-retrospective: optional
+
+  # Epic 17: UI Polish & Quick Wins
+  # Status: BACKLOG — Sprint N (H1-H3, H12) + Sprint N+3 (H4-H11)
+  # Scope: Remove AI assistant, hide unused features, responsive fixes, avatars, tooltips, timezone, dark mode, session extension
+  epic-17: backlog
+  17-1-remove-ai-assistant: backlog
+  17-2-hide-language-toggle: backlog
+  17-3-hide-achievement-and-streak: backlog
+  17-4-hide-already-added-students-in-roster: backlog
+  17-5-add-exercise-modal-responsive: backlog
+  17-6-mark-attendance-responsive-padding: backlog
+  17-7-delete-session-responsive: backlog
+  17-8-google-account-avatar: backlog
+  17-9-collapsed-navbar-tooltips: backlog
+  17-10-selectable-timezone-in-settings: backlog
+  17-11-light-dark-mode-toggle: backlog
+  17-12-extend-login-session: backlog
+  epic-17-retrospective: optional
+
+  # Epic 18: Knowledge Hub
+  # Status: BACKLOG — Sprint N+2
+  # Scope: Document library with upload, tags, search, golden sample linking
+  epic-18: backlog
+  18-1-knowledge-hub-mvp: backlog
+  18-2-link-to-golden-samples: backlog
+  epic-18-retrospective: optional
+
+  # Epic 19: Course Redesign
+  # Status: BACKLOG — Sprint N+2
+  # Scope: Course as standalone entity, reusable templates, Knowledge Hub integration
+  epic-19: backlog
+  19-1-course-as-standalone-page: backlog
+  19-2-reusable-course-to-class: backlog
+  19-3-course-knowledge-hub-link: backlog
+  epic-19-retrospective: optional
