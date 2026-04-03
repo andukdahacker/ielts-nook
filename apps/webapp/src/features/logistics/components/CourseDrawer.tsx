@@ -44,6 +44,7 @@ export function CourseDrawer({
   centerId,
 }: CourseDrawerProps) {
   const [step, setStep] = useState(1);
+  const [isSavingNext, setIsSavingNext] = useState(false);
   const isEditing = !!course;
   const { createCourse, updateCourse } = useCourses(centerId);
 
@@ -72,6 +73,7 @@ export function CourseDrawer({
         });
       }
       setStep(1);
+      setIsSavingNext(false);
     }
   }, [open, course, form]);
 
@@ -91,6 +93,7 @@ export function CourseDrawer({
   };
 
   const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && isSavingNext) return;
     if (!newOpen && form.formState.isDirty) {
       if (
         confirm(
@@ -253,11 +256,36 @@ export function CourseDrawer({
                 {step === 1 ? (
                   <Button
                     type="button"
-                    onClick={async () => {
+                    disabled={isSavingNext}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       const isValid = await form.trigger(["name", "color"]);
-                      if (isValid) setStep(2);
+                      if (!isValid) return;
+
+                      if (isEditing && course) {
+                        setIsSavingNext(true);
+                        try {
+                          const { name, description, color } = form.getValues();
+                          await updateCourse({
+                            id: course.id,
+                            input: { name, description, color },
+                          });
+                          toast.success("Changes saved");
+                          setStep(2);
+                        } catch {
+                          toast.error("Failed to save changes");
+                        } finally {
+                          setIsSavingNext(false);
+                        }
+                      } else {
+                        setStep(2);
+                      }
                     }}
                   >
+                    {isSavingNext && (
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                    )}
                     Next
                     <ChevronRight className="ml-2 size-4" />
                   </Button>
