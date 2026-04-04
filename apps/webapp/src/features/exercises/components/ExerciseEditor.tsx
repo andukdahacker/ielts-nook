@@ -370,6 +370,7 @@ export function ExerciseEditor() {
   const [deleteSectionId, setDeleteSectionId] = useState<string | null>(null);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userHasEdited = useRef(false);
+  const editCountRef = useRef(0);
 
   // Hooks
   const { createExercise, updateExercise, publishExercise } = useExercises(centerId);
@@ -441,9 +442,13 @@ export function ExerciseEditor() {
     (setter: React.Dispatch<React.SetStateAction<string>>, value: string) => {
       setter(value);
       userHasEdited.current = true;
+      editCountRef.current++;
     },
     [],
   );
+
+  // W2 section type check — extracted so `exercise` is not a dependency of scheduleAutosave
+  const isW2SectionType = exercise?.sections?.[0]?.sectionType === "W2_TASK1_GENERAL";
 
   // Auto-save effect (30 second debounce)
   const scheduleAutosave = useCallback(() => {
@@ -451,9 +456,10 @@ export function ExerciseEditor() {
     setSaveStatus("unsaved");
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(async () => {
+      const editCountAtSave = editCountRef.current;
       try {
         setSaveStatus("saving");
-        const isW2 = exercise?.sections?.[0]?.sectionType === "W2_TASK1_GENERAL";
+        const isW2 = isW2SectionType;
         await autosave({
           title: title || undefined,
           instructions: instructions || null,
@@ -481,20 +487,23 @@ export function ExerciseEditor() {
           bandLevel: bandLevel as "4-5" | "5-6" | "6-7" | "7-8" | "8-9" | null | undefined,
         });
         setSaveStatus("saved");
+        if (editCountRef.current === editCountAtSave) {
+          userHasEdited.current = false;
+        }
       } catch {
         setSaveStatus("unsaved");
       }
     }, 30000);
-  }, [id, title, instructions, passageContent, playbackMode, audioSections, showTranscriptAfterSubmit, writingPrompt, letterTone, wordCountMin, wordCountMax, wordCountMode, sampleResponse, showSampleAfterGrading, speakingPrepTime, speakingTime, maxRecordingDuration, enableTranscription, timeLimit, timerPosition, warningAlerts, autoSubmitOnExpiry, gracePeriodSeconds, enablePause, bandLevel, autosave, exercise]);
+  }, [id, title, instructions, passageContent, playbackMode, audioSections, showTranscriptAfterSubmit, writingPrompt, letterTone, wordCountMin, wordCountMax, wordCountMode, sampleResponse, showSampleAfterGrading, speakingPrepTime, speakingTime, maxRecordingDuration, enableTranscription, timeLimit, timerPosition, warningAlerts, autoSubmitOnExpiry, gracePeriodSeconds, enablePause, bandLevel, autosave, isW2SectionType]);
 
   useEffect(() => {
-    if (isEditing && exercise && userHasEdited.current) {
+    if (isEditing && userHasEdited.current) {
       scheduleAutosave();
     }
     return () => {
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     };
-  }, [title, instructions, passageContent, playbackMode, audioSections, showTranscriptAfterSubmit, writingPrompt, letterTone, wordCountMin, wordCountMax, wordCountMode, sampleResponse, showSampleAfterGrading, speakingPrepTime, speakingTime, maxRecordingDuration, enableTranscription, bandLevel, isEditing, exercise, scheduleAutosave]);
+  }, [title, instructions, passageContent, playbackMode, audioSections, showTranscriptAfterSubmit, writingPrompt, letterTone, wordCountMin, wordCountMax, wordCountMode, sampleResponse, showSampleAfterGrading, speakingPrepTime, speakingTime, maxRecordingDuration, enableTranscription, bandLevel, isEditing, scheduleAutosave]);
 
   // Handlers
   const handleSkillSelect = async (skill: ExerciseSkill) => {
@@ -534,6 +543,7 @@ export function ExerciseEditor() {
   const handleSaveDraft = async () => {
     if (!id) return;
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    const editCountAtSave = editCountRef.current;
     try {
       setSaveStatus("saving");
       const isW2 = exercise?.sections?.[0]?.sectionType === "W2_TASK1_GENERAL";
@@ -564,6 +574,9 @@ export function ExerciseEditor() {
         bandLevel: bandLevel as "4-5" | "5-6" | "6-7" | "7-8" | "8-9" | null | undefined,
       });
       setSaveStatus("saved");
+      if (editCountRef.current === editCountAtSave) {
+        userHasEdited.current = false;
+      }
       toast.success("Draft saved");
     } catch {
       setSaveStatus("unsaved");
@@ -685,6 +698,7 @@ export function ExerciseEditor() {
     (mode: "TEST_MODE" | "PRACTICE_MODE") => {
       setPlaybackMode(mode);
       userHasEdited.current = true;
+      editCountRef.current++;
     },
     [],
   );
@@ -693,6 +707,7 @@ export function ExerciseEditor() {
     (sections: AudioSection[]) => {
       setAudioSections(sections);
       userHasEdited.current = true;
+      editCountRef.current++;
     },
     [],
   );
@@ -895,13 +910,13 @@ export function ExerciseEditor() {
             wordCountMode={wordCountMode}
             sampleResponse={sampleResponse}
             showSampleAfterGrading={showSampleAfterGrading}
-            onWritingPromptChange={(v) => { setWritingPrompt(v); userHasEdited.current = true; }}
-            onLetterToneChange={(v) => { setLetterTone(v); userHasEdited.current = true; }}
-            onWordCountMinChange={(v) => { setWordCountMin(v); userHasEdited.current = true; }}
-            onWordCountMaxChange={(v) => { setWordCountMax(v); userHasEdited.current = true; }}
-            onWordCountModeChange={(v) => { setWordCountMode(v); userHasEdited.current = true; }}
-            onSampleResponseChange={(v) => { setSampleResponse(v); userHasEdited.current = true; }}
-            onShowSampleAfterGradingChange={(v) => { setShowSampleAfterGrading(v); userHasEdited.current = true; }}
+            onWritingPromptChange={(v) => { setWritingPrompt(v); userHasEdited.current = true; editCountRef.current++; }}
+            onLetterToneChange={(v) => { setLetterTone(v); userHasEdited.current = true; editCountRef.current++; }}
+            onWordCountMinChange={(v) => { setWordCountMin(v); userHasEdited.current = true; editCountRef.current++; }}
+            onWordCountMaxChange={(v) => { setWordCountMax(v); userHasEdited.current = true; editCountRef.current++; }}
+            onWordCountModeChange={(v) => { setWordCountMode(v); userHasEdited.current = true; editCountRef.current++; }}
+            onSampleResponseChange={(v) => { setSampleResponse(v); userHasEdited.current = true; editCountRef.current++; }}
+            onShowSampleAfterGradingChange={(v) => { setShowSampleAfterGrading(v); userHasEdited.current = true; editCountRef.current++; }}
           />
         </div>
       )}
@@ -915,10 +930,10 @@ export function ExerciseEditor() {
             speakingTime={speakingTime}
             maxRecordingDuration={maxRecordingDuration}
             enableTranscription={enableTranscription}
-            onSpeakingPrepTimeChange={(v) => { setSpeakingPrepTime(v); userHasEdited.current = true; }}
-            onSpeakingTimeChange={(v) => { setSpeakingTime(v); userHasEdited.current = true; }}
-            onMaxRecordingDurationChange={(v) => { setMaxRecordingDuration(v); userHasEdited.current = true; }}
-            onEnableTranscriptionChange={(v) => { setEnableTranscription(v); userHasEdited.current = true; }}
+            onSpeakingPrepTimeChange={(v) => { setSpeakingPrepTime(v); userHasEdited.current = true; editCountRef.current++; }}
+            onSpeakingTimeChange={(v) => { setSpeakingTime(v); userHasEdited.current = true; editCountRef.current++; }}
+            onMaxRecordingDurationChange={(v) => { setMaxRecordingDuration(v); userHasEdited.current = true; editCountRef.current++; }}
+            onEnableTranscriptionChange={(v) => { setEnableTranscription(v); userHasEdited.current = true; editCountRef.current++; }}
           />
         </div>
       )}
@@ -933,6 +948,7 @@ export function ExerciseEditor() {
             onPassageUpdated={(text) => {
               setPassageContent(text);
               userHasEdited.current = true;
+              editCountRef.current++;
             }}
           />
         </div>
@@ -1026,12 +1042,12 @@ export function ExerciseEditor() {
             autoSubmitOnExpiry={autoSubmitOnExpiry}
             gracePeriodSeconds={gracePeriodSeconds}
             enablePause={enablePause}
-            onTimeLimitChange={(v) => { setTimeLimit(v); userHasEdited.current = true; }}
-            onTimerPositionChange={(v) => { setTimerPosition(v); userHasEdited.current = true; }}
-            onWarningAlertsChange={(v) => { setWarningAlerts(v); userHasEdited.current = true; }}
-            onAutoSubmitOnExpiryChange={(v) => { setAutoSubmitOnExpiry(v); userHasEdited.current = true; }}
-            onGracePeriodSecondsChange={(v) => { setGracePeriodSeconds(v); userHasEdited.current = true; }}
-            onEnablePauseChange={(v) => { setEnablePause(v); userHasEdited.current = true; }}
+            onTimeLimitChange={(v) => { setTimeLimit(v); userHasEdited.current = true; editCountRef.current++; }}
+            onTimerPositionChange={(v) => { setTimerPosition(v); userHasEdited.current = true; editCountRef.current++; }}
+            onWarningAlertsChange={(v) => { setWarningAlerts(v); userHasEdited.current = true; editCountRef.current++; }}
+            onAutoSubmitOnExpiryChange={(v) => { setAutoSubmitOnExpiry(v); userHasEdited.current = true; editCountRef.current++; }}
+            onGracePeriodSecondsChange={(v) => { setGracePeriodSeconds(v); userHasEdited.current = true; editCountRef.current++; }}
+            onEnablePauseChange={(v) => { setEnablePause(v); userHasEdited.current = true; editCountRef.current++; }}
           />
         </div>
       )}
@@ -1044,7 +1060,7 @@ export function ExerciseEditor() {
             bandLevel={bandLevel}
             selectedTagIds={exerciseTags?.map((t) => t.id) ?? []}
             questionTypes={exercise?.sections?.map((s) => s.sectionType).filter(Boolean) ?? []}
-            onBandLevelChange={(v) => { setBandLevel(v); userHasEdited.current = true; }}
+            onBandLevelChange={(v) => { setBandLevel(v); userHasEdited.current = true; editCountRef.current++; }}
             onTagsChange={(tagIds) => setExerciseTags({ tagIds })}
           />
         </div>

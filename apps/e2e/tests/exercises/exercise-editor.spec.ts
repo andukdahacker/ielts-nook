@@ -197,3 +197,112 @@ test.describe("Exercise Editor (AC1)", () => {
     }
   });
 });
+
+/**
+ * Story 11.5: Unsaved Changes False Positive
+ * - AC1: After Save Draft, indicator shows "Saved" (not "Unsaved changes")
+ * - AC2: Indicator reappears on new edits after saving
+ * - AC3: Autosave success also clears indicator; no false positive from query refetch
+ */
+test.describe("Save Status Indicator (Story 11.5)", () => {
+  let exerciseId: string | null = null;
+
+  test.afterEach(async ({ page }) => {
+    if (exerciseId) {
+      await cleanupExercise(page, exerciseId);
+      exerciseId = null;
+    }
+  });
+
+  async function gotoExerciseEditor(
+    page: import("@playwright/test").Page,
+    id: string
+  ) {
+    await page.goto(getAppUrl(`/exercises/${id}/edit`));
+    await page.waitForLoadState("networkidle");
+    await closeAIAssistantDialog(page);
+    await expect(page.locator("#exercise-title")).not.toHaveValue("", {
+      timeout: 10000,
+    });
+  }
+
+  test("AC1: after Save Draft, status shows 'Saved' not 'Unsaved changes'", async ({
+    page,
+  }) => {
+    await loginAs(page, TEST_USERS.OWNER);
+
+    const created = await createExerciseViaAPI(page, {
+      skill: "READING",
+      title: uniqueName("E2E SaveStatus"),
+    });
+    exerciseId = created.id;
+
+    await gotoExerciseEditor(page, created.id);
+
+    // Make an edit to trigger unsaved state
+    await page.locator("#exercise-title").clear();
+    await page.locator("#exercise-title").fill(uniqueName("E2E SaveStatus Edited"));
+
+    // Verify unsaved indicator appears
+    await expect(page.getByText("Unsaved changes")).toBeVisible();
+
+    // Save draft
+    await page.getByRole("button", { name: "Save Draft" }).click();
+    await waitForToast(page, "Draft saved");
+
+    // Verify status shows "Saved" after save completes
+    await expect(page.getByText("Saved")).toBeVisible();
+    await expect(page.getByText("Unsaved changes")).not.toBeVisible();
+  });
+
+  test("AC2: editing after save flips status to 'Unsaved changes'", async ({
+    page,
+  }) => {
+    await loginAs(page, TEST_USERS.OWNER);
+
+    const created = await createExerciseViaAPI(page, {
+      skill: "READING",
+      title: uniqueName("E2E SaveStatus Re-edit"),
+    });
+    exerciseId = created.id;
+
+    await gotoExerciseEditor(page, created.id);
+
+    // Edit, save, confirm saved
+    await page.locator("#exercise-title").clear();
+    await page.locator("#exercise-title").fill(uniqueName("First Edit"));
+    await page.getByRole("button", { name: "Save Draft" }).click();
+    await waitForToast(page, "Draft saved");
+    await expect(page.getByText("Saved")).toBeVisible();
+
+    // Edit again after save — should flip to unsaved
+    await page.locator("#exercise-instructions").fill("New instructions after save");
+    await expect(page.getByText("Unsaved changes")).toBeVisible();
+  });
+
+  test("AC1+AC3: status remains 'Saved' after save — no false positive from query refetch", async ({
+    page,
+  }) => {
+    await loginAs(page, TEST_USERS.OWNER);
+
+    const created = await createExerciseViaAPI(page, {
+      skill: "READING",
+      title: uniqueName("E2E No False Positive"),
+    });
+    exerciseId = created.id;
+
+    await gotoExerciseEditor(page, created.id);
+
+    // Edit and save
+    await page.locator("#exercise-title").clear();
+    await page.locator("#exercise-title").fill(uniqueName("Stable Save"));
+    await page.getByRole("button", { name: "Save Draft" }).click();
+    await waitForToast(page, "Draft saved");
+
+    // Verify "Saved" and wait 3 seconds to confirm no false positive flip-back
+    await expect(page.getByText("Saved")).toBeVisible();
+    await page.waitForTimeout(3000);
+    await expect(page.getByText("Saved")).toBeVisible();
+    await expect(page.getByText("Unsaved changes")).not.toBeVisible();
+  });
+});
