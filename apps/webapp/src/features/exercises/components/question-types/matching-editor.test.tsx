@@ -201,6 +201,91 @@ describe("MatchingEditor", () => {
     expect(answer.matches).toEqual({ "0": "B", "1": "C" });
   });
 
+  it("trims whitespace from source item on blur for value-based keys (R9)", () => {
+    const onChange = vi.fn();
+    render(
+      <MatchingEditor
+        sectionType="R9_MATCHING_HEADINGS"
+        options={{
+          sourceItems: ["A"],
+          targetItems: ["Heading 1", "Heading 2", "Heading 3"],
+        }}
+        correctAnswer={{ matches: { A: "Heading 1" } }}
+        onChange={onChange}
+      />,
+    );
+    const input = screen.getByDisplayValue("A");
+    fireEvent.blur(input, { target: { value: "A " } });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const [options, answer] = onChange.mock.calls[0];
+    expect(options.sourceItems).toEqual(["A"]);
+    expect(answer.matches).toEqual({ A: "Heading 1" });
+  });
+
+  it("trims whitespace from target item on blur", () => {
+    const onChange = vi.fn();
+    render(
+      <MatchingEditor
+        sectionType="R9_MATCHING_HEADINGS"
+        options={{
+          sourceItems: ["A"],
+          targetItems: ["Heading 1", "Heading 2", "Heading 3"],
+        }}
+        correctAnswer={{ matches: { A: "Heading 1" } }}
+        onChange={onChange}
+      />,
+    );
+    const input = screen.getByDisplayValue("Heading 1");
+    fireEvent.blur(input, { target: { value: "Heading 1 " } });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const [options, answer] = onChange.mock.calls[0];
+    expect(options.targetItems).toEqual(["Heading 1", "Heading 2", "Heading 3"]);
+    expect(answer.matches).toEqual({ A: "Heading 1" });
+  });
+
+  it("trims whitespace from source item on blur for index-based keys (R10)", () => {
+    const onChange = vi.fn();
+    render(
+      <MatchingEditor
+        sectionType="R10_MATCHING_INFORMATION"
+        options={{
+          sourceItems: ["Statement 1"],
+          targetItems: ["A", "B", "C"],
+        }}
+        correctAnswer={{ matches: { "0": "A" } }}
+        onChange={onChange}
+      />,
+    );
+    const input = screen.getByDisplayValue("Statement 1");
+    fireEvent.blur(input, { target: { value: "Statement 1 " } });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const [options, answer] = onChange.mock.calls[0];
+    expect(options.sourceItems).toEqual(["Statement 1"]);
+    expect(answer.matches).toEqual({ "0": "A" });
+  });
+
+  it("self-heals pre-existing untrimmed source data on blur (AC3)", () => {
+    const onChange = vi.fn();
+    render(
+      <MatchingEditor
+        sectionType="R9_MATCHING_HEADINGS"
+        options={{
+          sourceItems: [" A "],
+          targetItems: ["Heading 1", "Heading 2", "Heading 3"],
+        }}
+        correctAnswer={{ matches: { " A ": "Heading 1" } }}
+        onChange={onChange}
+      />,
+    );
+    const inputs = screen.getAllByRole("textbox");
+    const input = inputs.find((el) => el.getAttribute("value") === " A ") ?? inputs[0];
+    fireEvent.blur(input, { target: { value: " A " } });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const [options, answer] = onChange.mock.calls[0];
+    expect(options.sourceItems).toEqual(["A"]);
+    expect(answer.matches).toEqual({ A: "Heading 1" });
+  });
+
   it("removes a target item and cleans up matches referencing it", () => {
     const onChange = vi.fn();
     render(

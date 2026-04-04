@@ -153,7 +153,7 @@ export function MatchingEditor({
   const updateSourceItem = (index: number, value: string) => {
     const oldKey = getSourceKey(index);
     const newSourceItems = [...sourceItems];
-    newSourceItems[index] = value;
+    newSourceItems[index] = value.trim();
     const newMatches = { ...matches };
 
     // For value-based keys, update the match key when source value changes
@@ -161,7 +161,7 @@ export function MatchingEditor({
       const matchedTarget = newMatches[oldKey];
       delete newMatches[oldKey];
       if (value.trim()) {
-        newMatches[value] = matchedTarget;
+        newMatches[value.trim()] = matchedTarget;
       }
     }
     update(newSourceItems, targetItems, newMatches);
@@ -193,12 +193,12 @@ export function MatchingEditor({
   const updateTargetItem = (index: number, value: string) => {
     const oldValue = targetItems[index];
     const newTargetItems = [...targetItems];
-    newTargetItems[index] = value;
+    newTargetItems[index] = value.trim();
     // Update any matches that referenced the old value
     const newMatches = { ...matches };
     for (const [key, val] of Object.entries(newMatches)) {
       if (val === oldValue) {
-        newMatches[key] = value;
+        newMatches[key] = value.trim();
       }
     }
     update(sourceItems, newTargetItems, newMatches);
