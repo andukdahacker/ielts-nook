@@ -44,14 +44,18 @@ function OptionTextInput({
         pendingTextsRef.current?.set(idx, e.target.value);
       }}
       onBlur={() => {
+        const pending = pendingTextsRef.current?.get(idx);
         pendingTextsRef.current?.delete(idx);
-        if (local !== value) onCommit(local);
+        const textToCommit = pending !== undefined ? pending : local;
+        if (textToCommit !== value) onCommit(textToCommit);
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           e.preventDefault();
+          const pending = pendingTextsRef.current?.get(idx);
           pendingTextsRef.current?.delete(idx);
-          if (local !== value) onCommit(local);
+          const textToCommit = pending !== undefined ? pending : local;
+          if (textToCommit !== value) onCommit(textToCommit);
           (e.target as HTMLInputElement).blur();
         }
       }}
@@ -107,7 +111,7 @@ export function MCQEditor({
     const nextLabel = LABELS[flushed.length];
     const newItems = [...flushed, { label: nextLabel, text: "" }];
     const newOptions = isMulti
-      ? { items: newItems, maxSelections }
+      ? { items: newItems, maxSelections: localMaxSelections }
       : { items: newItems };
     onChange(newOptions, correctAnswer);
   };
@@ -124,11 +128,13 @@ export function MCQEditor({
     });
     // Remap correct answer references to new labels
     if (isMulti) {
+      const clampedMax = Math.min(localMaxSelections, relabeled.length);
       const newAnswers = selectedMulti
         .map((a) => labelMap.get(a))
         .filter((a): a is string => a !== undefined);
+      setLocalMaxSelections(clampedMax);
       onChange(
-        { items: relabeled, maxSelections },
+        { items: relabeled, maxSelections: clampedMax },
         { answers: newAnswers },
       );
     } else {

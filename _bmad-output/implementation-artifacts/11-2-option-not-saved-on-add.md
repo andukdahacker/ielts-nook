@@ -1,6 +1,6 @@
 # Story 11.2: Option Not Saved on Add
 
-Status: review
+Status: done
 
 ## Story
 

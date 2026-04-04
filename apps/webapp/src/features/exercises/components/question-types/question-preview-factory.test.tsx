@@ -90,6 +90,7 @@ describe("QuestionPreviewFactory", () => {
         questionIndex={0}
       />,
     );
+    expect(screen.getByText("Test question")).toBeInTheDocument();
     expect(screen.getByText("A")).toBeInTheDocument();
     expect(screen.getByText("B")).toBeInTheDocument();
   });
@@ -108,7 +109,26 @@ describe("QuestionPreviewFactory", () => {
         questionIndex={0}
       />,
     );
+    expect(screen.getByText("Test question")).toBeInTheDocument();
     expect(screen.getByText("Statement 1")).toBeInTheDocument();
+  });
+
+  it("renders MatchingPreview for R12_MATCHING_SENTENCE_ENDINGS", () => {
+    render(
+      <QuestionPreviewFactory
+        sectionType="R12_MATCHING_SENTENCE_ENDINGS"
+        question={{
+          ...baseQuestion,
+          options: {
+            sourceItems: ["The writer suggests that"],
+            targetItems: ["ending A", "ending B", "ending C"],
+          },
+        }}
+        questionIndex={0}
+      />,
+    );
+    expect(screen.getByText("Test question")).toBeInTheDocument();
+    expect(screen.getByText("The writer suggests that")).toBeInTheDocument();
   });
 
   it("renders NoteTableFlowchartPreview for R13_NOTE_TABLE_FLOWCHART", () => {
@@ -126,6 +146,7 @@ describe("QuestionPreviewFactory", () => {
         questionIndex={0}
       />,
     );
+    expect(screen.getByText("Test question")).toBeInTheDocument();
     expect(screen.getByText(/Main Topic/)).toBeInTheDocument();
   });
 
@@ -138,6 +159,45 @@ describe("QuestionPreviewFactory", () => {
       />,
     );
     expect(screen.getByText(/No structure configured/i)).toBeInTheDocument();
+  });
+
+  it("renders MatchingPreview gracefully with empty questionText", () => {
+    render(
+      <QuestionPreviewFactory
+        sectionType="R9_MATCHING_HEADINGS"
+        question={{
+          ...baseQuestion,
+          questionText: "",
+          options: {
+            sourceItems: ["A"],
+            targetItems: ["Heading 1"],
+          },
+        }}
+        questionIndex={0}
+      />,
+    );
+    expect(screen.queryByText("Test question")).not.toBeInTheDocument();
+    expect(screen.getByText("A")).toBeInTheDocument();
+  });
+
+  it("renders NoteTableFlowchartPreview gracefully with empty questionText", () => {
+    render(
+      <QuestionPreviewFactory
+        sectionType="R13_NOTE_TABLE_FLOWCHART"
+        question={{
+          ...baseQuestion,
+          questionText: "",
+          options: {
+            subFormat: "note",
+            structure: "Topic ___1___",
+            wordLimit: 2,
+          },
+        }}
+        questionIndex={0}
+      />,
+    );
+    expect(screen.queryByText("Test question")).not.toBeInTheDocument();
+    expect(screen.getByText(/Topic/)).toBeInTheDocument();
   });
 
   it("renders DiagramLabellingPreview for R14_DIAGRAM_LABELLING", () => {
@@ -287,6 +347,7 @@ describe("QuestionPreviewFactory", () => {
         questionIndex={0}
       />,
     );
+    expect(screen.getByText("Test question")).toBeInTheDocument();
     expect(screen.getByText(/Main Topic/)).toBeInTheDocument();
   });
 
@@ -345,6 +406,7 @@ describe("QuestionPreviewFactory", () => {
         questionIndex={0}
       />,
     );
+    expect(screen.getByText("Test question")).toBeInTheDocument();
     expect(screen.getByText("Speaker 1")).toBeInTheDocument();
     expect(screen.getByText("Speaker 2")).toBeInTheDocument();
   });

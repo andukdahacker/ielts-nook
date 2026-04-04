@@ -72,6 +72,7 @@ export function QuestionPreviewFactory({
       return (
         <MatchingPreview
           sectionType={sectionType}
+          questionText={question.questionText}
           questionIndex={questionIndex}
           options={question.options as { sourceItems: string[]; targetItems: string[] } | null}
         />
@@ -81,6 +82,7 @@ export function QuestionPreviewFactory({
     case "L1_FORM_NOTE_TABLE":
       return (
         <NoteTableFlowchartPreview
+          questionText={question.questionText}
           questionIndex={questionIndex}
           options={question.options as { subFormat: "note" | "table" | "flowchart"; structure: string; wordLimit?: number } | null}
         />
@@ -109,6 +111,7 @@ export function QuestionPreviewFactory({
       return (
         <MatchingPreview
           sectionType={sectionType}
+          questionText={question.questionText}
           questionIndex={questionIndex}
           options={question.options as { sourceItems: string[]; targetItems: string[] } | null}
         />

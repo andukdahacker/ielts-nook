@@ -18,6 +18,7 @@ const PREVIEW_LABELS: Record<MatchingSectionType, { sourceLabel: string; targetL
 
 interface MatchingPreviewProps {
   sectionType: IeltsQuestionType;
+  questionText?: string;
   questionIndex: number;
   options: {
     sourceItems: string[];
@@ -27,6 +28,7 @@ interface MatchingPreviewProps {
 
 export function MatchingPreview({
   sectionType,
+  questionText = "",
   questionIndex,
   options,
 }: MatchingPreviewProps) {
@@ -40,7 +42,9 @@ export function MatchingPreview({
   if (sourceItems.length === 0) {
     return (
       <div className="space-y-2">
-        <p className="text-sm font-medium">{questionIndex + 1}.</p>
+        <p className="text-sm">
+          <span className="font-medium">{questionIndex + 1}.</span> {questionText}
+        </p>
         <p className="pl-4 text-xs text-muted-foreground italic">
           No matching items configured.
         </p>
@@ -50,7 +54,9 @@ export function MatchingPreview({
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium">{questionIndex + 1}.</p>
+      <p className="text-sm">
+        <span className="font-medium">{questionIndex + 1}.</span> {questionText}
+      </p>
       <div className="pl-4 space-y-1.5">
         {sourceItems.map((item, i) => (
           <div key={i} className="flex items-center gap-2">

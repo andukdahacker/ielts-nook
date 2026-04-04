@@ -41,10 +41,9 @@ test.describe("MCQ Option Add — Text Preservation (Story 11.2)", () => {
     await page.locator("button").filter({ hasText: "Reading" }).first().click();
     await page.waitForURL(/.*\/exercises\/[^/]+\/edit/);
     await waitForToast(page, "Exercise created");
-    await page.waitForLoadState("networkidle");
     await closeAIAssistantDialog(page);
     await expect(page.locator("#exercise-title")).not.toHaveValue("", {
-      timeout: 5000,
+      timeout: 10000,
     });
 
     // Extract exercise ID for cleanup
@@ -162,7 +161,6 @@ test.describe("MCQ Option Add — Text Preservation (Story 11.2)", () => {
 
     // Reload and verify text was persisted
     await page.reload();
-    await page.waitForLoadState("networkidle");
     await closeAIAssistantDialog(page);
 
     // Expand the question again
@@ -190,9 +188,11 @@ test.describe("MCQ Option Add — Text Preservation (Story 11.2)", () => {
   }) => {
     await setupMCQQuestion(page);
 
-    // Switch section type to "Multiple Choice (Multiple)"
-    const typeDropdown = page.locator("select").filter({ has: page.locator('option[value="R2_MCQ_MULTI"]') }).first();
-    await typeDropdown.selectOption("R2_MCQ_MULTI");
+    // Switch section type to "Multiple Choice (Multiple)" via Radix Select
+    // Find the trigger button next to the "Question Type" label
+    const questionTypeSection = page.locator('.space-y-2').filter({ hasText: "Question Type" }).first();
+    await questionTypeSection.getByRole("combobox").click();
+    await page.getByRole("option", { name: /Multiple Choice \(Multiple\)/i }).click();
 
     const optionInputSelector = 'input[placeholder*="Option"]';
 

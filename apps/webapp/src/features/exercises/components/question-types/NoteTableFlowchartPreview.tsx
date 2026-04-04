@@ -9,6 +9,7 @@ interface NoteTableFlowchartOptions {
 }
 
 interface NoteTableFlowchartPreviewProps {
+  questionText?: string;
   questionIndex: number;
   options: NoteTableFlowchartOptions | null;
 }
@@ -23,13 +24,19 @@ interface FlowchartStructure {
 }
 
 export function NoteTableFlowchartPreview({
+  questionText = "",
   questionIndex,
   options,
 }: NoteTableFlowchartPreviewProps) {
   if (!options || !options.structure) {
     return (
-      <div className="pl-4 text-sm text-muted-foreground italic">
-        {questionIndex + 1}. No structure configured.
+      <div className="space-y-1">
+        <p className="text-sm">
+          <span className="font-medium">{questionIndex + 1}.</span> {questionText}
+        </p>
+        <p className="pl-4 text-sm text-muted-foreground italic">
+          No structure configured.
+        </p>
       </div>
     );
   }
@@ -38,7 +45,9 @@ export function NoteTableFlowchartPreview({
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium">{questionIndex + 1}.</p>
+      <p className="text-sm">
+        <span className="font-medium">{questionIndex + 1}.</span> {questionText}
+      </p>
       {subFormat === "note" && (
         <NotePreviewContent structure={structure} wordLimit={wordLimit ?? 2} />
       )}
