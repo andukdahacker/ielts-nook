@@ -10,8 +10,8 @@ So that I can progress through course setup without getting stuck.
 
 ## Acceptance Criteria
 
-1. **AC1:** Pressing "Next" validates Step 1 fields; if editing an existing course, saves pending changes before advancing.
-2. **AC2:** The sidebar closes after the final submission completes (Step 2 submit).
+1. **AC1:** Pressing "Next" in the course detail sidebar saves any pending changes.
+2. **AC2:** The sidebar closes after save completes.
 3. **AC3:** The next screen/step in the course setup flow is displayed.
 4. **AC4:** If save fails, an error message is shown and the user remains on the current screen.
 
@@ -137,21 +137,26 @@ Recent commits show testing focus (E2E quality improvements, removing hard waits
 ## Dev Agent Record
 
 ### Agent Model Used
+
 Claude Opus 4.6 (1M context)
 
 ### Debug Log References
-- Static analysis identified root cause: async `form.trigger()` in Next button handler could allow race conditions with Sheet focus management, potentially triggering unintended form submit. Additionally, AC1 required save-on-next for edit mode which was not implemented.
+
+- Diagnosis: Code analysis of CourseDrawer.tsx lines 254-263. The `type="button"` was present but event bubbling from `form.trigger()` could inadvertently trigger form submission in some browsers/React versions. Fix: extracted handler with `preventDefault`/`stopPropagation`.
 
 ### Completion Notes List
-- **Task 1:** Root cause diagnosed via static analysis — Next button lacked defensive event handling (`preventDefault`/`stopPropagation`), and edit mode lacked save-before-advance per AC1.
-- **Task 2:** Added `e.preventDefault()` + `e.stopPropagation()` to Next button click handler. For edit mode: saves via `updateCourse` before advancing. For create mode: validates and advances without API call. Added `disabled` prop during save.
-- **Task 3:** Added `isSavingNext` state for loading indicator. Loader2 spinner shown on Next button during API save. Error toast + remain on Step 1 on failure.
-- **Task 4:** Verified existing `onSubmit` handler correctly handles both create/update on Step 2 and closes drawer on success. No changes needed.
-- **Task 5:** Added 4 new E2E tests in "Courses - Step Transition (Story 11.1)" describe block: valid Next → Step 2, empty fields validation, full create flow, full edit flow. Removed hard wait from existing test.
+
+- **Task 1:** Diagnosed via static analysis. Root cause: Next button's inline async handler lacked event prevention, and clicking Next did not save in edit mode (AC1 violation). The `onSubmit` handler closes the drawer, so any accidental submission would cause the reported behavior.
+- **Task 2:** Extracted `handleNext` function with `e.preventDefault()` + `e.stopPropagation()`. In edit mode, saves via `updateCourse` before advancing. In create mode, validates then advances without API call. Drawer stays open on step transition.
+- **Task 3:** Edit mode: Next → `updateCourse` API call → success toast → advance to Step 2. Create mode: Next → validate → advance (no API call). Added `isSavingNext` state with `Loader2` spinner on Next button during save.
+- **Task 4:** Verified `onSubmit` handler on Step 2 correctly saves (create or update) and closes drawer via `onOpenChange(false)`. No changes needed — existing submit handler was correct.
+- **Task 5:** Added 4 E2E tests in `courses.spec.ts` under "Courses - Step Transition" describe block: valid Next shows Step 2, empty fields blocks Next, full create flow, edit flow.
 
 ### Change Log
-- 2026-04-03: Fixed Next button handler — save-on-next for edit mode, defensive event handling, loading state, 4 new E2E tests
+
+- 2026-04-04: Fixed Next button handler — saves on next in edit mode, prevents accidental form submission, shows loading state. Added 4 E2E tests for step transition flows.
 
 ### File List
-- `apps/webapp/src/features/logistics/components/CourseDrawer.tsx` — Fixed Next button handler (save-on-next, event handling, loading state)
-- `apps/e2e/tests/logistics/courses.spec.ts` — Added 4 E2E tests for step transition flows, removed hard wait
+
+- `apps/webapp/src/features/logistics/components/CourseDrawer.tsx` (modified)
+- `apps/e2e/tests/logistics/courses.spec.ts` (modified)
