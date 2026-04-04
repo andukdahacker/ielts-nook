@@ -27,6 +27,7 @@ import { Separator } from "@workspace/ui/components/separator";
 import { MobileNavOverflow } from "./MobileNavOverflow";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { GracePeriodBanner } from "@/features/settings/components/GracePeriodBanner";
+import { BreadcrumbProvider } from "@/core/context/breadcrumb-context";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [isAISidebarOpen, setIsAISidebarOpen] = useState(true);
@@ -67,6 +68,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <SidebarInset>
+          <BreadcrumbProvider>
             <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
               <div className="flex items-center justify-between gap-2 px-4 w-full">
                 <div className="gap-2 items-center flex">
@@ -88,6 +90,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 {children}
               </div>
             </main>
+          </BreadcrumbProvider>
           </SidebarInset>
 
           {/* AI Sidebar - Desktop (Fixed Right) */}

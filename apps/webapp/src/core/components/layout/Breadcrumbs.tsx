@@ -9,6 +9,7 @@ import {
 import { useLocation, Link } from "react-router";
 import { Fragment } from "react";
 import { breadcrumbConfig } from "@/core/config/breadcrumb-config";
+import { useBreadcrumbValues } from "@/core/context/breadcrumb-context";
 
 interface BreadcrumbsProps {
   /**
@@ -25,19 +26,22 @@ interface BreadcrumbsProps {
  */
 export function Breadcrumbs({ customLabels = {} }: BreadcrumbsProps) {
   const location = useLocation();
+  const { labels: contextLabels, nonClickableSegments } = useBreadcrumbValues();
   const pathSegments = location.pathname.split("/").filter(Boolean);
 
   // Build breadcrumb items from path segments
   const breadcrumbItems = pathSegments.map((segment, index) => {
     const path = "/" + pathSegments.slice(0, index + 1).join("/");
     const isLast = index === pathSegments.length - 1;
-    // Use custom label, then config, then format the segment itself
+    // Context labels take precedence, then custom labels, then config, then format
     const label =
-      customLabels[segment] ||
-      breadcrumbConfig[segment] ||
+      contextLabels[segment] ??
+      customLabels[segment] ??
+      breadcrumbConfig[segment] ??
       formatSegment(segment);
+    const isNonClickable = nonClickableSegments.has(segment);
 
-    return { path, label, isLast, segment };
+    return { path, label, isLast, segment, isNonClickable };
   });
 
   // Don't show breadcrumbs if only 1-2 segments (centerId/dashboard)
@@ -53,7 +57,7 @@ export function Breadcrumbs({ customLabels = {} }: BreadcrumbsProps) {
           <Fragment key={item.path}>
             {index > 0 && <BreadcrumbSeparator />}
             <BreadcrumbItem>
-              {item.isLast ? (
+              {item.isLast || item.isNonClickable ? (
                 <BreadcrumbPage>{item.label}</BreadcrumbPage>
               ) : (
                 <BreadcrumbLink asChild>

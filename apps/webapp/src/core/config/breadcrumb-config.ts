@@ -17,4 +17,6 @@ export const breadcrumbConfig: Record<string, string> = {
   integrations: "Integrations",
   privacy: "Privacy",
   billing: "Billing",
+  new: "New",
+  edit: "Edit",
 };

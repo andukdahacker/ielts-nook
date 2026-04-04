@@ -21,4 +21,9 @@ describe("breadcrumb-config", () => {
     expect(breadcrumbConfig.privacy).toBe("Privacy");
     expect(breadcrumbConfig.billing).toBe("Billing");
   });
+
+  it("contains generic action segments", () => {
+    expect(breadcrumbConfig.new).toBe("New");
+    expect(breadcrumbConfig.edit).toBe("Edit");
+  });
 });

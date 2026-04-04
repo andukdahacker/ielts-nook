@@ -64,6 +64,7 @@ import { TimerSettingsEditor } from "./TimerSettingsEditor";
 import { DocumentUploadPanel } from "./DocumentUploadPanel";
 import { AIGenerationPanel } from "./AIGenerationPanel";
 import { useAIGeneration } from "../hooks/use-ai-generation";
+import { useBreadcrumbOverrides } from "@/core/context/breadcrumb-context";
 import type { Exercise } from "@workspace/types";
 
 // Default first question type per skill
@@ -389,6 +390,21 @@ export function ExerciseEditor() {
   } = useSections(id);
   const { exerciseTags, setExerciseTags } = useExerciseTags(centerId, id);
   const { regenerateSection } = useAIGeneration(id);
+  const { setLabel, removeLabel, setNonClickable, removeNonClickable } = useBreadcrumbOverrides();
+
+  // Set breadcrumb labels for exercise edit page
+  useEffect(() => {
+    if (id) {
+      setLabel(id, exercise?.title ?? "Loading...");
+      setNonClickable(id);
+    }
+    return () => {
+      if (id) {
+        removeLabel(id);
+        removeNonClickable(id);
+      }
+    };
+  }, [id, exercise?.title, setLabel, removeLabel, setNonClickable, removeNonClickable]);
 
   // Reset edit tracking when switching to a different exercise
   useEffect(() => {
