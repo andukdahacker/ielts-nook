@@ -74,6 +74,13 @@ export function MCQEditor({
   const isMulti = sectionType === "R2_MCQ_MULTI";
   const items: MCQOption[] = options?.items ?? [];
   const pendingTextsRef = useRef<Map<number, string>>(new Map());
+  // Track the latest items sent via onChange, so operations use fresh data
+  // even before the debounced server update round-trips back via props.
+  const optimisticItemsRef = useRef<MCQOption[]>(items);
+  if (items !== optimisticItemsRef.current && items.length > 0) {
+    // Sync from props when server data arrives (and is non-empty)
+    optimisticItemsRef.current = items;
+  }
 
   const flushPendingTexts = (currentItems: MCQOption[]): MCQOption[] => {
     if (pendingTextsRef.current.size === 0) return currentItems;
@@ -106,10 +113,12 @@ export function MCQEditor({
   };
 
   const addOption = () => {
-    if (items.length >= LABELS.length) return;
-    const flushed = flushPendingTexts(items);
+    const current = optimisticItemsRef.current;
+    if (current.length >= LABELS.length) return;
+    const flushed = flushPendingTexts(current);
     const nextLabel = LABELS[flushed.length];
     const newItems = [...flushed, { label: nextLabel, text: "" }];
+    optimisticItemsRef.current = newItems;
     const newOptions = isMulti
       ? { items: newItems, maxSelections: localMaxSelections }
       : { items: newItems };
@@ -117,7 +126,7 @@ export function MCQEditor({
   };
 
   const removeOption = (index: number) => {
-    const flushed = flushPendingTexts(items);
+    const flushed = flushPendingTexts(optimisticItemsRef.current);
     const newItems = flushed.filter((_, i) => i !== index);
     // Re-label sequentially and build old→new label mapping
     const labelMap = new Map<string, string>();
@@ -127,6 +136,7 @@ export function MCQEditor({
       return { ...item, label: newLabel };
     });
     // Remap correct answer references to new labels
+    optimisticItemsRef.current = relabeled;
     if (isMulti) {
       const clampedMax = Math.min(localMaxSelections, relabeled.length);
       const newAnswers = selectedMulti
@@ -144,9 +154,11 @@ export function MCQEditor({
   };
 
   const updateOptionText = (index: number, text: string) => {
-    const newItems = items.map((item, i) =>
+    const flushed = flushPendingTexts(optimisticItemsRef.current);
+    const newItems = flushed.map((item, i) =>
       i === index ? { ...item, text } : item,
     );
+    optimisticItemsRef.current = newItems;
     updateItems(newItems);
   };
 

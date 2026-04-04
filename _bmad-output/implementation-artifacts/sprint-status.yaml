@@ -208,11 +208,11 @@ development_status:
   # Status: BACKLOG — Sprint N priority (P0 + P1 bugs)
   # Scope: Course nav, option save, preview render, matching headings, unsaved indicator, breadcrumbs, submit lock
   epic-11: in-progress
-  11-1-course-detail-next-button-fix: review
-  11-2-option-not-saved-on-add: backlog
-  11-3-question-text-missing-in-preview: backlog
-  11-4-matching-headings-space-bug: backlog
-  11-5-unsaved-changes-false-positive: backlog
+  11-1-course-detail-next-button-fix: done
+  11-2-option-not-saved-on-add: done
+  11-3-question-text-missing-in-preview: done
+  11-4-matching-headings-space-bug: done
+  11-5-unsaved-changes-false-positive: done
   11-6-exercise-edit-breadcrumbs: review
   11-7-lock-submitted-exercises: backlog
   epic-11-retrospective: optional

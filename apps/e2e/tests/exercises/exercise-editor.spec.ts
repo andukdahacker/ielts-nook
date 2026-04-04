@@ -251,7 +251,7 @@ test.describe("Save Status Indicator (Story 11.5)", () => {
     await waitForToast(page, "Draft saved");
 
     // Verify status shows "Saved" after save completes
-    await expect(page.getByText("Saved")).toBeVisible();
+    await expect(page.getByText("Saved", { exact: true })).toBeVisible();
     await expect(page.getByText("Unsaved changes")).not.toBeVisible();
   });
 
@@ -273,7 +273,7 @@ test.describe("Save Status Indicator (Story 11.5)", () => {
     await page.locator("#exercise-title").fill(uniqueName("First Edit"));
     await page.getByRole("button", { name: "Save Draft" }).click();
     await waitForToast(page, "Draft saved");
-    await expect(page.getByText("Saved")).toBeVisible();
+    await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 
     // Edit again after save — should flip to unsaved
     await page.locator("#exercise-instructions").fill("New instructions after save");
@@ -300,9 +300,9 @@ test.describe("Save Status Indicator (Story 11.5)", () => {
     await waitForToast(page, "Draft saved");
 
     // Verify "Saved" and wait 3 seconds to confirm no false positive flip-back
-    await expect(page.getByText("Saved")).toBeVisible();
+    await expect(page.getByText("Saved", { exact: true })).toBeVisible();
     await page.waitForTimeout(3000);
-    await expect(page.getByText("Saved")).toBeVisible();
+    await expect(page.getByText("Saved", { exact: true })).toBeVisible();
     await expect(page.getByText("Unsaved changes")).not.toBeVisible();
   });
 });

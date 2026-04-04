@@ -395,7 +395,7 @@ export function ExerciseEditor() {
   // Set breadcrumb labels for exercise edit page
   useEffect(() => {
     if (id) {
-      setLabel(id, exercise?.title ?? "Loading...");
+      setLabel(id, exercise?.title || "Loading...");
       setNonClickable(id);
     }
     return () => {

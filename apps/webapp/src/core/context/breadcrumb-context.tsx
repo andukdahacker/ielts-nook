@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 interface BreadcrumbOverrides {
   labels: Record<string, string>;
@@ -62,9 +62,14 @@ export function BreadcrumbProvider({ children }: { children: React.ReactNode }) 
     setNonClickableSegments(new Set());
   }, []);
 
+  const value = useMemo(
+    () => ({ labels, nonClickableSegments }),
+    [labels, nonClickableSegments],
+  );
+
   return (
     <BreadcrumbSetterContext.Provider value={{ setLabel, removeLabel, setNonClickable, removeNonClickable, clearAll }}>
-      <BreadcrumbValueContext.Provider value={{ labels, nonClickableSegments }}>
+      <BreadcrumbValueContext.Provider value={value}>
         {children}
       </BreadcrumbValueContext.Provider>
     </BreadcrumbSetterContext.Provider>

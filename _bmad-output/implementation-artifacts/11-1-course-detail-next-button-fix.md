@@ -1,6 +1,6 @@
 # Story 11.1: Course Detail Next Button Fix
 
-Status: review
+Status: done
 
 ## Story
 

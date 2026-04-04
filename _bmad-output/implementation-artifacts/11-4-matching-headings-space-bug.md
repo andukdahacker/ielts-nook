@@ -1,6 +1,6 @@
 # Story 11.4: Matching Headings Space Bug
 
-Status: review
+Status: done
 
 ## Story
 

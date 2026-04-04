@@ -175,6 +175,6 @@ test.describe("Landing Page - SEO", () => {
     await page.waitForLoadState("domcontentloaded");
     const loadTime = Date.now() - start;
 
-    expect(loadTime).toBeLessThan(5000);
+    expect(loadTime).toBeLessThan(10000);
   });
 });

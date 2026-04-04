@@ -155,6 +155,10 @@ test.describe("MCQ Option Add — Text Preservation (Story 11.2)", () => {
     await thirdOption.fill("Option C text");
     await thirdOption.blur();
 
+    // Wait for debounced question update (500ms debounce + API call)
+    await page.waitForTimeout(1000);
+    await page.waitForLoadState("networkidle");
+
     // Save draft and verify
     await page.getByRole("button", { name: "Save Draft" }).click();
     await waitForToast(page, "Draft saved");
