@@ -1,5 +1,6 @@
-import { ChevronLeft, ChevronRight, Send } from "lucide-react";
+import { ChevronLeft, ChevronRight, Send, CheckCircle2 } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
+import { Badge } from "@workspace/ui/components/badge";
 
 interface QuestionStepperProps {
   currentIndex: number;
@@ -7,6 +8,7 @@ interface QuestionStepperProps {
   onPrevious: () => void;
   onNext: () => void;
   onSubmit: () => void;
+  isLocked?: boolean;
 }
 
 export function QuestionStepper({
@@ -15,6 +17,7 @@ export function QuestionStepper({
   onPrevious,
   onNext,
   onSubmit,
+  isLocked,
 }: QuestionStepperProps) {
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === totalQuestions - 1;
@@ -37,7 +40,12 @@ export function QuestionStepper({
           {currentIndex + 1} / {totalQuestions}
         </span>
 
-        {isLast ? (
+        {isLocked ? (
+          <Badge variant="secondary" className="min-h-[44px] gap-1.5 px-4 text-sm" data-testid="submitted-badge">
+            <CheckCircle2 className="size-4 text-green-600" />
+            Submitted
+          </Badge>
+        ) : isLast ? (
           <Button
             onClick={onSubmit}
             className="min-h-[44px] gap-1"

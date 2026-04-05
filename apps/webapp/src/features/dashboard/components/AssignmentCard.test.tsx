@@ -67,9 +67,9 @@ describe("AssignmentCard", () => {
     expect(screen.getByRole("button", { name: /Continue/i })).toBeInTheDocument();
   });
 
-  it("shows View Results button when submission is SUBMITTED", () => {
+  it("shows View Submission button when submission is SUBMITTED", () => {
     renderCard({ ...baseAssignment, submissionStatus: "SUBMITTED", submissionId: "sub-1" } as StudentAssignment);
-    expect(screen.getByRole("button", { name: /View Results/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /View Submission/i })).toBeInTheDocument();
   });
 
   it("shows Submitted badge when submission is SUBMITTED", () => {

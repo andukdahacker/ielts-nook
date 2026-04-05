@@ -13,6 +13,7 @@ interface MatchingInputProps {
   options: { sourceItems: string[]; targetItems: string[] } | null;
   value: { matches?: Record<string, string> } | null;
   onChange: (answer: unknown) => void;
+  readOnly?: boolean;
 }
 
 export function MatchingInput({
@@ -20,6 +21,7 @@ export function MatchingInput({
   options,
   value,
   onChange,
+  readOnly,
 }: MatchingInputProps) {
   const sourceItems = options?.sourceItems ?? [];
   const targetItems = options?.targetItems ?? [];
@@ -48,6 +50,7 @@ export function MatchingInput({
             <Select
               value={matches[String(i)] ?? ""}
               onValueChange={(val) => handleMatchChange(String(i), val)}
+              disabled={readOnly}
             >
               <SelectTrigger className="min-h-[44px] text-sm w-[200px]">
                 <SelectValue placeholder="Select..." />

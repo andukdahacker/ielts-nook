@@ -7,6 +7,7 @@ interface TextAnswerInputProps {
   wordLimit: number | null | undefined;
   value: { answer?: string } | null;
   onChange: (answer: unknown) => void;
+  readOnly?: boolean;
 }
 
 export function TextAnswerInput({
@@ -15,6 +16,7 @@ export function TextAnswerInput({
   wordLimit,
   value,
   onChange,
+  readOnly,
 }: TextAnswerInputProps) {
   const currentAnswer = (value as { answer?: string })?.answer ?? "";
 
@@ -29,6 +31,7 @@ export function TextAnswerInput({
           onChange={(e) => onChange({ answer: e.target.value })}
           placeholder="Type your answer..."
           className="min-h-[44px] text-sm"
+          disabled={readOnly}
         />
         {wordLimit && (
           <Badge variant="outline" className="text-xs shrink-0">

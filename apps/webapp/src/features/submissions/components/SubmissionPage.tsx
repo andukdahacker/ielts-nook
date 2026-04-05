@@ -61,11 +61,32 @@ export function SubmissionPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitPending, setIsSubmitPending] = useState(false);
   const [localAnswersRestored, setLocalAnswersRestored] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<string | null>(null);
   const prevIndexRef = useRef(currentIndex);
   const elapsedRef = useRef(0);
   const pendingPhotos = useRef<Map<string, File>>(new Map());
   const submitRetryRef = useRef(false);
   const isRecoverySubmitRef = useRef(false);
+  const prevAssignmentIdRef = useRef(assignmentId);
+
+  // Reset state when navigating to a different assignment (SPA nav without remount)
+  useEffect(() => {
+    if (prevAssignmentIdRef.current !== assignmentId) {
+      prevAssignmentIdRef.current = assignmentId;
+      setSubmissionId(null);
+      setStartedAt(null);
+      setCurrentIndex(0);
+      setAnswers({});
+      setShowConfirm(false);
+      setIsSubmitted(false);
+      setIsSubmitting(false);
+      setIsSubmitPending(false);
+      setLocalAnswersRestored(false);
+      setIsLocked(false);
+      setSubmissionStatus(null);
+    }
+  }, [assignmentId]);
 
   // Auto-save hook
   const { saveStatus, lastServerSaveTimestamp, isOnline } = useAutoSave({
@@ -73,12 +94,15 @@ export function SubmissionPage() {
     assignmentId,
     submissionId,
     answers,
-    enabled: !!submissionId && !isSubmitted,
+    enabled: !!submissionId && !isSubmitted && !isLocked,
   });
 
   // Restore answers from IndexedDB after server answers are seeded
   useEffect(() => {
-    if (!centerId || !assignmentId || !submissionId) return;
+    if (!centerId || !assignmentId || !submissionId || isLocked) {
+      if (isLocked) setLocalAnswersRestored(true);
+      return;
+    }
     loadAnswersLocal(centerId, assignmentId)
       .then((stored) => {
         if (stored?.answers && Object.keys(stored.answers).length > 0) {
@@ -154,9 +178,15 @@ export function SubmissionPage() {
     if (!assignmentId || submissionId) return;
     startSubmission.mutate(assignmentId, {
       onSuccess: (data) => {
-        const sub = (data as { data: { id: string; startedAt: string; answers?: Array<{ questionId: string; answer: unknown }> } }).data;
+        const sub = (data as { data: { id: string; startedAt: string; status?: string; answers?: Array<{ questionId: string; answer: unknown }> } }).data;
         setSubmissionId(sub.id);
         setStartedAt(sub.startedAt);
+        if (sub.status) {
+          setSubmissionStatus(sub.status);
+          if (sub.status !== "IN_PROGRESS") {
+            setIsLocked(true);
+          }
+        }
         if (sub.answers?.length) {
           setAnswers((prev) => {
             const seeded = { ...prev };
@@ -178,17 +208,18 @@ export function SubmissionPage() {
 
   // useBeforeUnload guard
   useEffect(() => {
-    if (isSubmitted) return;
+    if (isSubmitted || isLocked) return;
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [isSubmitted]);
+  }, [isSubmitted, isLocked]);
 
   // Save-on-navigate: save previous question's answer when index changes
   useEffect(() => {
     if (prevIndexRef.current === currentIndex) return;
+    if (isLocked) { prevIndexRef.current = currentIndex; return; }
     const prevQuestion = flatQuestions[prevIndexRef.current];
     if (prevQuestion && submissionId && answers[prevQuestion.id]) {
       // Skip if auto-save just sent a server save
@@ -305,7 +336,7 @@ export function SubmissionPage() {
   // Check for persisted submit-pending flag on mount (tab-killed recovery)
   // Gated on localAnswersRestored to prevent race with IndexedDB answer restore
   useEffect(() => {
-    if (!centerId || !assignmentId || !submissionId || !localAnswersRestored) return;
+    if (!centerId || !assignmentId || !submissionId || !localAnswersRestored || isLocked) return;
     loadSubmitPending(centerId, assignmentId).then((pending) => {
       if (pending && isOnline) {
         isRecoverySubmitRef.current = true;
@@ -380,6 +411,8 @@ export function SubmissionPage() {
         autoSubmitOnExpiry={autoSubmitOnExpiry}
         onTimerExpired={handleSubmit}
         saveStatus={saveStatus}
+        isLocked={isLocked}
+        submissionStatus={submissionStatus}
       />
 
       <OfflineBanner isOnline={isOnline} isSubmitted={isSubmitted} />
@@ -427,6 +460,7 @@ export function SubmissionPage() {
             onPhotoCapture={(file) => handlePhotoCapture(currentQuestion.id, file)}
             speakingPrepTime={currentQuestion.speakingPrepTime}
             speakingTime={currentQuestion.speakingTime}
+            readOnly={isLocked}
           />
         </div>
       </main>
@@ -437,16 +471,19 @@ export function SubmissionPage() {
         onPrevious={handlePrevious}
         onNext={handleNext}
         onSubmit={() => setShowConfirm(true)}
+        isLocked={isLocked}
       />
 
-      <SubmitConfirmDialog
-        open={showConfirm}
-        onOpenChange={setShowConfirm}
-        onConfirm={handleSubmit}
-        totalQuestions={flatQuestions.length}
-        answeredCount={answeredSet.size}
-        isSubmitting={isSubmitting}
-      />
+      {!isLocked && (
+        <SubmitConfirmDialog
+          open={showConfirm}
+          onOpenChange={setShowConfirm}
+          onConfirm={handleSubmit}
+          totalQuestions={flatQuestions.length}
+          answeredCount={answeredSet.size}
+          isSubmitting={isSubmitting}
+        />
+      )}
     </div>
   );
 }

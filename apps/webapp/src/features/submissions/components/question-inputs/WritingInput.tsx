@@ -9,6 +9,7 @@ interface WritingInputProps {
   wordCountMax?: number | null;
   value: { text?: string } | null;
   onChange: (answer: unknown) => void;
+  readOnly?: boolean;
 }
 
 function countWords(text: string): number {
@@ -25,6 +26,7 @@ export function WritingInput({
   wordCountMax,
   value,
   onChange,
+  readOnly,
 }: WritingInputProps) {
   const text = (value as { text?: string })?.text ?? "";
   const wordCount = countWords(text);
@@ -43,6 +45,7 @@ export function WritingInput({
         placeholder="Write your response here..."
         className="min-h-[200px] text-sm"
         rows={10}
+        disabled={readOnly}
       />
       <div className="flex items-center gap-2">
         <Badge

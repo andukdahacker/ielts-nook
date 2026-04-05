@@ -6,6 +6,7 @@ interface NoteTableFlowchartInputProps {
   options: { subFormat: "note" | "table" | "flowchart"; structure: string; wordLimit?: number } | null;
   value: { blanks?: Record<string, string> } | null;
   onChange: (answer: unknown) => void;
+  readOnly?: boolean;
 }
 
 function safeParseJson<T>(str: string): T | null {
@@ -21,6 +22,7 @@ export function NoteTableFlowchartInput({
   options,
   value,
   onChange,
+  readOnly,
 }: NoteTableFlowchartInputProps) {
   if (!options?.structure) {
     return (
@@ -44,6 +46,7 @@ export function NoteTableFlowchartInput({
         onChange={(e) => handleBlankChange(blankNum, e.target.value)}
         placeholder="..."
         className="h-8 w-28 text-xs inline-flex"
+        disabled={readOnly}
       />
       <Badge variant="outline" className="text-[9px] h-4 shrink-0">
         {wordLimit}w
@@ -58,7 +61,7 @@ export function NoteTableFlowchartInput({
         <NoteContent structure={structure} renderBlank={renderBlank} />
       )}
       {subFormat === "table" && (
-        <TableContent structure={structure} renderBlank={renderBlank} blanks={blanks} handleBlankChange={handleBlankChange} wordLimit={wordLimit} />
+        <TableContent structure={structure} renderBlank={renderBlank} blanks={blanks} handleBlankChange={handleBlankChange} wordLimit={wordLimit} readOnly={readOnly} />
       )}
       {subFormat === "flowchart" && (
         <FlowchartContent structure={structure} renderBlank={renderBlank} />
@@ -96,12 +99,14 @@ function TableContent({
   blanks,
   handleBlankChange,
   wordLimit,
+  readOnly,
 }: {
   structure: string;
   renderBlank: (blankNum: string) => React.ReactNode;
   blanks: Record<string, string>;
   handleBlankChange: (blankNum: string, text: string) => void;
   wordLimit: number;
+  readOnly?: boolean;
 }) {
   const parsed = safeParseJson<{ columns: string[]; rows: string[][] }>(structure);
   if (!parsed) {
@@ -134,6 +139,7 @@ function TableContent({
                           onChange={(e) => handleBlankChange(blankMatch[1], e.target.value)}
                           placeholder="..."
                           className="h-8 w-28 text-xs"
+                          disabled={readOnly}
                         />
                         <Badge variant="outline" className="text-[9px] h-4 shrink-0">
                           {wordLimit}w

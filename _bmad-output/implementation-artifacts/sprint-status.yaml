@@ -69,7 +69,7 @@
 #   - Epic 8: Added 8.4-8.5 (i18n, golden sample UI)
 
 generated: 2026-01-29
-last_updated: 2026-04-04T00:00:00
+last_updated: 2026-04-04T12:00:00
 project: classlite
 project_key: classlite
 tracking_system: file-system
@@ -214,7 +214,7 @@ development_status:
   11-4-matching-headings-space-bug: done
   11-5-unsaved-changes-false-positive: done
   11-6-exercise-edit-breadcrumbs: review
-  11-7-lock-submitted-exercises: backlog
+  11-7-lock-submitted-exercises: review
   epic-11-retrospective: optional
 
   # Epic 12: Exercise Editor UX

@@ -32,7 +32,7 @@ export class GradingService {
 
     // Teachers can only access submissions from classes they teach
     // ADMIN/OWNER have full access within tenant (RBAC middleware already verified role)
-    if (classTeacherId && classTeacherId !== userId) {
+    if (!classTeacherId || classTeacherId !== userId) {
       const membership = await db.centerMembership.findFirst({
         where: { userId },
         select: { role: true },
@@ -829,6 +829,67 @@ export class GradingService {
       teacherFinalScore,
       nextSubmissionId: nextSubmission?.id ?? null,
     };
+  }
+  async unlockSubmission(centerId: string, submissionId: string, firebaseUid: string) {
+    const db = getTenantedClient(this.prisma, centerId);
+
+    const submission = await db.submission.findUnique({
+      where: { id: submissionId },
+      include: {
+        assignment: {
+          include: { class: { select: { teacherId: true } } },
+        },
+      },
+    });
+    if (!submission) throw AppError.notFound("Submission not found");
+
+    await this.verifyAccess(db, firebaseUid, submission.assignment.class?.teacherId);
+
+    if (submission.status === "IN_PROGRESS") {
+      throw AppError.badRequest("Submission is already unlocked");
+    }
+
+    // Use $transaction with explicit centerId filters (Rule 5)
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Delete AIFeedbackItems (FK → SubmissionFeedback)
+      const feedback = await tx.submissionFeedback.findFirst({
+        where: { submissionId, centerId },
+        select: { id: true },
+      });
+      if (feedback) {
+        await tx.aIFeedbackItem.deleteMany({
+          where: { submissionFeedbackId: feedback.id, centerId },
+        });
+        // 2. Delete SubmissionFeedback
+        await tx.submissionFeedback.delete({
+          where: { id: feedback.id, centerId },
+        });
+      }
+
+      // 3. Delete TeacherComments
+      await tx.teacherComment.deleteMany({
+        where: { submissionId, centerId },
+      });
+
+      // 4. Delete GradingJob
+      await tx.gradingJob.deleteMany({
+        where: { submissionId, centerId },
+      });
+
+      // 5. Reset StudentAnswer scores (keep answers for student to see)
+      await tx.studentAnswer.updateMany({
+        where: { submissionId, centerId },
+        data: { isCorrect: null, score: null },
+      });
+
+      // 6. Reset submission status
+      await tx.submission.update({
+        where: { id: submissionId, centerId },
+        data: { status: "IN_PROGRESS", submittedAt: null, timeSpentSec: 0 },
+      });
+    });
+
+    return { id: submissionId, status: "IN_PROGRESS" as const };
   }
 }
 

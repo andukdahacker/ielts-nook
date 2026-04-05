@@ -408,6 +408,119 @@ describe("SubmissionPage", () => {
     });
   });
 
+  describe("Locked state (Story 11.7)", () => {
+    function setupLockedSubmission(status = "SUBMITTED") {
+      mockStartMutate.mockImplementation(
+        (_: unknown, options?: { onSuccess?: (data: unknown) => void }) => {
+          options?.onSuccess?.({
+            data: {
+              id: "sub-1",
+              startedAt: new Date().toISOString(),
+              status,
+              answers: [
+                { questionId: "q1", answer: { text: "my answer" } },
+                { questionId: "q2", answer: { text: "my answer 2" } },
+              ],
+            },
+          });
+        },
+      );
+    }
+
+    it("renders inputs as disabled when submission status is SUBMITTED", async () => {
+      setupLockedSubmission("SUBMITTED");
+      renderSubmissionPage();
+
+      await waitFor(() => {
+        expect(mockStartMutate).toHaveBeenCalled();
+      });
+
+      // Submit button should be replaced with "Submitted" badge
+      await waitFor(() => {
+        expect(screen.queryByRole("button", { name: /submit/i })).not.toBeInTheDocument();
+        expect(screen.getByTestId("submitted-badge")).toBeInTheDocument();
+      });
+    });
+
+    it("shows status badge in header when locked", async () => {
+      setupLockedSubmission("GRADED");
+      renderSubmissionPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("status-badge")).toBeInTheDocument();
+        expect(screen.getByTestId("status-badge")).toHaveTextContent("Graded");
+      });
+    });
+
+    it("hides save indicator and timer when locked", async () => {
+      setupLockedSubmission("SUBMITTED");
+      renderSubmissionPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("status-badge")).toBeInTheDocument();
+      });
+
+      // Save indicator should not be rendered when locked
+      expect(screen.queryByTestId("save-indicator")).not.toBeInTheDocument();
+    });
+
+    it("disables auto-save when locked", async () => {
+      setupLockedSubmission("SUBMITTED");
+      renderSubmissionPage();
+
+      await waitFor(() => {
+        expect(mockStartMutate).toHaveBeenCalled();
+      });
+
+      // Auto-save should be called with enabled: false
+      expect(mockUseAutoSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          enabled: false,
+        }),
+      );
+    });
+
+    it("does not show SubmitConfirmDialog when locked", async () => {
+      setupLockedSubmission("SUBMITTED");
+      renderSubmissionPage();
+
+      await waitFor(() => {
+        expect(mockStartMutate).toHaveBeenCalled();
+      });
+
+      // No submit button or confirm dialog should be present
+      expect(screen.queryByRole("button", { name: /^submit$/i })).not.toBeInTheDocument();
+    });
+
+    it("populates answers from submission in locked mode", async () => {
+      setupLockedSubmission("SUBMITTED");
+      renderSubmissionPage();
+
+      await waitFor(() => {
+        expect(mockStartMutate).toHaveBeenCalled();
+      });
+
+      // Answers should be populated from the submission
+      // Pill 2 (not current) should show answered state
+      await waitFor(() => {
+        const pill2 = screen.getByRole("button", { name: "2" });
+        expect(pill2.className).toContain("bg-primary/20");
+      });
+    });
+
+    it("does not restore from IndexedDB when locked", async () => {
+      setupLockedSubmission("SUBMITTED");
+      renderSubmissionPage();
+
+      await waitFor(() => {
+        expect(mockStartMutate).toHaveBeenCalled();
+      });
+
+      // IndexedDB restore should NOT be called when locked
+      expect(mockLoadLocal).not.toHaveBeenCalled();
+    });
+  });
+
   describe("Submit-pending persistence", () => {
     it("checks for persisted submit-pending on mount", async () => {
       renderSubmissionPage();

@@ -18,6 +18,7 @@ import {
   TogglePrioritySchema,
   StudentFeedbackResponseSchema,
   SubmissionHistoryResponseSchema,
+  UnlockSubmissionResponseSchema,
 } from "@workspace/types";
 import { FastifyInstance, FastifyReply } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
@@ -422,6 +423,39 @@ export async function gradingRoutes(fastify: FastifyInstance) {
           submissionId,
           payload.uid,
           request.body as z.infer<typeof FinalizeGradingSchema>,
+        );
+        return reply.send(result);
+      } catch (error: unknown) {
+        return handleRouteError(error, request, reply);
+      }
+    },
+  });
+
+  // POST /submissions/:submissionId/unlock — Unlock submission for re-submission (Story 11.7)
+  api.post("/submissions/:submissionId/unlock", {
+    schema: {
+      params: z.object({ submissionId: z.string() }),
+      response: {
+        200: UnlockSubmissionResponseSchema,
+        400: ErrorResponseSchema,
+        401: ErrorResponseSchema,
+        403: ErrorResponseSchema,
+        404: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    handler: async (request, reply) => {
+      try {
+        const payload = request.jwtPayload!;
+        if (!payload.centerId) {
+          return reply.status(400).send({ message: "User does not belong to a center" });
+        }
+        const { submissionId } = request.params as { submissionId: string };
+        const result = await controller.unlockSubmission(
+          payload.centerId,
+          submissionId,
+          payload.uid,
         );
         return reply.send(result);
       } catch (error: unknown) {

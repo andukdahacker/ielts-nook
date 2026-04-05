@@ -7,6 +7,7 @@ interface PhotoCaptureInputProps {
   value: { photoUrl?: string } | null;
   onChange: (answer: unknown) => void;
   onPhotoCapture?: (file: File) => void;
+  readOnly?: boolean;
 }
 
 export function PhotoCaptureInput({
@@ -14,6 +15,7 @@ export function PhotoCaptureInput({
   value,
   onChange,
   onPhotoCapture,
+  readOnly,
 }: PhotoCaptureInputProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     (value as { photoUrl?: string })?.photoUrl ?? null,
@@ -62,7 +64,7 @@ export function PhotoCaptureInput({
         className="hidden"
       />
 
-      {!previewUrl && (
+      {!previewUrl && !readOnly && (
         <Button
           variant="outline"
           onClick={() => fileInputRef.current?.click()}
@@ -73,6 +75,10 @@ export function PhotoCaptureInput({
         </Button>
       )}
 
+      {!previewUrl && readOnly && (
+        <p className="text-sm text-muted-foreground italic">No photo submitted.</p>
+      )}
+
       {previewUrl && (
         <div className="relative">
           <img
@@ -80,26 +86,28 @@ export function PhotoCaptureInput({
             alt="Captured answer"
             className="max-w-full h-auto rounded-lg border max-h-[300px] object-contain"
           />
-          <div className="mt-2 flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              className="gap-1"
-            >
-              <RotateCcw className="size-3" />
-              Retake
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearPhoto}
-              className="gap-1 text-destructive"
-            >
-              <X className="size-3" />
-              Remove
-            </Button>
-          </div>
+          {!readOnly && (
+            <div className="mt-2 flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                className="gap-1"
+              >
+                <RotateCcw className="size-3" />
+                Retake
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearPhoto}
+                className="gap-1 text-destructive"
+              >
+                <X className="size-3" />
+                Remove
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

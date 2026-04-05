@@ -278,6 +278,22 @@ export class GradingController {
     };
   }
 
+  async unlockSubmission(
+    centerId: string,
+    submissionId: string,
+    firebaseUid: string,
+  ) {
+    const result = await this.service.unlockSubmission(
+      centerId,
+      submissionId,
+      firebaseUid,
+    );
+    return {
+      data: result,
+      message: "Submission unlocked for re-submission",
+    };
+  }
+
   async finalizeGrading(
     centerId: string,
     submissionId: string,

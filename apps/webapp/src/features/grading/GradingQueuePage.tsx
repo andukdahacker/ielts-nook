@@ -1,8 +1,20 @@
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@workspace/ui/components/alert-dialog";
+import {
   CircleCheck,
   Loader2,
+  LockOpen,
   Mic,
   PenLine,
   RefreshCw,
@@ -36,6 +48,7 @@ import { useMediaQuery } from "./hooks/use-media-query";
 import { usePrefetchSubmission } from "./hooks/use-prefetch-submission";
 import { useRetriggerAnalysis } from "./hooks/use-retrigger-analysis";
 import { useSubmissionDetail } from "./hooks/use-submission-detail";
+import { useUnlockSubmission } from "./hooks/use-unlock-submission";
 import { useUpdateComment } from "./hooks/use-update-comment";
 import { formatRelativeTime } from "./utils/format-time";
 
@@ -119,6 +132,7 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
   const approveFeedbackItem = useApproveFeedbackItem(activeSubmissionId ?? "");
   const bulkApprove = useBulkApprove(activeSubmissionId ?? "");
   const finalizeGrading = useFinalizeGrading(activeSubmissionId ?? "");
+  const unlockSubmission = useUnlockSubmission(activeSubmissionId ?? "");
 
   // Teacher score override state
   const [teacherFinalScore, setTeacherFinalScore] = useState<number | null>(null);
@@ -495,6 +509,38 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
         </span>
         {isFinalized && (
           <Badge variant="secondary" className="ml-auto">Graded</Badge>
+        )}
+        {submission && submission.status !== "IN_PROGRESS" && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`gap-1.5 ${isFinalized ? "" : "ml-auto"}`}
+                disabled={unlockSubmission.isPending}
+              >
+                <LockOpen className="size-3.5" />
+                Unlock
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Unlock for Re-submission?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will reset all grading data and allow the student to re-submit. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => unlockSubmission.mutate()}
+                  disabled={unlockSubmission.isPending}
+                >
+                  {unlockSubmission.isPending ? "Unlocking..." : "Unlock"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </div>
 

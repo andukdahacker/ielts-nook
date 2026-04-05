@@ -376,3 +376,13 @@ export const FinalizeGradingResponseSchema = createResponseSchema(
   }),
 );
 export type FinalizeGradingResponse = z.infer<typeof FinalizeGradingResponseSchema>;
+
+// --- Unlock Submission Schemas (Story 11.7) ---
+
+export const UnlockSubmissionResponseSchema = createResponseSchema(
+  z.object({
+    id: z.string(),
+    status: z.literal("IN_PROGRESS"),
+  }),
+);
+export type UnlockSubmissionResponse = z.infer<typeof UnlockSubmissionResponseSchema>;

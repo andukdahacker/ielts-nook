@@ -1,5 +1,6 @@
-import { ArrowLeft, Clock, LoaderCircle, Check, CircleAlert, CloudOff, CloudUpload } from "lucide-react";
+import { ArrowLeft, Clock, LoaderCircle, Check, CircleAlert, CloudOff, CloudUpload, CheckCircle2 } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
+import { Badge } from "@workspace/ui/components/badge";
 import { useNavigate, useParams } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import type { SaveStatus } from "../hooks/use-auto-save";
@@ -14,6 +15,8 @@ interface SubmissionHeaderProps {
   autoSubmitOnExpiry?: boolean;
   onTimerExpired?: () => void;
   saveStatus?: SaveStatus;
+  isLocked?: boolean;
+  submissionStatus?: string | null;
 }
 
 function formatTimer(seconds: number) {
@@ -98,6 +101,15 @@ function SaveIndicator({ saveStatus }: { saveStatus?: SaveStatus }) {
   );
 }
 
+function getStatusLabel(status: string | null | undefined): string {
+  switch (status) {
+    case "SUBMITTED": return "Submitted";
+    case "AI_PROCESSING": return "Grading...";
+    case "GRADED": return "Graded";
+    default: return status ?? "Submitted";
+  }
+}
+
 export function SubmissionHeader({
   title,
   currentQuestion,
@@ -107,6 +119,8 @@ export function SubmissionHeader({
   autoSubmitOnExpiry,
   onTimerExpired,
   saveStatus,
+  isLocked,
+  submissionStatus,
 }: SubmissionHeaderProps) {
   const navigate = useNavigate();
   const { centerId } = useParams();
@@ -132,11 +146,11 @@ export function SubmissionHeader({
   const expiredRef = useRef(false);
 
   useEffect(() => {
-    if (remaining === 0 && autoSubmitOnExpiry && onTimerExpired && !expiredRef.current) {
+    if (remaining === 0 && autoSubmitOnExpiry && onTimerExpired && !expiredRef.current && !isLocked) {
       expiredRef.current = true;
       onTimerExpired();
     }
-  }, [remaining, autoSubmitOnExpiry, onTimerExpired]);
+  }, [remaining, autoSubmitOnExpiry, onTimerExpired, isLocked]);
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -157,17 +171,26 @@ export function SubmissionHeader({
           </p>
         </div>
 
-        <SaveIndicator saveStatus={saveStatus} />
+        {isLocked ? (
+          <Badge variant="secondary" className="gap-1.5 shrink-0" data-testid="status-badge">
+            <CheckCircle2 className="size-3.5 text-green-600" />
+            {getStatusLabel(submissionStatus)}
+          </Badge>
+        ) : (
+          <>
+            <SaveIndicator saveStatus={saveStatus} />
 
-        {remaining !== null && (
-          <div
-            className={`flex items-center gap-1 text-sm font-mono tabular-nums ${
-              isLowTime ? "text-destructive font-semibold" : "text-muted-foreground"
-            }`}
-          >
-            <Clock className="size-4" />
-            {formatTimer(remaining)}
-          </div>
+            {remaining !== null && (
+              <div
+                className={`flex items-center gap-1 text-sm font-mono tabular-nums ${
+                  isLowTime ? "text-destructive font-semibold" : "text-muted-foreground"
+                }`}
+              >
+                <Clock className="size-4" />
+                {formatTimer(remaining)}
+              </div>
+            )}
+          </>
         )}
       </div>
     </header>

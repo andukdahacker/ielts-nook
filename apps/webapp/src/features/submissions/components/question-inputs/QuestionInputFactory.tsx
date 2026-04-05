@@ -27,6 +27,7 @@ interface QuestionInputFactoryProps {
   onPhotoCapture?: (file: File) => void;
   speakingPrepTime?: number | null;
   speakingTime?: number | null;
+  readOnly?: boolean;
 }
 
 export function QuestionInputFactory({
@@ -38,6 +39,7 @@ export function QuestionInputFactory({
   onPhotoCapture,
   speakingPrepTime,
   speakingTime,
+  readOnly,
 }: QuestionInputFactoryProps) {
   switch (sectionType) {
     case "R1_MCQ_SINGLE":
@@ -53,6 +55,7 @@ export function QuestionInputFactory({
           options={question.options as { items: { label: string; text: string }[]; maxSelections?: number } | null}
           value={value as { answer?: string; answers?: string[] } | null}
           onChange={onChange}
+          readOnly={readOnly}
         />
       );
 
@@ -68,6 +71,7 @@ export function QuestionInputFactory({
           wordLimit={question.wordLimit}
           value={value as { answer?: string } | null}
           onChange={onChange}
+          readOnly={readOnly}
         />
       );
 
@@ -78,6 +82,7 @@ export function QuestionInputFactory({
           options={question.options as { wordBank: string[]; summaryText: string } | null}
           value={value as { blanks?: Record<string, string> } | null}
           onChange={onChange}
+          readOnly={readOnly}
         />
       );
 
@@ -93,6 +98,7 @@ export function QuestionInputFactory({
           options={question.options as { sourceItems: string[]; targetItems: string[] } | null}
           value={value as { matches?: Record<string, string> } | null}
           onChange={onChange}
+          readOnly={readOnly}
         />
       );
 
@@ -104,6 +110,7 @@ export function QuestionInputFactory({
           options={question.options as { subFormat: "note" | "table" | "flowchart"; structure: string; wordLimit?: number } | null}
           value={value as { blanks?: Record<string, string> } | null}
           onChange={onChange}
+          readOnly={readOnly}
         />
       );
 
@@ -115,6 +122,7 @@ export function QuestionInputFactory({
           options={question.options as { diagramUrl: string; labelPositions: string[]; wordBank?: string[]; wordLimit?: number } | null}
           value={value as { labels?: Record<string, string> } | null}
           onChange={onChange}
+          readOnly={readOnly}
         />
       );
 
@@ -129,6 +137,7 @@ export function QuestionInputFactory({
           wordCountMax={null}
           value={value as { text?: string } | null}
           onChange={onChange}
+          readOnly={readOnly}
         />
       );
 
@@ -141,6 +150,7 @@ export function QuestionInputFactory({
           speakingTime={speakingTime}
           value={value as { audioUrl?: string; duration?: number } | null}
           onChange={onChange}
+          readOnly={readOnly}
         />
       );
 
@@ -154,6 +164,7 @@ export function QuestionInputFactory({
           cueCard={question.options as { topic: string; bulletPoints: string[] } | null}
           value={value as { audioUrl?: string; duration?: number } | null}
           onChange={onChange}
+          readOnly={readOnly}
         />
       );
 
@@ -164,6 +175,7 @@ export function QuestionInputFactory({
           value={value as { photoUrl?: string } | null}
           onChange={onChange}
           onPhotoCapture={onPhotoCapture}
+          readOnly={readOnly}
         />
       );
   }

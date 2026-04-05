@@ -38,7 +38,8 @@ export const analyzeSubmissionJob = inngest.createFunction(
       const prisma = createPrisma();
       try {
         const errorCategory = classifyError(error);
-        await prisma.gradingJob.update({
+        // Guard: job may have been deleted by teacher unlock
+        await prisma.gradingJob.updateMany({
           where: { id: jobId },
           data: {
             status: "failed",
@@ -48,10 +49,11 @@ export const analyzeSubmissionJob = inngest.createFunction(
         });
 
         // Revert submission status to SUBMITTED so teacher can still grade manually
+        // Only revert if still in AI_PROCESSING (unlock may have reset to IN_PROGRESS)
         if (centerId && submissionId) {
           const db = getTenantedClient(prisma, centerId);
-          await db.submission.update({
-            where: { id: submissionId },
+          await db.submission.updateMany({
+            where: { id: submissionId, status: "AI_PROCESSING" },
             data: { status: "SUBMITTED" },
           });
         }
@@ -65,16 +67,19 @@ export const analyzeSubmissionJob = inngest.createFunction(
     const { jobId, submissionId, centerId } = event.data;
 
     // Step 1: Mark job as processing, set submission to AI_PROCESSING
+    // Guard: job may have been deleted by teacher unlock between event dispatch and execution
     await step.run("mark-processing", async () => {
       const prisma = createPrisma();
       try {
+        const job = await prisma.gradingJob.findUnique({ where: { id: jobId } });
+        if (!job) return; // Job deleted by unlock — skip silently
         await prisma.gradingJob.update({
           where: { id: jobId },
           data: { status: "processing" },
         });
         const db = getTenantedClient(prisma, centerId);
-        await db.submission.update({
-          where: { id: submissionId },
+        await db.submission.updateMany({
+          where: { id: submissionId, status: "SUBMITTED" },
           data: { status: "AI_PROCESSING" },
         });
       } finally {
@@ -244,16 +249,17 @@ export const analyzeSubmissionJob = inngest.createFunction(
     });
 
     // Step 5: Mark job as completed, revert submission status to SUBMITTED
+    // Guard: job/submission may have been deleted/reset by teacher unlock
     await step.run("mark-completed", async () => {
       const prisma = createPrisma();
       try {
-        await prisma.gradingJob.update({
-          where: { id: jobId },
+        await prisma.gradingJob.updateMany({
+          where: { id: jobId, status: { not: "completed" } },
           data: { status: "completed" },
         });
         const db = getTenantedClient(prisma, centerId);
-        await db.submission.update({
-          where: { id: submissionId },
+        await db.submission.updateMany({
+          where: { id: submissionId, status: "AI_PROCESSING" },
           data: { status: "SUBMITTED" },
         });
       } finally {

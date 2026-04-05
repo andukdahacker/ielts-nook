@@ -10,6 +10,7 @@ interface MCQInputProps {
   options: { items: { label: string; text: string }[]; maxSelections?: number } | null;
   value: { answer?: string; answers?: string[] } | null;
   onChange: (answer: unknown) => void;
+  readOnly?: boolean;
 }
 
 export function MCQInput({
@@ -19,6 +20,7 @@ export function MCQInput({
   options,
   value,
   onChange,
+  readOnly,
 }: MCQInputProps) {
   const items = options?.items ?? [];
   const maxSelections = options?.maxSelections;
@@ -47,12 +49,14 @@ export function MCQInput({
             <button
               key={item.label}
               type="button"
-              onClick={() => onChange({ answer: item.label })}
+              onClick={() => !readOnly && onChange({ answer: item.label })}
+              disabled={readOnly}
               className={cn(
                 "min-h-[44px] px-4 py-2 rounded-lg border text-sm font-medium transition-colors",
                 selected === item.label
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-card hover:bg-accent border-input",
+                readOnly && "opacity-70 cursor-not-allowed",
               )}
             >
               {item.text}
@@ -83,15 +87,18 @@ export function MCQInput({
               <label
                 key={item.label}
                 className={cn(
-                  "flex items-center gap-3 w-full min-h-[44px] px-4 py-2 rounded-lg border text-sm cursor-pointer transition-colors",
+                  "flex items-center gap-3 w-full min-h-[44px] px-4 py-2 rounded-lg border text-sm transition-colors",
                   isSelected
                     ? "bg-primary/10 border-primary"
                     : "bg-card hover:bg-accent border-input",
+                  readOnly ? "opacity-70 cursor-not-allowed" : "cursor-pointer",
                 )}
               >
                 <Checkbox
                   checked={isSelected}
+                  disabled={readOnly}
                   onCheckedChange={() => {
+                    if (readOnly) return;
                     const newAnswers = isSelected
                       ? selectedAnswers.filter((a) => a !== item.label)
                       : [...selectedAnswers, item.label];
@@ -119,20 +126,22 @@ export function MCQInput({
       </p>
       <RadioGroup
         value={selectedSingle}
-        onValueChange={(label) => onChange({ answer: label })}
+        onValueChange={(label) => !readOnly && onChange({ answer: label })}
+        disabled={readOnly}
         className="space-y-2"
       >
         {items.map((item) => (
           <label
             key={item.label}
             className={cn(
-              "flex items-center gap-3 w-full min-h-[44px] px-4 py-2 rounded-lg border text-sm cursor-pointer transition-colors",
+              "flex items-center gap-3 w-full min-h-[44px] px-4 py-2 rounded-lg border text-sm transition-colors",
               selectedSingle === item.label
                 ? "bg-primary/10 border-primary"
                 : "bg-card hover:bg-accent border-input",
+              readOnly ? "opacity-70 cursor-not-allowed" : "cursor-pointer",
             )}
           >
-            <RadioGroupItem value={item.label} />
+            <RadioGroupItem value={item.label} disabled={readOnly} />
             <span>{item.label}. {item.text}</span>
           </label>
         ))}

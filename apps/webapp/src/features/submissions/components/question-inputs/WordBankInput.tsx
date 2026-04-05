@@ -11,6 +11,7 @@ interface WordBankInputProps {
   options: { wordBank: string[]; summaryText: string } | null;
   value: { blanks?: Record<string, string> } | null;
   onChange: (answer: unknown) => void;
+  readOnly?: boolean;
 }
 
 export function WordBankInput({
@@ -18,6 +19,7 @@ export function WordBankInput({
   options,
   value,
   onChange,
+  readOnly,
 }: WordBankInputProps) {
   const summaryText = options?.summaryText ?? "";
   const wordBank = options?.wordBank ?? [];
@@ -43,6 +45,7 @@ export function WordBankInput({
               <Select
                 value={blanks[blankNum] ?? ""}
                 onValueChange={(val) => handleBlankChange(blankNum, val)}
+                disabled={readOnly}
               >
                 <SelectTrigger className="h-8 text-xs w-[160px] inline-flex">
                   <SelectValue placeholder={`Blank ${blankNum}`} />

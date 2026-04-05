@@ -13,6 +13,7 @@ interface DiagramLabellingInputProps {
   options: { diagramUrl: string; labelPositions: string[]; wordBank?: string[]; wordLimit?: number } | null;
   value: { labels?: Record<string, string> } | null;
   onChange: (answer: unknown) => void;
+  readOnly?: boolean;
 }
 
 export function DiagramLabellingInput({
@@ -20,6 +21,7 @@ export function DiagramLabellingInput({
   options,
   value,
   onChange,
+  readOnly,
 }: DiagramLabellingInputProps) {
   if (!options) {
     return (
@@ -62,6 +64,7 @@ export function DiagramLabellingInput({
               <Select
                 value={labels[String(i + 1)] ?? ""}
                 onValueChange={(val) => handleLabelChange(String(i + 1), val)}
+                disabled={readOnly}
               >
                 <SelectTrigger className="min-h-[44px] text-sm w-[180px]">
                   <SelectValue placeholder="Select label..." />
@@ -81,6 +84,7 @@ export function DiagramLabellingInput({
                   onChange={(e) => handleLabelChange(String(i + 1), e.target.value)}
                   placeholder="..."
                   className="min-h-[44px] w-32 text-sm"
+                  disabled={readOnly}
                 />
                 <Badge variant="outline" className="text-[9px] h-4 shrink-0">
                   {wordLimit}w

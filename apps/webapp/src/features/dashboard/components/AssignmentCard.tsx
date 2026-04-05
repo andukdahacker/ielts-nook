@@ -87,16 +87,28 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
     }
   })();
 
-  const buttonLabel = !subStatus ? "Start" : subStatus === "IN_PROGRESS" ? "Continue" : "View Results";
-  const ButtonIcon = !subStatus ? Play : subStatus === "IN_PROGRESS" ? RotateCw : Eye;
+  const buttonLabel = !subStatus
+    ? "Start"
+    : subStatus === "IN_PROGRESS"
+      ? "Continue"
+      : subStatus === "GRADED"
+        ? "View Results"
+        : "View Submission";
+  const ButtonIcon = !subStatus
+    ? Play
+    : subStatus === "IN_PROGRESS"
+      ? RotateCw
+      : Eye;
 
   const statusBadge = subStatus === "SUBMITTED"
     ? { text: "Submitted", variant: "default" as const }
-    : subStatus === "GRADED"
-      ? { text: "Graded", variant: "default" as const }
-      : subStatus === "IN_PROGRESS"
-        ? { text: "In Progress", variant: "secondary" as const }
-        : null;
+    : subStatus === "AI_PROCESSING"
+      ? { text: "Grading...", variant: "secondary" as const }
+      : subStatus === "GRADED"
+        ? { text: "Graded", variant: "default" as const }
+        : subStatus === "IN_PROGRESS"
+          ? { text: "In Progress", variant: "secondary" as const }
+          : null;
 
   return (
     <div className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">

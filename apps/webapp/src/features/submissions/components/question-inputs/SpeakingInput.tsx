@@ -12,6 +12,7 @@ interface SpeakingInputProps {
   cueCard?: { topic: string; bulletPoints: string[] } | null;
   value: { audioUrl?: string; duration?: number } | null;
   onChange: (answer: unknown) => void;
+  readOnly?: boolean;
 }
 
 export function SpeakingInput({
@@ -22,6 +23,7 @@ export function SpeakingInput({
   cueCard,
   value,
   onChange,
+  readOnly,
 }: SpeakingInputProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -161,7 +163,7 @@ export function SpeakingInput({
 
       {prepCountdown === null && (
         <div className="flex flex-col items-center gap-3 p-4 border rounded-lg">
-          {isRecording && (
+          {isRecording && !readOnly && (
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-red-500 animate-pulse" />
               <span className="text-sm font-medium">{formatTime(recordingTime)}</span>
@@ -171,7 +173,7 @@ export function SpeakingInput({
             </div>
           )}
 
-          {!isRecording && !audioUrl && (
+          {!isRecording && !audioUrl && !readOnly && (
             <Button
               onClick={startWithPrep}
               className="min-h-[44px] gap-2"
@@ -181,7 +183,11 @@ export function SpeakingInput({
             </Button>
           )}
 
-          {isRecording && (
+          {!isRecording && !audioUrl && readOnly && (
+            <p className="text-sm text-muted-foreground italic">No recording submitted.</p>
+          )}
+
+          {isRecording && !readOnly && (
             <Button
               variant="destructive"
               onClick={stopRecording}
@@ -200,10 +206,12 @@ export function SpeakingInput({
                 <Badge variant="outline" className="text-xs">
                   {formatTime(recordingTime)}
                 </Badge>
-                <Button variant="outline" size="sm" onClick={resetRecording} className="gap-1">
-                  <RotateCcw className="size-3" />
-                  Re-record
-                </Button>
+                {!readOnly && (
+                  <Button variant="outline" size="sm" onClick={resetRecording} className="gap-1">
+                    <RotateCcw className="size-3" />
+                    Re-record
+                  </Button>
+                )}
               </div>
             </div>
           )}
