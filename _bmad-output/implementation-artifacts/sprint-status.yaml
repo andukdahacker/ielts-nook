@@ -69,7 +69,7 @@
 #   - Epic 8: Added 8.4-8.5 (i18n, golden sample UI)
 
 generated: 2026-01-29
-last_updated: 2026-04-06T00:00:00
+last_updated: 2026-04-06
 project: classlite
 project_key: classlite
 tracking_system: file-system
@@ -184,7 +184,7 @@ development_status:
 
   # Epic 8: Platform Compliance & Methodology
   epic-8: in-progress
-  8-1-methodology-guardian: ready-for-dev
+  8-1-methodology-guardian: done
   8-2-data-sovereignty-privacy-center: ready-for-dev
   8-3-content-moderation-system: backlog
   8-4-language-preference-i18n: backlog # NEW (NFR8)
@@ -207,21 +207,21 @@ development_status:
   # Epic 11: Critical Bug Fixes
   # Status: BACKLOG — Sprint N priority (P0 + P1 bugs)
   # Scope: Course nav, option save, preview render, matching headings, unsaved indicator, breadcrumbs, submit lock
-  epic-11: in-progress
+  epic-11: done
   11-1-course-detail-next-button-fix: done
   11-2-option-not-saved-on-add: done
   11-3-question-text-missing-in-preview: done
   11-4-matching-headings-space-bug: done
   11-5-unsaved-changes-false-positive: done
-  11-6-exercise-edit-breadcrumbs: review
-  11-7-lock-submitted-exercises: review
+  11-6-exercise-edit-breadcrumbs: done
+  11-7-lock-submitted-exercises: done
   epic-11-retrospective: optional
 
   # Epic 12: Exercise Editor UX
   # Status: BACKLOG — Sprint N + N+1
   # Scope: Input lag, sticky toolbar, auto-scroll, post-publish, validation, placeholders, drag, edit rules, nav
-  epic-12: backlog
-  12-1-input-lag-matching-headings: backlog
+  epic-12: in-progress
+  12-1-input-lag-matching-headings: ready-for-dev
   12-2-input-lag-true-false-not-given: backlog
   12-3-sticky-toolbar: backlog
   12-4-auto-scroll-to-new-section: backlog

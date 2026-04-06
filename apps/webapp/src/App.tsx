@@ -37,6 +37,7 @@ import { PrivacyPage } from "./features/settings/pages/PrivacyPage";
 import { RoomsPage } from "./features/settings/pages/RoomsPage";
 import { TagsSettingsPage } from "./features/settings/pages/TagsSettingsPage";
 import { BillingPage } from "./features/settings/pages/BillingPage";
+import { AICustomizationPage } from "./features/settings/pages/AICustomizationPage";
 
 function App() {
   const queryClient = new QueryClient({
@@ -130,6 +131,7 @@ function App() {
                         element={<IntegrationsPage />}
                       />
                       <Route path="privacy" element={<PrivacyPage />} />
+                      <Route path="ai" element={<AICustomizationPage />} />
                       <Route path="billing" element={<BillingPage />} />
                     </Route>
 

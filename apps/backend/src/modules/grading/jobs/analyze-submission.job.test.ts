@@ -94,6 +94,71 @@ describe("analyze-submission.job", () => {
       expect(config.systemPrompt).toContain("limited accuracy");
       expect(config.schema).toBeDefined();
     });
+
+    it("should include golden samples in prompt when provided", () => {
+      const samples = [
+        { studentWork: "Essay about technology.", teacherFeedback: "Good analysis, add examples." },
+      ];
+      const config = getGradingPromptAndSchema(
+        "WRITING",
+        "Test text.",
+        undefined,
+        samples,
+      );
+
+      expect(config.systemPrompt).toContain("STYLE REFERENCE");
+      expect(config.systemPrompt).toContain("Essay about technology.");
+      expect(config.systemPrompt).toContain("Good analysis, add examples.");
+    });
+
+    it("should not include style reference when no samples provided", () => {
+      const config = getGradingPromptAndSchema(
+        "WRITING",
+        "Test text.",
+      );
+
+      expect(config.systemPrompt).not.toContain("STYLE REFERENCE");
+    });
+
+    it("should complete correctly when golden sample loading returns empty", () => {
+      const config = getGradingPromptAndSchema(
+        "WRITING",
+        "Test text.",
+        undefined,
+        [],
+      );
+
+      expect(config.systemPrompt).not.toContain("STYLE REFERENCE");
+      expect(config.systemPrompt).toContain("IELTS examiner");
+    });
+  });
+
+  describe("golden sample loading step", () => {
+    it("should create prisma client and query active samples by skill type", async () => {
+      const goldenSamples = [
+        { studentWork: "work1", teacherFeedback: "feedback1" },
+      ];
+      mockDb.goldenSample = {
+        findMany: vi.fn().mockResolvedValue(goldenSamples),
+      };
+
+      // Simulate the load-golden-samples step logic
+      const prisma = createPrisma();
+      try {
+        const db = getTenantedClient(prisma, "center-1");
+        const result = await db.goldenSample.findMany({
+          where: { skillType: "WRITING", isActive: true },
+          orderBy: { order: "asc" },
+          select: { studentWork: true, teacherFeedback: true },
+        });
+
+        expect(result).toEqual(goldenSamples);
+        expect(createPrisma).toHaveBeenCalled();
+        expect(getTenantedClient).toHaveBeenCalledWith(prisma, "center-1");
+      } finally {
+        await prisma.$disconnect();
+      }
+    });
   });
 
   describe("classifyError", () => {

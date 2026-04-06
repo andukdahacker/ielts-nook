@@ -33,6 +33,7 @@ import { gradingRoutes } from "./modules/grading/grading.routes.js";
 import { studentHealthRoutes } from "./modules/student-health/index.js";
 import { inngestRoutes } from "./modules/inngest/inngest.routes.js";
 import { billingRoutes } from "./modules/billing/billing.routes.js";
+import { goldenSamplesRoutes } from "./modules/golden-samples/golden-samples.routes.js";
 import { billingWebhookRoutes } from "./modules/billing/billing.webhook.routes.js";
 import { healthRoutes } from "./modules/health/health.routes.js";
 import firebasePlugin from "./plugins/firebase.plugin.js";
@@ -271,6 +272,7 @@ export const buildApp = async () => {
   await app.register(notificationsRoutes, { prefix: "/api/v1/notifications" });
   await app.register(usersRoutes, { prefix: "/api/v1/users" });
   await app.register(billingRoutes, { prefix: "/api/v1/billing" });
+  await app.register(goldenSamplesRoutes, { prefix: "/api/v1/golden-samples" });
 
   // Public unsubscribe routes (no auth required)
   await app.register(unsubscribeRoutes, { prefix: "/api/v1/unsubscribe" });

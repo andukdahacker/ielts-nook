@@ -99,6 +99,7 @@ model Center {
   subscription          Subscription?
   billingEvents         BillingEvent[]
   studentCountSnapshots StudentCountSnapshot[]
+  goldenSamples         GoldenSample[]
 
   @@map("center")
 }
@@ -987,4 +988,23 @@ model StudentCountSnapshot {
   @@unique([centerId, month])
   @@index([centerId])
   @@map("student_count_snapshot")
+}
+
+model GoldenSample {
+  id              String   @id @default(cuid())
+  centerId        String   @map("center_id")
+  title           String
+  skillType       ExerciseSkill @map("skill_type")
+  studentWork     String   @map("student_work") @db.Text
+  teacherFeedback String   @map("teacher_feedback") @db.Text
+  isActive        Boolean  @default(true) @map("is_active")
+  order           Int      @default(0)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  center Center @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@index([centerId])
+  @@index([centerId, skillType])
+  @@map("golden_sample")
 }

@@ -65,6 +65,83 @@ describe("ai-grading-prompts", () => {
       expect(result.systemPrompt).not.toContain("TASK PROMPT:");
     });
 
+    it("should include style reference when golden samples provided", () => {
+      const samples = [
+        { studentWork: "Student essay about cities.", teacherFeedback: "Great structure, consider more examples." },
+        { studentWork: "Student essay about nature.", teacherFeedback: "Good vocabulary, work on coherence." },
+      ];
+
+      const result = getGradingPromptAndSchema(
+        "WRITING",
+        "Student text here.",
+        undefined,
+        samples,
+      );
+
+      expect(result.systemPrompt).toContain("STYLE REFERENCE");
+      expect(result.systemPrompt).toContain("Student essay about cities.");
+      expect(result.systemPrompt).toContain("Great structure, consider more examples.");
+      expect(result.systemPrompt).toContain("[Example 1]");
+      expect(result.systemPrompt).toContain("[Example 2]");
+      expect(result.systemPrompt).toContain("Match the tone, vocabulary, and pedagogical approach");
+    });
+
+    it("should not include style reference when no golden samples", () => {
+      const result = getGradingPromptAndSchema(
+        "WRITING",
+        "Student text here.",
+      );
+
+      expect(result.systemPrompt).not.toContain("STYLE REFERENCE");
+    });
+
+    it("should not include style reference when empty samples array", () => {
+      const result = getGradingPromptAndSchema(
+        "WRITING",
+        "Student text here.",
+        undefined,
+        [],
+      );
+
+      expect(result.systemPrompt).not.toContain("STYLE REFERENCE");
+    });
+
+    it("should include style reference in Speaking prompts too", () => {
+      const samples = [
+        { studentWork: "I think education is important.", teacherFeedback: "Good fluency, work on pronunciation." },
+      ];
+
+      const result = getGradingPromptAndSchema(
+        "SPEAKING",
+        "Student transcript here.",
+        undefined,
+        samples,
+      );
+
+      expect(result.systemPrompt).toContain("STYLE REFERENCE");
+      expect(result.systemPrompt).toContain("Good fluency, work on pronunciation.");
+    });
+
+    it("should handle varying sample counts (1, 5, 10)", () => {
+      const makeSamples = (n: number) =>
+        Array.from({ length: n }, (_, i) => ({
+          studentWork: `Student work ${i + 1} with enough content.`,
+          teacherFeedback: `Teacher feedback ${i + 1} with enough content.`,
+        }));
+
+      for (const count of [1, 5, 10]) {
+        const result = getGradingPromptAndSchema(
+          "WRITING",
+          "text",
+          undefined,
+          makeSamples(count),
+        );
+
+        expect(result.systemPrompt).toContain(`[Example 1]`);
+        expect(result.systemPrompt).toContain(`[Example ${count}]`);
+      }
+    });
+
     it("Writing schema should validate valid grading response", () => {
       const { schema } = getGradingPromptAndSchema("WRITING", "text");
 

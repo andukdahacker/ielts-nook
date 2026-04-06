@@ -157,6 +157,26 @@ export const analyzeSubmissionJob = inngest.createFunction(
       }
     });
 
+    // Step 2.5: Load golden samples for the skill type (non-fatal — grading continues without them)
+    let goldenSamples: { studentWork: string; teacherFeedback: string }[] = [];
+    try {
+      goldenSamples = await step.run("load-golden-samples", async () => {
+        const prisma = createPrisma();
+        try {
+          const db = getTenantedClient(prisma, centerId);
+          return db.goldenSample.findMany({
+            where: { skillType: submissionData.skill, isActive: true },
+            orderBy: { order: "asc" },
+            select: { studentWork: true, teacherFeedback: true },
+          });
+        } finally {
+          await prisma.$disconnect();
+        }
+      });
+    } catch {
+      // Golden samples are optional — continue grading without them
+    }
+
     // Small delay before API call
     await step.sleep("pre-api-delay", "1s");
 
@@ -174,6 +194,7 @@ export const analyzeSubmissionJob = inngest.createFunction(
         submissionData.skill,
         submissionData.studentText,
         submissionData.questionPrompt || undefined,
+        goldenSamples.length > 0 ? goldenSamples : undefined,
       );
 
       const response = await genai.models.generateContent({
