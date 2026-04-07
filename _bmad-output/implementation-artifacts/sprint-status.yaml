@@ -223,7 +223,7 @@ development_status:
   epic-12: in-progress
   12-1-input-lag-matching-headings: done
   12-2-input-lag-true-false-not-given: done
-  12-3-sticky-toolbar: backlog
+  12-3-sticky-toolbar: done
   12-4-auto-scroll-to-new-section: backlog
   12-5-stay-on-page-after-publish: backlog
   12-6-matching-headings-duplicate-warning: backlog

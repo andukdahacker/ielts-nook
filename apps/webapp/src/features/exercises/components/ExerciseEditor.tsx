@@ -39,7 +39,9 @@ import {
   AlertDialogTitle,
 } from "@workspace/ui/components/alert-dialog";
 import {
+  AlertCircle,
   ArrowLeft,
+  Check,
   ChevronDown,
   Eye,
   Loader2,
@@ -827,37 +829,49 @@ export function ExerciseEditor() {
   }
 
   return (
-    <div className="container py-10 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => navigate("../exercises")}>
-          <ArrowLeft className="mr-2 size-4" />
-          Back to Exercises
-        </Button>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">
-            {saveStatus === "saving" || isAutosaving
-              ? "Saving..."
-              : saveStatus === "unsaved"
-                ? "Unsaved changes"
-                : "Saved"}
-          </span>
-          <Button variant="outline" size="sm" onClick={() => setShowPreview(true)}>
-            <Eye className="mr-2 size-4" />
-            Preview
+    <div>
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-14 items-center justify-between px-4">
+          <Button variant="ghost" aria-label="Back to Exercises" onClick={() => navigate("../exercises")}>
+            <ArrowLeft className="sm:mr-2 size-4" />
+            <span className="hidden sm:inline">Back to Exercises</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleSaveDraft}>
-            <Save className="mr-2 size-4" />
-            Save Draft
-          </Button>
-          {exercise?.status === "DRAFT" && (
-            <Button size="sm" onClick={() => setShowPublishDialog(true)}>
-              Publish
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-sm text-muted-foreground">
+              <span className="hidden sm:inline">
+                {saveStatus === "saving" || isAutosaving
+                  ? "Saving..."
+                  : saveStatus === "unsaved"
+                    ? "Unsaved changes"
+                    : "Saved"}
+              </span>
+              <span className="sm:hidden" aria-label={saveStatus === "saving" || isAutosaving ? "Saving" : saveStatus === "unsaved" ? "Unsaved changes" : "Saved"}>
+                {saveStatus === "saving" || isAutosaving
+                  ? <Loader2 className="size-4 animate-spin" />
+                  : saveStatus === "unsaved"
+                    ? <AlertCircle className="size-4" />
+                    : <Check className="size-4 text-green-500" />}
+              </span>
+            </span>
+            <Button variant="outline" size="sm" aria-label="Preview" onClick={() => setShowPreview(true)}>
+              <Eye className="sm:mr-2 size-4" />
+              <span className="hidden sm:inline">Preview</span>
             </Button>
-          )}
+            <Button variant="outline" size="sm" aria-label="Save Draft" onClick={handleSaveDraft}>
+              <Save className="sm:mr-2 size-4" />
+              <span className="hidden sm:inline">Save Draft</span>
+            </Button>
+            {exercise?.status === "DRAFT" && (
+              <Button size="sm" onClick={() => setShowPublishDialog(true)}>
+                Publish
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      </header>
 
+      <div className="py-6 space-y-6">
       {/* Title & Instructions */}
       <div className="space-y-4 max-w-3xl">
         <div className="space-y-2">
@@ -1204,6 +1218,7 @@ export function ExerciseEditor() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }
