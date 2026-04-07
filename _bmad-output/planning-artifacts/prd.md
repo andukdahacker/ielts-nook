@@ -27,7 +27,7 @@ classification:
   domain: edtech
   complexity: medium
   projectContext: brownfield
-lastEdited: "2026-02-17"
+lastEdited: "2026-04-06"
 editHistory:
   - date: "2026-01-17"
     changes: "Updated Executive Summary, User Journeys, Functional Requirements, and NFRs based on UX Design Specification (High-Velocity Pedagogy, Offline-Proofing, Grading Workbench details)."
@@ -39,6 +39,10 @@ editHistory:
     changes: "Removed Zalo integration entirely (business registration blocker, poor docs, no validated demand). Replaced parent communication with email-based notifications. Added Parent Portal to Phase 2. Added Section 9: Billing & Subscription with per-active-student pricing model, Polar.sh self-serve billing, and billing FRs (FR43-FR48). Updated integrations and RBAC matrix."
   - date: "2026-02-17"
     changes: "Added free-form teacher commenting (FR49-FR53). Teachers can add text-anchored and general comments with private/student-facing visibility toggle, mixed into AI feedback feed. Updated Executive Summary, Journey 1 (new Annotate step), and RBAC matrix."
+  - date: "2026-04-06"
+    changes: "Aligned PRD with architecture addendum for Epics 8.5, 18, 19. Added Knowledge Hub (FR54-FR59), Course Management (FR60-FR64), Session Hub (FR65-FR69) — 16 new FRs. Added Journey 7 (Session Prep) and Journey 8 (Content Curator). Moved Knowledge Hub, Course Redesign, Session Hub from Phase 2 to Phase 1.5. Updated FR32/FR33 to reference Knowledge Hub as golden sample source. Added 10 new RBAC rows. Added NFR12 (50MB upload limit). Updated Executive Summary with Knowledge Hub, Course-as-template, and Session Hub."
+  - date: "2026-04-06"
+    changes: "Aligned PRD with architecture addendum for Epic 14 (Session & Schedule Redesign). Added FR70-FR74 for auto-generation from recurrence rules, individual session exceptions, and recurrence rule updates. Updated Journey 4 for recurrence-based scheduling. Added Session Redesign to Phase 1.5 roadmap. Added 2 RBAC rows. Updated Executive Summary."
 ---
 
 # Product Requirements Document - classlite
@@ -48,9 +52,9 @@ editHistory:
 
 ## Executive Summary
 
-**ClassLite** is a B2B SaaS Learning Management System tailored for small to medium-sized IELTS centers in Vietnam. It streamlines operations by unifying administrative logistics (scheduling, rosters) and pedagogical delivery (AI-assisted grading, exercise building) into a single "Lite" platform.
+**ClassLite** is a B2B SaaS Learning Management System tailored for small to medium-sized IELTS centers in Vietnam. It streamlines operations by unifying administrative logistics (scheduling, rosters), pedagogical delivery (AI-assisted grading, exercise building), and content management (Knowledge Hub, course planning) into a single "Lite" platform.
 
-The core vision is **"High-Velocity Pedagogy"**. By automating 80% of the grading drudgery through an AI-assisted workbench ("Review -> Annotate -> Approve"), ClassLite empowers expert teachers to double their feedback speed without sacrificing quality. Teachers retain full editorial control — they can add their own free-form comments anchored to specific text, alongside AI-generated feedback, with per-comment visibility control (private notes vs student-facing). For owners, it offers **"Glanceable Intelligence"**—immediate visibility into center health ("Done by 5 PM" philosophy) without complex reporting tools.
+The core vision is **"High-Velocity Pedagogy"**. By automating 80% of the grading drudgery through an AI-assisted workbench ("Review -> Annotate -> Approve"), ClassLite empowers expert teachers to double their feedback speed without sacrificing quality. Teachers retain full editorial control — they can add their own free-form comments anchored to specific text, alongside AI-generated feedback, with per-comment visibility control (private notes vs student-facing). A **Knowledge Hub** serves as the center's unified content library — uploaded files, authored rich-text pages, and golden samples for AI style training all live in one searchable, tagged system. **Courses** function as reusable templates with structured lesson plans, linked materials, and exercises that snapshot-copy into classes. **Sessions** become the daily teaching hub where teachers see today's content, customize materials, and journal pre/post-class notes. **Scheduling** is automated — sessions are auto-generated from recurrence rules (weekly/biweekly, with end date or rolling window), with per-occurrence exception handling for cancellations and reschedules that survive rule changes. For owners, it offers **"Glanceable Intelligence"**—immediate visibility into center health ("Done by 5 PM" philosophy) without complex reporting tools.
 
 ### Target Users
 
@@ -114,9 +118,13 @@ The core vision is **"High-Velocity Pedagogy"**. By automating 80% of the gradin
 
 ### Phase 1.5 (Differentiation Update)
 
-**Focus:** Innovation and Retention. De-risked features deployed shortly after stability is proven.
+**Focus:** Innovation, Content Management, and Retention. De-risked features deployed shortly after stability is proven.
 
-- **Innovation**: **Methodology Guardian** (Style Cloning).
+- **Knowledge Hub**: Unified content library — file uploads (PDF, DOCX, PPTX up to 50MB), markdown rich-text pages, and golden samples for AI style training. Shared tag system across exercises and documents. Inline PDF preview.
+- **Course Redesign**: Courses as standalone reusable templates with structured lesson plans, linked documents and exercises. Snapshot-copy to classes on creation. Dedicated course page.
+- **Session Hub**: Sessions become the daily teaching hub — lesson content inherited from course plans, customizable materials and assignments per session, append-only teacher session notes (pre/post class journal).
+- **Session & Schedule Redesign**: Sessions auto-generated from recurrence rules (weekly/biweekly with end date or rolling 3-month window). Individual session exceptions (cancel, reschedule, edit) preserved across recurrence rule changes. Completed sessions protected from re-generation.
+- **Methodology Guardian**: Golden samples unified into Knowledge Hub (Document type: GOLDEN_SAMPLE). AI style training via Few-Shot Prompting from curated student work + teacher feedback pairs.
 - **Billing**: Self-serve subscription via Polar.sh (per-active-student pricing).
 - **Exercise Builder Additions:** R9-R12 (Matching types: Headings, Information, Features, Sentence Endings)
 
@@ -124,7 +132,7 @@ The core vision is **"High-Velocity Pedagogy"**. By automating 80% of the gradin
 
 **Focus:** Scale and Ecosystem.
 
-- **Features**: Knowledge Hub (Asset Library), Gamification (Badges/Points), Native Mobile Apps, **Parent Portal** (Parent role with read-only student progress view, invite/onboarding flow).
+- **Features**: Student Personal Notes (with entity linking to documents, sessions, assignments), Gamification (Badges/Points), Native Mobile Apps, **Parent Portal** (Parent role with read-only student progress view, invite/onboarding flow), Course template versioning with "pull updates" action.
 - **Exercise Builder Additions:** R13-R14 (Diagram/Flow-chart types), S1-S3 (Speaking with audio recording), Full Mock Test Assembly with band conversion.
 
 ---
@@ -171,9 +179,10 @@ The core vision is **"High-Velocity Pedagogy"**. By automating 80% of the gradin
 - **Trigger:** New center sign-up.
 - **Step 1 (Setup):** Owner configures center name and timezone.
 - **Step 2 (Roster):** Owner uploads student/teacher CSV or invites via email.
-- **Step 3 (Schedule):** Owner uses drag-and-drop scheduler to create class sessions. System highlights a teacher conflict in red.
-- **Step 4 (Resolution):** Owner adjusts the time; conflict clears.
-- **Validation:** Roster and schedule are live. No spreadsheets needed.
+- **Step 3 (Schedule):** Owner creates a recurring schedule — "IELTS Writing, Tue & Thu at 3pm, weekly, ends June 30." System auto-generates all session instances. Conflict warnings surface post-generation (non-blocking).
+- **Step 4 (Resolution):** Owner resolves a flagged teacher conflict by adjusting one session's time. That session becomes an exception — it survives future rule changes.
+- **Step 5 (Exceptions):** Teacher cancels next week's Thursday session (holiday). Students are notified. The cancelled session remains visible with a strikethrough badge.
+- **Validation:** Roster and schedule are live. Sessions auto-populate from rules. Individual adjustments don't break the series.
 
 ### Journey 5: The Content Architect (Teacher)
 
@@ -198,6 +207,30 @@ The core vision is **"High-Velocity Pedagogy"**. By automating 80% of the gradin
 - **Step 4 (Preview):** Teacher tests the exercise as a student would experience it.
 - **Step 5 (Assign):** Assigned to Class 10A with instructions: "Use headphones in a quiet room."
 - **Validation:** Students can practice realistic Listening conditions. Auto-grading handles answer variants.
+
+### Journey 7: The Session Prep (Teacher)
+
+**Goal:** Prepare for today's class in under 5 minutes with all materials, content, and notes in one place.
+
+- **Trigger:** Teacher clicks today's session in their schedule.
+- **Step 1 (Review):** Session detail opens showing lesson title, markdown content (inherited from course lesson plan), linked materials (PDFs, pages), and linked assignments.
+- **Step 2 (Customize):** Teacher adds an extra document from Knowledge Hub for today's class. Removes one exercise that's too advanced for this group.
+- **Step 3 (Prep Notes):** Teacher writes a pre-session note: "Focus on Hoa's essay structure. Minh missed last class — recap paragraph 2."
+- **Step 4 (Teach):** Class happens.
+- **Step 5 (Reflect):** After class, teacher writes a post-session note: "Group struggled with coherence transitions. Revisit next week."
+- **Validation:** Teacher feels prepared and organized. Notes accumulate as a running journal across sessions.
+
+### Journey 8: The Content Curator (Teacher/Admin)
+
+**Goal:** Build a searchable, organized content library and connect it to courses and AI grading.
+
+- **Trigger:** Teacher has materials to organize for an upcoming IELTS prep course.
+- **Step 1 (Upload):** Teacher uploads 3 PDFs (past exam papers) and creates 2 markdown pages (vocabulary lists, essay structure guide) in the Knowledge Hub.
+- **Step 2 (Tag):** Teacher tags all items with "IELTS Writing", "Band 6-7". Same tags already used on exercises appear in the tag picker.
+- **Step 3 (Golden Sample):** Owner creates a Golden Sample document — pastes a student essay and the ideal teacher feedback. Marks it active for Writing.
+- **Step 4 (Link to Course):** Teacher opens the "IELTS Prep Q3" course, adds materials to Lesson Plan 3: "Opinion Essays". Links the vocabulary page and one past exam PDF.
+- **Step 5 (Student Access):** After class, students see the linked materials in their session view. They can also browse the Knowledge Hub directly for tagged content.
+- **Validation:** Content is centralized, discoverable, and flows from library → course → session → student.
 
 ---
 
@@ -224,6 +257,16 @@ _Traces to: Journey 4_
 - **FR10**: [System] can [detect and warn of resource conflicts (Room/Teacher double-booking) during scheduling].
 - **FR11**: [Teacher] can [mark attendance (Present/Absent)].
 - **FR12**: [System] can [notify participants of schedule changes via in-app notification and email within 30 seconds of update].
+
+### 2.1 Session & Schedule Redesign (Phase 1.5)
+
+_Traces to: Journey 4, Epic 14_
+
+- **FR70**: [System] can [auto-generate session instances from a recurrence rule (day of week, start/end time, frequency of weekly or biweekly, and optional end date) when a schedule is created or updated, capped at a maximum horizon of 12 months].
+- **FR71**: [System] can [generate sessions on a rolling 3-month window for schedules without an end date, via a daily background job that fills the gap automatically].
+- **FR72**: [Teacher] can [cancel a single session occurrence without affecting the rest of the series, preserving the cancelled session as a visible record with visual marking and triggering student notification within 30 seconds].
+- **FR73**: [Teacher] can [reschedule a single session occurrence to a different time or date, creating an exception that is preserved when the recurrence rule is later changed, with conflict detection on the new time slot].
+- **FR74**: [Admin] can [update a recurrence rule (day, time, frequency) with changes applied to future sessions only — past sessions and manually edited or cancelled exceptions are preserved, and affected participants are notified via summary email].
 
 ### 3. Pedagogy & Exercise Builder
 
@@ -274,11 +317,42 @@ _Traces to: Journey 1, 2, 3_
 
 - **FR30**: [System] can [send automated email notifications to parents for Personal Bests or 7-day assignment streaks].
 - **FR31**: [Parent] can [manage email notification preferences] (Phase 2: via Parent Portal).
-- **FR32**: [Owner] can [upload "Golden Sample" feedback to tune AI style].
-- **FR33**: [System] can [utilize Few-Shot Prompting using Golden Samples to target > 85% style alignment].
+- **FR32**: [Owner] can [create Golden Sample documents in the Knowledge Hub with student work text and ideal teacher feedback text, categorized by skill type (Writing/Speaking), with a maximum of 10 active samples per skill type per center].
+- **FR33**: [System] can [utilize active Golden Sample documents from the Knowledge Hub for Few-Shot Prompting to target > 85% style alignment with the center's feedback tone and vocabulary].
 - **FR34**: [System] can [detect offline status and display a persistent "Do Not Close" warning banner during submission attempts].
 - **FR35**: [System] can [queue failed submissions and auto-retry upon network reconnection via Background Sync].
 - **FR36**: [System] can [screen AI-generated and user-submitted content for compliance with local regulations (Decree 72/2013/ND-CP) and flag violations for admin review].
+
+### 7. Knowledge Hub (Phase 1.5)
+
+_Traces to: Journey 8_
+
+- **FR54**: [Teacher/Admin] can [upload documents (PDF, DOCX, PPTX, max 50MB) to the Knowledge Hub with title, description, and tags].
+- **FR55**: [Teacher/Admin] can [create rich-text pages in the Knowledge Hub using a WYSIWYG markdown editor with headings, bold/italic, lists, links, and inline images].
+- **FR56**: [User] can [search the Knowledge Hub by document title, tags, and document type (File, Page, Golden Sample)].
+- **FR57**: [User] can [preview PDF documents inline in the browser without downloading].
+- **FR58**: [User] can [tag documents and exercises with shared tags from a unified tag pool for cross-content discovery].
+- **FR59**: [Student] can [access Knowledge Hub documents linked to courses or sessions they are enrolled in].
+
+### 8. Course Management (Phase 1.5)
+
+_Traces to: Journey 8_
+
+- **FR60**: [Admin] can [create standalone courses with a markdown syllabus, status (Draft/Published/Archived), linked documents, and linked exercises].
+- **FR61**: [Admin] can [create structured lesson plans within a course, each with a title, markdown content, ordered linked documents, and ordered linked exercises].
+- **FR62**: [Admin] can [create a class from a course template, snapshot-copying lesson plans (content, materials, exercises) to the class sessions as a one-time copy that does not update retroactively].
+- **FR63**: [System] can [display how many active classes are linked to a course on the course list and detail pages].
+- **FR64**: [Teacher/Admin] can [view and manage courses independently from classes at a dedicated course page (`/:centerId/courses/:courseId`)].
+
+### 9. Session Hub (Phase 1.5)
+
+_Traces to: Journey 7_
+
+- **FR65**: [Teacher] can [view session detail showing lesson title, lesson content (markdown), linked materials, and linked assignments for that session].
+- **FR66**: [Teacher] can [customize session materials and assignments independently from the originating course lesson plan].
+- **FR67**: [Teacher] can [write append-only session notes (pre-session and post-session types) as a running journal, with multiple notes per type ordered chronologically].
+- **FR68**: [Student] can [view session materials (linked documents) and assignments (with status) for sessions in their enrolled classes].
+- **FR69**: [System] can [display session content provenance indicating which course lesson plan the content originated from, with a link back to the source].
 
 ---
 
@@ -403,22 +477,35 @@ Teachers can combine exercises into a **Mock Test** that simulates full IELTS te
 
 ### Section 8: RBAC Matrix
 
-| Feature                  | Owner | Admin |     Teacher      | Student |
-| :----------------------- | :---: | :---: | :--------------: | :-----: |
-| Center Settings          | CRUD  | CRUD  |        R         |    -    |
-| User Management          | CRUD  | CRUD  |        -         |    -    |
-| Class Scheduling         | CRUD  | CRUD  |        R         |    R    |
-| Attendance               | CRUD  | CRUD  |       CRUD       |    R    |
-| Exercise Creation        | CRUD  | CRUD  |       CRUD       |    -    |
-| Audio Upload (Listening) | CRUD  | CRUD  |       CRUD       |    -    |
-| Mock Test Assembly       | CRUD  | CRUD  |       CRUD       |    -    |
-| Assignment               | CRUD  | CRUD  |       CRUD       |    -    |
-| Submission               |   -   |   -   |        -         |  CRUD   |
-| AI Grading Workbench     | CRUD  | CRUD  |       CRUD       |    -    |
-| Teacher Comments         | CRUD  | CRUD  |       CRUD       | R (student-facing only) |
-| Band Rubric Config       | CRUD  | CRUD  |        R         |    -    |
-| Student Health Dashboard |   R   |   R   | R (Own Students) |    -    |
-| Billing & Subscription   | CRUD  |   R   |        -         |    -    |
+| Feature                      | Owner | Admin |     Teacher      | Student |
+| :--------------------------- | :---: | :---: | :--------------: | :-----: |
+| Center Settings              | CRUD  | CRUD  |        R         |    -    |
+| User Management              | CRUD  | CRUD  |        -         |    -    |
+| Class Scheduling             | CRUD  | CRUD  |        R         |    R    |
+| Attendance                   | CRUD  | CRUD  |       CRUD       |    R    |
+| Exercise Creation            | CRUD  | CRUD  |       CRUD       |    -    |
+| Audio Upload (Listening)     | CRUD  | CRUD  |       CRUD       |    -    |
+| Mock Test Assembly           | CRUD  | CRUD  |       CRUD       |    -    |
+| Assignment                   | CRUD  | CRUD  |       CRUD       |    -    |
+| Submission                   |   -   |   -   |        -         |  CRUD   |
+| AI Grading Workbench         | CRUD  | CRUD  |       CRUD       |    -    |
+| Teacher Comments             | CRUD  | CRUD  |       CRUD       | R (student-facing only) |
+| Band Rubric Config           | CRUD  | CRUD  |        R         |    -    |
+| Student Health Dashboard     |   R   |   R   | R (Own Students) |    -    |
+| Billing & Subscription       | CRUD  |   R   |        -         |    -    |
+| Knowledge Hub: Upload/Create | CRUD  | CRUD  |       CRUD       |    -    |
+| Knowledge Hub: View/Download | CRUD  | CRUD  |       CRUD       | R (enrolled) |
+| Knowledge Hub: Delete        | CRUD  | CRUD  |    D (own only)  |    -    |
+| Golden Samples: Manage       | CRUD  |   -   |        -         |    -    |
+| Course: Create/Edit          | CRUD  | CRUD  |        -         |    -    |
+| Course: View                 |   R   |   R   |        R         | R (enrolled) |
+| Lesson Plans: Create/Edit    | CRUD  | CRUD  |        -         |    -    |
+| Recurrence Rule: Create/Edit | CRUD  | CRUD  |        -         |    -    |
+| Session: Cancel Occurrence   | CRUD  | CRUD  | CU (assigned)    |    -    |
+| Session: Reschedule          | CRUD  | CRUD  | CU (assigned)    |    -    |
+| Session: Customize Materials | CRUD  | CRUD  | CRU (assigned)   |    -    |
+| Session: Teacher Notes       |   -   |   -   | CRUD (assigned)  |    -    |
+| Session: View Materials      |   R   |   R   |        R         | R (enrolled) |
 
 ---
 
@@ -497,3 +584,7 @@ Teachers can combine exercises into a **Mock Test** that simulates full IELTS te
 - **NFR9**: [Accessibility, WCAG 2.1 Level AA, Audit, All public-facing interfaces].
 - **NFR10**: [Usability, Keyboard-only operation, Audit, Grading Loop workflow].
 - **NFR11**: [Usability, High-contrast visual focus indicators, Audit, All interactive elements].
+
+### Storage & Upload
+
+- **NFR12**: [Storage, 50MB maximum file size, Upload validation, Knowledge Hub document uploads (PDF, DOCX, PPTX, images)].

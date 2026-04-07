@@ -5,6 +5,9 @@ inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-classlite-2026-01-16.md
   - _bmad-output/planning-artifacts/ux-design-specification.md
   - _bmad-output/planning-artifacts/prd-validation-report.md
+  - _bmad-output/planning-artifacts/epics.md
+  - _bmad-output/implementation-artifacts/8-1-methodology-guardian.md
+  - docs/data-models.md
 workflowType: "architecture"
 project_name: "classlite"
 user_name: "Ducdo"
@@ -12,6 +15,18 @@ date: "2026-01-18"
 lastStep: 8
 status: "complete"
 completedAt: "2026-01-18"
+addendum:
+  - date: "2026-04-06"
+    scope: "Knowledge Hub + Course Redesign + Session Hub (Epics 8.5, 18, 19)"
+    newModels: 10
+    phases: 3
+    reviewMethod: "Party Mode (Winston, John, Amelia, Sally)"
+  - date: "2026-04-06"
+    scope: "Session & Schedule Redesign (Epic 14)"
+    schemaChanges: "ClassSchedule +3 fields, ClassSession +3 fields"
+    newEndpoints: 1
+    modifiedEndpoints: 3
+    reviewMethod: "Party Mode (Winston, John, Quinn, Amelia)"
 ---
 
 # Architecture Decision Document
@@ -600,8 +615,683 @@ The chosen starter template and architectural patterns provide a production-read
 
 ---
 
+## Knowledge Hub, Course Redesign & Session Hub (Epics 8.5, 18, 19)
+
+_Addendum date: 2026-04-06. Extends the original architecture to cover document management, course-as-template, and session-as-teaching-hub._
+
+### Design Principles
+
+1. **Knowledge Hub is the single source of truth** for all center content — files, authored pages, and golden samples live in one library
+2. **Course is a reusable template** — lesson plans with linked materials and exercises, snapshot-copied to classes on creation
+3. **Session is the daily teaching hub** — inherits from lesson plans, customizable per session, with teacher notes
+4. **Shared tags** — one tag pool across exercises and documents for consistent discovery
+5. **Markdown for authored content** — pages, lesson plans, teacher notes all use markdown stored as Text fields
+
+### Data Architecture
+
+#### Unified Tag System
+
+Rename `ExerciseTag` → `Tag`. Shared across exercises and documents. This is a **prerequisite task** for Phase 1 — touches existing queries and the Prisma schema.
+
+```prisma
+model Tag {
+  id        String   @id @default(cuid())
+  centerId  String   @map("center_id")
+  name      String
+  color     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  center    Center @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  exercises Exercise[] // many-to-many via ExerciseTagMap
+  documents Document[] // many-to-many via DocumentTagMap
+
+  @@index([centerId])
+  @@map("tag")
+}
+```
+
+**Migration:** Rename `exercise_tag` → `tag` table, rename join table, update all service/route/test files referencing `ExerciseTag`.
+
+#### Document Model (Knowledge Hub)
+
+Replaces the `GoldenSample` model. Three document types in one polymorphic table:
+
+```prisma
+model Document {
+  id          String   @id @default(cuid())
+  centerId    String   @map("center_id")
+  type        String   // FILE | GOLDEN_SAMPLE | PAGE
+  title       String
+  description String?
+
+  // FILE fields (used when type = FILE)
+  fileUrl     String?  @map("file_url")
+  fileName    String?  @map("file_name")
+  fileSize    Int?     @map("file_size")       // bytes
+  mimeType    String?  @map("mime_type")
+
+  // PAGE fields (used when type = PAGE)
+  content     String?  @db.Text               // markdown
+
+  // GOLDEN_SAMPLE fields (used when type = GOLDEN_SAMPLE)
+  studentWork     String?  @map("student_work") @db.Text
+  teacherFeedback String?  @map("teacher_feedback") @db.Text
+  skillType       String?  @map("skill_type")   // WRITING | SPEAKING
+  isActive        Boolean  @default(true) @map("is_active")
+  sampleOrder     Int      @default(0) @map("sample_order")
+
+  uploadedById String   @map("uploaded_by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  center      Center          @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  uploadedBy  CenterMembership @relation(fields: [uploadedById], references: [id])
+  tags        Tag[]           // many-to-many via DocumentTagMap
+  courseDocuments    CourseDocument[]
+  lessonPlanDocuments LessonPlanDocument[]
+  sessionDocuments  SessionDocument[]
+
+  @@index([centerId])
+  @@index([centerId, type])
+  @@index([centerId, type, skillType])
+  @@map("document")
+}
+```
+
+**Validation: Zod discriminated union** in `packages/types` enforces type-specific required fields at the API boundary:
+
+```typescript
+export const DocumentCreateSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("FILE"),
+    title: z.string().min(1),
+    fileUrl: z.string().url(),
+    fileName: z.string(),
+    fileSize: z.number().int().positive(),
+    mimeType: z.string(),
+    description: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal("GOLDEN_SAMPLE"),
+    title: z.string().min(1),
+    studentWork: z.string().min(50),
+    teacherFeedback: z.string().min(50),
+    skillType: z.enum(["WRITING", "SPEAKING"]),
+    description: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal("PAGE"),
+    title: z.string().min(1),
+    content: z.string(),
+    description: z.string().optional(),
+  }),
+]);
+```
+
+#### Course Model (Extended)
+
+```prisma
+model Course {
+  // existing fields: id, name, description, color, centerId, createdAt, updatedAt
+  syllabus  String?  @db.Text   // markdown overview/description
+  status    String   @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
+
+  // existing relation
+  classes   Class[]
+  // new relations
+  lessonPlans     CourseLessonPlan[]
+  courseDocuments  CourseDocument[]
+  courseExercises  CourseExercise[]
+}
+```
+
+#### Course Lesson Plan
+
+```prisma
+model CourseLessonPlan {
+  id         String   @id @default(cuid())
+  centerId   String   @map("center_id")
+  courseId    String   @map("course_id")
+  title      String
+  orderIndex Int      @map("order_index")
+  content    String?  @db.Text  // markdown lesson notes/objectives
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  center    Center   @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  documents LessonPlanDocument[]
+  exercises LessonPlanExercise[]
+  sessions  ClassSession[]  // sessions that were sourced from this plan
+
+  @@index([centerId])
+  @@index([courseId, orderIndex])
+  @@map("course_lesson_plan")
+}
+
+model LessonPlanDocument {
+  id           String @id @default(cuid())
+  centerId     String @map("center_id")
+  lessonPlanId String @map("lesson_plan_id")
+  documentId   String @map("document_id")
+  orderIndex   Int    @map("order_index")
+
+  center     Center           @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  lessonPlan CourseLessonPlan @relation(fields: [lessonPlanId], references: [id], onDelete: Cascade)
+  document   Document         @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonPlanId, documentId])
+  @@index([centerId])
+  @@map("lesson_plan_document")
+}
+
+model LessonPlanExercise {
+  id           String @id @default(cuid())
+  centerId     String @map("center_id")
+  lessonPlanId String @map("lesson_plan_id")
+  exerciseId   String @map("exercise_id")
+  orderIndex   Int    @map("order_index")
+
+  center     Center           @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  lessonPlan CourseLessonPlan @relation(fields: [lessonPlanId], references: [id], onDelete: Cascade)
+  exercise   Exercise         @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonPlanId, exerciseId])
+  @@index([centerId])
+  @@map("lesson_plan_exercise")
+}
+```
+
+#### Course-Level Links (materials not tied to a specific lesson)
+
+```prisma
+model CourseDocument {
+  id         String @id @default(cuid())
+  centerId   String @map("center_id")
+  courseId    String @map("course_id")
+  documentId String @map("document_id")
+  orderIndex Int    @map("order_index")
+
+  center   Center   @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, documentId])
+  @@index([centerId])
+  @@map("course_document")
+}
+
+model CourseExercise {
+  id         String @id @default(cuid())
+  centerId   String @map("center_id")
+  courseId    String @map("course_id")
+  exerciseId String @map("exercise_id")
+  orderIndex Int    @map("order_index")
+
+  center   Center   @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, exerciseId])
+  @@index([centerId])
+  @@map("course_exercise")
+}
+```
+
+#### Session Extensions
+
+```prisma
+// ClassSession — add these fields to existing model:
+// + lessonTitle       String?  @map("lesson_title")
+// + lessonContent     String?  @map("lesson_content") @db.Text
+// + sourceLessonPlanId String? @map("source_lesson_plan_id")
+// + relation: sourceLessonPlan CourseLessonPlan? @relation(...)
+// + relations: sessionDocuments[], sessionAssignments[], teacherNotes[]
+
+model SessionDocument {
+  id         String @id @default(cuid())
+  centerId   String @map("center_id")
+  sessionId  String @map("session_id")
+  documentId String @map("document_id")
+  orderIndex Int    @map("order_index")
+
+  center   Center       @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  session  ClassSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  document Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, documentId])
+  @@index([centerId])
+  @@map("session_document")
+}
+
+model SessionAssignment {
+  id           String @id @default(cuid())
+  centerId     String @map("center_id")
+  sessionId    String @map("session_id")
+  assignmentId String @map("assignment_id")
+  type         String // ASSIGNED | DUE
+
+  center     Center       @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  session    ClassSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  assignment Assignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, assignmentId])
+  @@index([centerId])
+  @@map("session_assignment")
+}
+
+model TeacherSessionNote {
+  id        String   @id @default(cuid())
+  centerId  String   @map("center_id")
+  sessionId String   @map("session_id")
+  authorId  String   @map("author_id")
+  type      String   // PRE_SESSION | POST_SESSION
+  content   String   @db.Text  // markdown
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  center  Center           @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  session ClassSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  author  CenterMembership @relation(fields: [authorId], references: [id])
+
+  @@index([sessionId, type, createdAt])
+  @@index([centerId])
+  @@map("teacher_session_note")
+}
+```
+
+**Note:** TeacherSessionNote is **append-only** (no unique constraint on session+author+type). Multiple notes per type, ordered by `createdAt`. Teachers journal freely — pre-session prep thoughts and post-session reflections accumulate over time.
+
+### Course → Class Snapshot Logic
+
+When a class is created from a course (story 19.2):
+
+1. **Lesson Plans → Sessions:** For each `CourseLessonPlan`, if sessions already exist (generated from schedule), map lesson plans to sessions by order:
+   - Copy `title` → `ClassSession.lessonTitle`
+   - Copy `content` → `ClassSession.lessonContent`
+   - Set `ClassSession.sourceLessonPlanId` → enables provenance display ("From: Lesson 3 — Opinion Essays") and future "pull updates from template"
+   - Copy `LessonPlanDocument` entries → `SessionDocument` entries
+   - Copy `LessonPlanExercise` entries → `Assignment` records (status: OPEN)
+2. **Course-level documents** → Accessible via `class.course.courseDocuments` relation (no separate copy needed — these are general course materials, not session-specific)
+3. **All session-level copies are one-time snapshots** — editing the course or lesson plan after does not affect existing classes
+
+**Future enhancement:** Course template versioning. Track `templateVersion` on Course; when a lesson plan changes, increment version. Classes with `sourceLessonPlanId` set can compare versions and offer a "Pull updates from template" action. The current model supports this without schema changes.
+
+### GoldenSample → Document Migration
+
+**This is a dedicated story, not a side task.** Migration steps:
+
+1. Create `Document` model with all fields
+2. Data migration script: for each existing `GoldenSample` row, insert a `Document` with `type = GOLDEN_SAMPLE`, mapping all fields (`title`, `studentWork`, `teacherFeedback`, `skillType`, `isActive`, `order` → `sampleOrder`)
+3. **Keep `/api/v1/golden-samples` route prefix** as a thin facade over `DocumentService` filtered by `type = GOLDEN_SAMPLE`. Frontend AI Customization page requires minimal changes — same CRUD shape, different service underneath
+4. Update AI grading job: `getActiveByCenterAndSkill()` queries `Document WHERE type = GOLDEN_SAMPLE AND isActive = true AND skillType = ?`
+5. Drop `GoldenSample` model after migration confirmed
+6. Update `TENANTED_MODELS`: add `Document`, remove `GoldenSample`
+
+### File Storage Strategy
+
+**Provider:** Firebase Storage (GCS) — extends existing pattern from exercise uploads.
+
+**Path structure:**
+```
+centers/{centerId}/knowledge-hub/{documentId}/{originalFileName}
+centers/{centerId}/content-images/{uuid}.{ext}  // images embedded in markdown via TipTap
+```
+
+**Upload flow:**
+1. Frontend: `@fastify/multipart` receives file (max 50MB via `limits.fileSize`)
+2. Backend: buffer → GCS bucket upload → `makePublic()` → store URL on Document model
+3. Reuses existing pattern from `exercises.service.ts` (`uploadAudio`, `uploadDiagram`)
+
+**Allowed MIME types for FILE uploads:**
+- `application/pdf`
+- `application/vnd.openxmlformats-officedocument.wordprocessingml.document` (DOCX)
+- `application/vnd.openxmlformats-officedocument.presentationml.presentation` (PPTX)
+- `image/png`, `image/jpeg` (for content images)
+
+**Frontend preview strategy:**
+- **PDF:** `pdfjs-dist` (Mozilla PDF.js) — renders in-browser, no server processing
+- **DOCX/PPTX:** Download-only for MVP. Server-side conversion deferred
+- **PAGE (markdown):** Rendered client-side via the same markdown renderer used in the editor
+
+### Markdown Editor Decision
+
+**Library:** TipTap (ProseMirror-based WYSIWYG)
+
+**Rationale:**
+- WYSIWYG experience for teachers who don't know markdown syntax
+- Stores as **markdown Text field** (not ProseMirror JSON) — portable, human-readable, no format lock-in
+- Toolbar: headings, bold/italic, lists, links, image embed, code blocks
+- Used across: PAGE documents, lesson plan content, teacher session notes
+- Shared editor component in `apps/webapp/src/components/` or `packages/ui`
+
+**Caveat:** TipTap's markdown serialization is not perfectly lossless for complex formatting (nested tables, exotic layouts). For IELTS teaching content (headings, bold, lists, images) this is a non-issue. Do not promise Notion-level rich editing with a markdown storage backend.
+
+**Image handling within markdown:**
+- Images uploaded via editor are stored in GCS at `centers/{centerId}/content-images/{uuid}.{ext}`
+- Inserted as standard markdown `![alt](url)` references
+- Same upload service, different path prefix
+
+### RBAC Rules
+
+| Action | Owner | Admin | Teacher | Student |
+|--------|-------|-------|---------|---------|
+| Knowledge Hub: upload FILE/PAGE | Yes | Yes | Yes | No |
+| Knowledge Hub: view/download | Yes | Yes | Yes | Yes (if enrolled) |
+| Knowledge Hub: delete | Yes | Yes | Own only | No |
+| Golden Samples: manage | Yes | No | No | No |
+| Course: create/edit | Yes | Yes | No | No |
+| Course: view | Yes | Yes | Yes | Yes (enrolled) |
+| Lesson Plan: create/edit | Yes | Yes | No | No |
+| Session: customize materials | Yes | Yes | Assigned only | No |
+| Session: teacher notes | No | No | Assigned only | No |
+| Session: view materials + assignments | Yes | Yes | Yes | Yes (enrolled) |
+
+**Student session view** is explicitly lightweight: linked documents (viewable/downloadable) + linked assignments (with status). No teacher notes, no lesson content, no teacher customization details.
+
+### Module Structure
+
+**Backend:**
+```
+apps/backend/src/modules/
+├── knowledge-hub/                    # NEW
+│   ├── document.service.ts
+│   ├── document.controller.ts
+│   ├── document.routes.ts
+│   └── document.service.test.ts
+├── golden-samples/                   # REFACTORED → thin facade over DocumentService
+│   ├── golden-samples.routes.ts      # keeps /api/v1/golden-samples prefix
+│   └── golden-samples.routes.integration.test.ts
+├── courses/                          # EXTENDED
+│   ├── course.service.ts             # add lesson plans, template snapshot logic
+│   ├── course.controller.ts
+│   ├── course.routes.ts
+│   └── lesson-plan.service.ts        # NEW
+├── sessions/                         # EXTENDED
+│   ├── session.service.ts            # add materials, assignments
+│   └── teacher-notes.service.ts      # NEW
+```
+
+**Frontend:**
+```
+apps/webapp/src/features/
+├── knowledge-hub/                    # NEW
+│   ├── components/
+│   │   ├── DocumentList.tsx
+│   │   ├── DocumentUpload.tsx
+│   │   ├── DocumentViewer.tsx        # PDF.js viewer
+│   │   └── PageEditor.tsx            # TipTap markdown editor
+│   ├── pages/
+│   │   ├── KnowledgeHubPage.tsx
+│   │   └── DocumentDetailPage.tsx
+│   └── knowledge-hub.api.ts
+├── courses/                          # EXTENDED
+│   ├── components/
+│   │   ├── CoursePage.tsx
+│   │   ├── LessonPlanEditor.tsx
+│   │   └── CourseTemplateWizard.tsx
+│   └── courses.api.ts
+├── settings/
+│   └── pages/
+│       └── AICustomizationPage.tsx   # refactored to query Document model
+```
+
+**Shared component:**
+```
+apps/webapp/src/components/
+└── MarkdownEditor.tsx                # TipTap wrapper, reused across features
+```
+
+### Implementation Phasing
+
+**Phase 1: Knowledge Hub + Golden Sample Migration**
+- **Prerequisite:** Tag rename (`ExerciseTag` → `Tag`, update all references)
+- Document model creation (all three types)
+- File upload for FILE type (extend GCS pattern)
+- TipTap markdown editor component for PAGE type
+- Golden sample migration (dedicated story — facade route, service swap, data migration)
+- AI grading integration updated to query Document model
+- Knowledge Hub UI (list, upload, search, tag filtering, PDF preview)
+
+**Phase 2: Course Redesign**
+- Course model extensions (syllabus, status, relations)
+- CourseLessonPlan model + CRUD
+- Lesson plan editor (TipTap, link documents + exercises)
+- Course standalone page with documents, exercises, lesson plans
+- Course → Class template snapshot logic
+- CourseDocument, CourseExercise join tables
+
+**Phase 3: Session as Teaching Hub**
+- ClassSession extensions (lessonTitle, lessonContent, sourceLessonPlanId)
+- SessionDocument, SessionAssignment models
+- Lesson plan → session content inheritance on class creation
+- Teacher session notes (append-only journal, pre/post)
+- Teacher session view (rich hub: lesson content, materials, assignments, notes)
+- Student session view (lightweight: materials + assignments only)
+
+**Future (separate epic):**
+- Student personal notes with entity linking (`StudentNote`, `NoteLink`, `@mention` system)
+- Course template versioning and "pull updates" action
+- DOCX/PPTX server-side preview conversion
+
+### New Models Summary
+
+| Model | Domain | Tenanted | Purpose |
+|-------|--------|----------|---------|
+| Document | Knowledge Hub | Yes | Unified content: files, pages, golden samples |
+| Tag | Shared | Yes | Replaces ExerciseTag, shared across exercises + documents |
+| CourseLessonPlan | Course | Yes | Structured syllabus entry with linked materials |
+| LessonPlanDocument | Course | Yes | Join: lesson plan → document |
+| LessonPlanExercise | Course | Yes | Join: lesson plan → exercise |
+| CourseDocument | Course | Yes | Join: course → document (general materials) |
+| CourseExercise | Course | Yes | Join: course → exercise (general exercises) |
+| SessionDocument | Session | Yes | Join: session → document (day's materials) |
+| SessionAssignment | Session | Yes | Join: session → assignment (assigned/due) |
+| TeacherSessionNote | Session | Yes | Append-only teacher journal per session |
+
+**Total new models: 10** (plus extensions to Course and ClassSession)
+
+---
+
 **Architecture Status:** READY FOR IMPLEMENTATION ✅
 
 **Next Phase:** Begin implementation using the architectural decisions and patterns documented herein.
 
 **Document Maintenance:** Update this architecture when major technical decisions are made during implementation.
+
+---
+
+## Session & Schedule Redesign (Epic 14)
+
+_Addendum date: 2026-04-06. Extends the existing scheduling system with auto-generation from recurrence rules, exception handling, and recurrence rule updates._
+_Reviewed via Party Mode (Winston, John, Quinn, Amelia)._
+
+### Design Principles
+
+1. **Simple recurrence model** — `dayOfWeek + frequency + interval + endDate` over RFC 5545 RRules. ClassLite scheduling is straightforward (weekly/biweekly on fixed days); RRules add 40KB+ dependency and mental model complexity for zero benefit
+2. **Eager generation** — all sessions materialized up to end date on save. Max 12-month cap enforced at Zod validation. For no-end-date classes, rolling 3-month window via scheduled Inngest job
+3. **Exceptions are flagged, not separated** — `isException` flag on ClassSession with `originalStartTime`/`originalEndTime` to track what the series would have generated
+4. **Completed sessions are sacred** — `COMPLETED` status sessions are never deleted during re-generation, implicitly treated as exceptions
+5. **Update in place** — recurrence rule changes update the existing ClassSchedule with `effectiveFrom` audit trail, delete future non-exception/non-completed sessions, then re-generate
+
+### Data Architecture
+
+#### ClassSchedule Extensions
+
+Add to existing model:
+
+```prisma
+model ClassSchedule {
+  // existing: id, classId, dayOfWeek, startTime, endTime, roomName, centerId
+
+  frequency      String   @default("WEEKLY")  // WEEKLY | BIWEEKLY
+  endDate        DateTime? @map("end_date")    // null = rolling window
+  effectiveFrom  DateTime? @map("effective_from") // audit: when rule last changed
+}
+```
+
+**`frequency`** — currently lost after session creation. Storing it enables re-generation when the rule changes.
+
+**`endDate`** — determines session generation boundary. Null triggers rolling window behavior.
+
+**`effectiveFrom`** — audit metadata only. Set when rule changes; not used as logic driver.
+
+#### ClassSession Extensions
+
+Add to existing model:
+
+```prisma
+model ClassSession {
+  // existing: id, classId, scheduleId, startTime, endTime, roomName, status, centerId
+
+  isException        Boolean   @default(false) @map("is_exception")
+  originalStartTime  DateTime? @map("original_start_time")
+  originalEndTime    DateTime? @map("original_end_time")
+}
+```
+
+**`isException`** — set to `true` when a session is individually edited (time, date, room) or cancelled. Protects the session from deletion during re-generation.
+
+**`originalStartTime` / `originalEndTime`** — what the series rule would have generated for this slot. Critical for deduplication during re-generation: when checking if a slot is already occupied, check `originalStartTime` for rescheduled exceptions, not just `startTime`.
+
+**When `isException` is set:**
+- Teacher edits a single session's time/date/room → `isException = true`, `originalStartTime`/`originalEndTime` = the original generated values, `startTime`/`endTime` = new values
+- Teacher cancels a single session → `isException = true`, `status = CANCELLED`, original times preserved
+- Attendance is taken → `status = COMPLETED` (implicitly protected, no explicit flag change needed)
+
+#### Indexes
+
+```prisma
+// Add to ClassSession
+@@index([scheduleId, isException])        // fast filter during re-generation
+@@index([scheduleId, originalStartTime])  // dedup check for rescheduled exceptions
+```
+
+### Generation Logic
+
+#### Auto-Generation on Save (Story 14.1)
+
+When a ClassSchedule is created or updated with schedules + end date:
+
+1. Determine date range: `effectiveFrom` (or today) → `endDate` (or today + 3 months)
+2. Expand dates matching `dayOfWeek` + `frequency` (weekly = every matching day, biweekly = every other)
+3. For each candidate date, create `startTime`/`endTime` from schedule's HH:mm times
+4. **Dedup check:** For each candidate slot, check for existing sessions where:
+   - `scheduleId` matches AND (`startTime` = candidate OR `originalStartTime` = candidate)
+   - Skip if found (session already exists, possibly as exception)
+5. Bulk create via `createMany`
+6. Run `checkBatchConflicts()` post-generation → return conflict warnings (non-blocking)
+
+#### Rolling Window Job (No End Date)
+
+**Trigger:** Inngest cron job, runs daily at 02:00 UTC.
+
+**Logic:**
+1. Query all ClassSchedules where `endDate IS NULL`
+2. For each, find the latest generated session's date
+3. If latest session < today + 3 months, generate sessions to fill the gap
+4. Same dedup + exception-aware logic as above
+
+**Pattern:** Follows existing Inngest job conventions — `new PrismaClient()` per `step.run()`, `getTenantedClient()`, `$disconnect()` in finally.
+
+#### Re-Generation on Rule Change (Story 14.4)
+
+When a recurrence rule is updated (day, time, frequency):
+
+1. Set `effectiveFrom = now()` on ClassSchedule
+2. Delete future sessions where:
+   ```
+   scheduleId = X
+   AND startTime >= now()
+   AND isException = false
+   AND status != COMPLETED
+   ```
+3. Re-generate from updated rule (same logic as auto-generation, starting from today)
+4. **Exceptions survive:** Cancelled and rescheduled sessions are preserved
+5. Send notification to class participants via existing Inngest email pipeline
+
+**Edge case — cancelled exception after rule change:** A cancelled Tuesday session survives when the rule changes to Wednesday. It remains visible on the calendar as a cancelled historical entry. No special handling needed — it simply no longer aligns with the current series pattern, which is correct behavior.
+
+**Edge case — rescheduled exception after rule change:** A session moved from Tue to Wed survives. The new rule generates a fresh Tue session (original slot is free per dedup). The teacher now has both — intentional, since the rescheduled session was a deliberate choice. If this creates a double-booking, conflict detection surfaces it.
+
+### Lesson Plan Inheritance for Re-Generated Sessions
+
+**Problem:** The Knowledge Hub addendum defines lesson plan → session inheritance during class creation (story 19.2). Re-generated sessions are created *after* class creation.
+
+**Solution:** Extract the lesson plan mapping logic into a shared utility:
+
+```typescript
+// apps/backend/src/modules/logistics/utils/lesson-plan-mapper.ts
+export async function mapLessonPlansToSessions(
+  db: TenantedClient,
+  classId: string,
+  sessionIds: string[],  // ordered by startTime
+): Promise<void>
+```
+
+- Query `CourseLessonPlan` entries for the class's course, ordered by `orderIndex`
+- Map lesson plans to sessions by position (plan 1 → session 1, etc.)
+- Set `lessonTitle`, `lessonContent`, `sourceLessonPlanId` on each session
+- Copy `LessonPlanDocument` → `SessionDocument`, `LessonPlanExercise` → `Assignment`
+- Called both during class creation (story 19.2) and during re-generation (story 14.4)
+
+### Conflict Detection Strategy
+
+**During auto-generation:** Non-blocking. Run `checkBatchConflicts()` after bulk create. Return `{ generatedCount, sessions, conflicts: ConflictResult[] }`. Frontend displays warnings.
+
+**During single session edit/reschedule:** Blocking (existing behavior). Run `checkConflicts()` before save. Frontend shows `ConflictWarningBanner`.
+
+**No change to existing conflict detection code** — `checkBatchConflicts()` already handles room + teacher double-booking for a batch of sessions.
+
+### API Changes
+
+#### Modified Endpoints
+
+| Endpoint | Change |
+|----------|--------|
+| `POST /api/v1/logistics/schedules` | Accept `frequency`, `endDate`. Auto-generate sessions on create |
+| `PATCH /api/v1/logistics/schedules/:id` | Accept rule changes. Trigger delete-regenerate flow |
+| `PATCH /api/v1/logistics/sessions/:id` | Set `isException = true` + populate `originalStartTime`/`originalEndTime` when time/date changes |
+
+#### New Endpoints
+
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /api/v1/logistics/sessions/:id/cancel` | Cancel single occurrence (set `isException`, `status = CANCELLED`). Distinct from DELETE — preserves the record |
+
+#### Removed/Deprecated
+
+| Endpoint | Reason |
+|----------|--------|
+| `POST /api/v1/logistics/sessions/generate` | Replaced by auto-generation on schedule save. Keep for backward compat during transition, mark deprecated |
+
+### Notification Integration
+
+All Epic 14 operations feed into the existing notification pipeline:
+
+- **Session cancelled** → existing `session-cancelled.template.ts`
+- **Session rescheduled** → existing `schedule-change.template.ts`
+- **Bulk re-generation** → new template: summary email "Your schedule for [ClassName] has been updated. X sessions affected."
+- **Trigger:** `inngest.send()` from controller, same pattern as story 2.6
+
+### RBAC Rules
+
+| Action | Owner | Admin | Teacher | Student |
+|--------|-------|-------|---------|---------|
+| Create/edit recurrence rule | Yes | Yes | No | No |
+| Cancel single session | Yes | Yes | Assigned only | No |
+| Reschedule single session | Yes | Yes | Assigned only | No |
+| Edit single session (room, time) | Yes | Yes | Assigned only | No |
+| View schedule | Yes | Yes | Yes | Yes (enrolled) |
+
+### Implementation Sequence
+
+1. **Schema changes** — Add fields to ClassSchedule and ClassSession, db:push, generate
+2. **Generation logic** — Refactor `generateSessions()` with exception-aware dedup, frequency support
+3. **Exception handling** — Update `updateSession()` to set `isException` + original times
+4. **Rule change flow** — Implement delete-regenerate in schedule update endpoint
+5. **Rolling window job** — Inngest cron for no-end-date classes
+6. **Cancel endpoint** — New `POST /sessions/:id/cancel`
+7. **Lesson plan mapper** — Extract shared utility, wire into re-generation
+8. **Notification templates** — Bulk schedule change summary email
+9. **Frontend** — Scheduler UI updates (cancel vs delete, exception visual markers)

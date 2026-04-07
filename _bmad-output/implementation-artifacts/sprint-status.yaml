@@ -186,7 +186,7 @@ development_status:
   epic-8: in-progress
   8-1-methodology-guardian: done
   8-2-data-sovereignty-privacy-center: ready-for-dev
-  8-3-content-moderation-system: backlog
+  8-3-content-moderation-system: ready-for-dev
   8-4-language-preference-i18n: backlog # NEW (NFR8)
   8-5-golden-sample-management-interface: backlog # NEW
   epic-8-retrospective: optional
@@ -221,8 +221,8 @@ development_status:
   # Status: BACKLOG — Sprint N + N+1
   # Scope: Input lag, sticky toolbar, auto-scroll, post-publish, validation, placeholders, drag, edit rules, nav
   epic-12: in-progress
-  12-1-input-lag-matching-headings: review
-  12-2-input-lag-true-false-not-given: review
+  12-1-input-lag-matching-headings: done
+  12-2-input-lag-true-false-not-given: done
   12-3-sticky-toolbar: backlog
   12-4-auto-scroll-to-new-section: backlog
   12-5-stay-on-page-after-publish: backlog
