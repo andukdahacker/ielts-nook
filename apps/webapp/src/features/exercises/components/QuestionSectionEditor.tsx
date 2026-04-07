@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@workspace/ui/components/select";
 import { ChevronDown, ChevronRight, GripVertical, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { QuestionEditorFactory } from "./question-types/QuestionEditorFactory";
 
 const QUESTION_TYPES_BY_SKILL: Record<
@@ -62,6 +62,125 @@ const QUESTION_TYPES_BY_SKILL: Record<
   ],
 };
 
+// --- Memoized Question Row Component ---
+
+interface MemoizedQuestionRowProps {
+  questionId: string;
+  questionText: string;
+  questionIndex: number;
+  isExpanded: boolean;
+  options: unknown;
+  correctAnswer: unknown;
+  wordLimit?: number | null;
+  sectionType: IeltsQuestionType;
+  exerciseId?: string;
+  onToggleExpand: (questionId: string) => void;
+  onDelete: (questionId: string) => void;
+  onEditorChange: (questionId: string, options: unknown, correctAnswer: unknown, wordLimit?: number | null) => void;
+  onQuestionTextChange: (questionId: string, text: string) => void;
+}
+
+const MemoizedQuestionRow = React.memo(function QuestionRow({
+  questionId,
+  questionText,
+  questionIndex,
+  isExpanded,
+  options,
+  correctAnswer,
+  wordLimit,
+  sectionType,
+  exerciseId,
+  onToggleExpand,
+  onDelete,
+  onEditorChange,
+  onQuestionTextChange,
+}: MemoizedQuestionRowProps) {
+  // Stable onChange for QuestionEditorFactory — avoids new ref on each row render
+  const stableFactoryOnChange = useCallback(
+    (opts: unknown, ans: unknown, wl?: number | null) => onEditorChange(questionId, opts, ans, wl),
+    [questionId, onEditorChange],
+  );
+
+  return (
+    <div className="rounded border">
+      {/* Question header — click to expand */}
+      <div
+        role="button"
+        tabIndex={0}
+        className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-muted/50 cursor-pointer"
+        onClick={() => onToggleExpand(questionId)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggleExpand(questionId);
+          }
+        }}
+      >
+        {isExpanded ? (
+          <ChevronDown className="size-3 text-muted-foreground shrink-0" />
+        ) : (
+          <ChevronRight className="size-3 text-muted-foreground shrink-0" />
+        )}
+        <span className="text-sm font-medium text-muted-foreground min-w-[2rem]">
+          Q{questionIndex + 1}
+        </span>
+        <span className="flex-1 text-sm truncate">{questionText}</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-7 text-destructive hover:text-destructive shrink-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(questionId);
+          }}
+        >
+          <Trash2 className="size-3" />
+        </Button>
+      </div>
+
+      {/* Expanded inline editor */}
+      {isExpanded && (
+        <div className="px-3 pb-3 pt-1 border-t space-y-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Question Text</Label>
+            <Input
+              defaultValue={questionText}
+              onChange={(e) => onQuestionTextChange(questionId, e.target.value)}
+              className="h-8 text-sm"
+            />
+          </div>
+          <QuestionEditorFactory
+            sectionType={sectionType}
+            options={options}
+            correctAnswer={correctAnswer}
+            wordLimit={wordLimit}
+            questionId={questionId}
+            exerciseId={exerciseId}
+            onChange={stableFactoryOnChange}
+          />
+        </div>
+      )}
+    </div>
+  );
+}, (prev, next) => {
+  // Custom comparator — deep-compare object props that get new refs from TanStack Query refetch
+  return (
+    prev.questionId === next.questionId &&
+    prev.questionText === next.questionText &&
+    prev.questionIndex === next.questionIndex &&
+    prev.isExpanded === next.isExpanded &&
+    prev.sectionType === next.sectionType &&
+    prev.exerciseId === next.exerciseId &&
+    prev.wordLimit === next.wordLimit &&
+    prev.onToggleExpand === next.onToggleExpand &&
+    prev.onDelete === next.onDelete &&
+    prev.onEditorChange === next.onEditorChange &&
+    prev.onQuestionTextChange === next.onQuestionTextChange &&
+    JSON.stringify(prev.options) === JSON.stringify(next.options) &&
+    JSON.stringify(prev.correctAnswer) === JSON.stringify(next.correctAnswer)
+  );
+});
+
 interface QuestionSectionEditorProps {
   section: QuestionSection;
   skill: ExerciseSkill;
@@ -100,18 +219,23 @@ export function QuestionSectionEditor({
   const questionTypes = QUESTION_TYPES_BY_SKILL[skill] ?? [];
   const debounceTimers = useRef<Map<string, { timer: ReturnType<typeof setTimeout>; fire: () => void }>>(new Map());
 
+  // --- Stable refs for latest props (avoids stale closures in useCallback) ---
+  const stateRef = useRef({ section, onUpdateQuestion, onDeleteQuestion });
+  stateRef.current = { section, onUpdateQuestion, onDeleteQuestion };
+
   const debouncedUpdate = useCallback(
     (questionId: string, input: UpdateQuestionInput) => {
       const existing = debounceTimers.current.get(questionId);
       if (existing) clearTimeout(existing.timer);
       const fire = () => {
         debounceTimers.current.delete(questionId);
+        const { section, onUpdateQuestion } = stateRef.current;
         onUpdateQuestion(section.id, questionId, input);
       };
       const timer = setTimeout(fire, 500);
       debounceTimers.current.set(questionId, { timer, fire });
     },
-    [section.id, onUpdateQuestion],
+    [], // Stable — reads from stateRef
   );
 
   const flushPendingUpdates = useCallback(() => {
@@ -137,25 +261,44 @@ export function QuestionSectionEditor({
     setNewQuestionText("");
   };
 
-  const handleEditorChange = (
-    question: Question,
-    options: unknown,
-    correctAnswer: unknown,
-    wordLimit?: number | null,
-  ) => {
-    const input: UpdateQuestionInput = {
-      options,
-      correctAnswer,
-    };
-    if (wordLimit !== undefined) {
-      input.wordLimit = wordLimit;
-    }
-    debouncedUpdate(question.id, input);
-  };
+  // Stable callback for editor changes from MemoizedQuestionRow
+  const handleEditorChange = useCallback(
+    (questionId: string, options: unknown, correctAnswer: unknown, wordLimit?: number | null) => {
+      const input: UpdateQuestionInput = {
+        options,
+        correctAnswer,
+      };
+      if (wordLimit !== undefined) {
+        input.wordLimit = wordLimit;
+      }
+      debouncedUpdate(questionId, input);
+    },
+    [debouncedUpdate],
+  );
 
-  const toggleExpand = (questionId: string) => {
+  // Stable callback for question text changes
+  const handleQuestionTextChange = useCallback(
+    (questionId: string, text: string) => {
+      debouncedUpdate(questionId, { questionText: text });
+    },
+    [debouncedUpdate],
+  );
+
+  // Stable toggle expand callback
+  const toggleExpand = useCallback((questionId: string) => {
     setExpandedQuestionId((prev) => (prev === questionId ? null : questionId));
-  };
+  }, []);
+
+  // Stable delete callback — cancel pending debounce before deleting
+  const handleDeleteQuestion = useCallback((questionId: string) => {
+    const pending = debounceTimers.current.get(questionId);
+    if (pending) {
+      clearTimeout(pending.timer);
+      debounceTimers.current.delete(questionId);
+    }
+    const { section, onDeleteQuestion } = stateRef.current;
+    onDeleteQuestion(section.id, questionId);
+  }, []);
 
   return (
     <div className="rounded-lg border p-4 space-y-4">
@@ -283,71 +426,22 @@ export function QuestionSectionEditor({
       <div className="space-y-2">
         <Label>Questions</Label>
         {(section.questions ?? []).map((q: Question, qIdx: number) => (
-          <div key={q.id} className="rounded border">
-            {/* Question header — click to expand */}
-            <div
-              role="button"
-              tabIndex={0}
-              className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-muted/50 cursor-pointer"
-              onClick={() => toggleExpand(q.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  toggleExpand(q.id);
-                }
-              }}
-            >
-              {expandedQuestionId === q.id ? (
-                <ChevronDown className="size-3 text-muted-foreground shrink-0" />
-              ) : (
-                <ChevronRight className="size-3 text-muted-foreground shrink-0" />
-              )}
-              <span className="text-sm font-medium text-muted-foreground min-w-[2rem]">
-                Q{qIdx + 1}
-              </span>
-              <span className="flex-1 text-sm truncate">{q.questionText}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 text-destructive hover:text-destructive shrink-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteQuestion(section.id, q.id);
-                }}
-              >
-                <Trash2 className="size-3" />
-              </Button>
-            </div>
-
-            {/* Expanded inline editor */}
-            {expandedQuestionId === q.id && (
-              <div className="px-3 pb-3 pt-1 border-t space-y-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Question Text</Label>
-                  <Input
-                    defaultValue={q.questionText}
-                    onChange={(e) =>
-                      debouncedUpdate(q.id, {
-                        questionText: e.target.value,
-                      })
-                    }
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <QuestionEditorFactory
-                  sectionType={section.sectionType}
-                  options={q.options}
-                  correctAnswer={q.correctAnswer}
-                  wordLimit={q.wordLimit}
-                  questionId={q.id}
-                  exerciseId={exerciseId}
-                  onChange={(opts, ans, wl) =>
-                    handleEditorChange(q, opts, ans, wl)
-                  }
-                />
-              </div>
-            )}
-          </div>
+          <MemoizedQuestionRow
+            key={q.id}
+            questionId={q.id}
+            questionText={q.questionText}
+            questionIndex={qIdx}
+            isExpanded={expandedQuestionId === q.id}
+            options={q.options}
+            correctAnswer={q.correctAnswer}
+            wordLimit={q.wordLimit}
+            sectionType={section.sectionType}
+            exerciseId={exerciseId}
+            onToggleExpand={toggleExpand}
+            onDelete={handleDeleteQuestion}
+            onEditorChange={handleEditorChange}
+            onQuestionTextChange={handleQuestionTextChange}
+          />
         ))}
 
         {/* Add question inline */}

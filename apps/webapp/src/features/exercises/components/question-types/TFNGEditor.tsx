@@ -1,6 +1,7 @@
 import type { IeltsQuestionType } from "@workspace/types";
 import { Label } from "@workspace/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group";
+import React, { useEffect, useState } from "react";
 
 interface TFNGEditorProps {
   sectionType: IeltsQuestionType;
@@ -20,7 +21,7 @@ const DISPLAY_LABELS: Record<string, string> = {
   NO: "No",
 };
 
-export function TFNGEditor({
+export const TFNGEditor = React.memo(function TFNGEditor({
   sectionType,
   correctAnswer,
   onChange,
@@ -28,15 +29,25 @@ export function TFNGEditor({
 }: TFNGEditorProps) {
   const isYNNG = sectionType === "R4_YNNG";
   const choices = isYNNG ? YNNG_OPTIONS : TFNG_OPTIONS;
-  const selected = correctAnswer?.answer ?? "";
   const idPrefix = `tfng-${questionId}`;
+
+  // Optimistic local state for instant radio feedback (AC2)
+  const [localAnswer, setLocalAnswer] = useState(correctAnswer?.answer ?? "");
+
+  // Sync from server when prop changes
+  useEffect(() => {
+    setLocalAnswer(correctAnswer?.answer ?? "");
+  }, [correctAnswer?.answer]);
 
   return (
     <div className="space-y-2">
       <Label className="text-xs">Correct Answer</Label>
       <RadioGroup
-        value={selected}
-        onValueChange={(val) => onChange(null, { answer: val })}
+        value={localAnswer}
+        onValueChange={(val) => {
+          setLocalAnswer(val); // Instant visual feedback
+          onChange(null, { answer: val }); // Trigger debounced parent update
+        }}
         className="flex gap-4"
       >
         {choices.map((choice) => (
@@ -54,4 +65,12 @@ export function TFNGEditor({
       </RadioGroup>
     </div>
   );
-}
+}, (prev, next) => {
+  // Custom comparator: compare answer string, not object reference (safeParse creates new objects)
+  return (
+    prev.sectionType === next.sectionType &&
+    prev.correctAnswer?.answer === next.correctAnswer?.answer &&
+    prev.onChange === next.onChange &&
+    prev.questionId === next.questionId
+  );
+});

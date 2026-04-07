@@ -133,7 +133,7 @@ export function QuestionEditorFactory({
           sectionType={sectionType}
           correctAnswer={safeParse(LenientTFNGAnswer, correctAnswer)}
           questionId={questionId}
-          onChange={(opts, ans) => onChange(opts, ans)}
+          onChange={onChange}
         />
       );
 
