@@ -221,7 +221,7 @@ development_status:
   # Status: BACKLOG — Sprint N + N+1
   # Scope: Input lag, sticky toolbar, auto-scroll, post-publish, validation, placeholders, drag, edit rules, nav
   epic-12: in-progress
-  12-1-input-lag-matching-headings: ready-for-dev
+  12-1-input-lag-matching-headings: review
   12-2-input-lag-true-false-not-given: backlog
   12-3-sticky-toolbar: backlog
   12-4-auto-scroll-to-new-section: backlog

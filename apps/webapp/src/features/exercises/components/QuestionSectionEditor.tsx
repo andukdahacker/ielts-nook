@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@workspace/ui/components/select";
 import { ChevronDown, ChevronRight, GripVertical, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { QuestionEditorFactory } from "./question-types/QuestionEditorFactory";
 
 const QUESTION_TYPES_BY_SKILL: Record<
@@ -76,6 +76,7 @@ interface QuestionSectionEditorProps {
   onDeleteQuestion: (sectionId: string, questionId: string) => void;
   onRegenerate?: (sectionId: string, difficulty?: string) => void;
   dragHandleProps?: DraggableProvidedDragHandleProps | null;
+  registerFlush?: (flush: () => void) => () => void;
 }
 
 export function QuestionSectionEditor({
@@ -92,24 +93,39 @@ export function QuestionSectionEditor({
   onDeleteQuestion,
   onRegenerate,
   dragHandleProps,
+  registerFlush,
 }: QuestionSectionEditorProps) {
   const [newQuestionText, setNewQuestionText] = useState("");
   const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null);
   const questionTypes = QUESTION_TYPES_BY_SKILL[skill] ?? [];
-  const debounceTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const debounceTimers = useRef<Map<string, { timer: ReturnType<typeof setTimeout>; fire: () => void }>>(new Map());
 
   const debouncedUpdate = useCallback(
     (questionId: string, input: UpdateQuestionInput) => {
       const existing = debounceTimers.current.get(questionId);
-      if (existing) clearTimeout(existing);
-      const timer = setTimeout(() => {
+      if (existing) clearTimeout(existing.timer);
+      const fire = () => {
         debounceTimers.current.delete(questionId);
         onUpdateQuestion(section.id, questionId, input);
-      }, 500);
-      debounceTimers.current.set(questionId, timer);
+      };
+      const timer = setTimeout(fire, 500);
+      debounceTimers.current.set(questionId, { timer, fire });
     },
     [section.id, onUpdateQuestion],
   );
+
+  const flushPendingUpdates = useCallback(() => {
+    for (const [, { timer, fire }] of debounceTimers.current) {
+      clearTimeout(timer);
+      fire();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (registerFlush) {
+      return registerFlush(flushPendingUpdates);
+    }
+  }, [registerFlush, flushPendingUpdates]);
 
   const handleAddQuestion = () => {
     if (!newQuestionText.trim()) return;

@@ -372,6 +372,12 @@ export function ExerciseEditor() {
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userHasEdited = useRef(false);
   const editCountRef = useRef(0);
+  const sectionFlushCallbacks = useRef(new Set<() => void>());
+
+  const registerSectionFlush = useCallback((flush: () => void) => {
+    sectionFlushCallbacks.current.add(flush);
+    return () => { sectionFlushCallbacks.current.delete(flush); };
+  }, []);
 
   // Hooks
   const { createExercise, updateExercise, publishExercise } = useExercises(centerId);
@@ -558,6 +564,11 @@ export function ExerciseEditor() {
 
   const handleSaveDraft = async () => {
     if (!id) return;
+    // Flush any pending uncontrolled input values (e.g., un-blurred MatchingEditor fields)
+    (document.activeElement as HTMLElement)?.blur();
+    await new Promise((r) => setTimeout(r, 0));
+    // Flush all pending question-level debounce timers so mutations fire before save
+    for (const flush of sectionFlushCallbacks.current) flush();
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     const editCountAtSave = editCountRef.current;
     try {
@@ -1129,6 +1140,7 @@ export function ExerciseEditor() {
                             regenerateSection({ sectionId, difficulty: difficulty as "easy" | "medium" | "hard" | undefined });
                           } : undefined}
                           dragHandleProps={provided.dragHandleProps}
+                          registerFlush={registerSectionFlush}
                         />
                       </div>
                     )}
