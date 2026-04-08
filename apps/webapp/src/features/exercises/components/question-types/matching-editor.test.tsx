@@ -656,6 +656,99 @@ describe("duplicate target values", () => {
   });
 });
 
+// --- Story 12-6: Duplicate heading warnings ---
+describe("duplicate heading warnings", () => {
+  it("shows warning when two paragraphs share the same heading (R9)", () => {
+    render(
+      <MatchingEditor
+        sectionType="R9_MATCHING_HEADINGS"
+        options={{
+          sourceItems: ["A", "B"],
+          targetItems: ["Same Heading", "Different Heading", "Extra"],
+        }}
+        correctAnswer={{ matches: { A: "Same Heading", B: "Same Heading" } }}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/A, B.*share the same heading.*Same Heading/)).toBeInTheDocument();
+  });
+
+  it("lists all paragraph keys when three share a heading", () => {
+    render(
+      <MatchingEditor
+        sectionType="R9_MATCHING_HEADINGS"
+        options={{
+          sourceItems: ["A", "B", "C"],
+          targetItems: ["Heading X", "Extra 1", "Extra 2", "Extra 3"],
+        }}
+        correctAnswer={{ matches: { A: "Heading X", B: "Heading X", C: "Heading X" } }}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/A, B, C/)).toBeInTheDocument();
+  });
+
+  it("warning disappears when matches are non-duplicate", () => {
+    const { rerender } = render(
+      <MatchingEditor
+        sectionType="R9_MATCHING_HEADINGS"
+        options={{
+          sourceItems: ["A", "B"],
+          targetItems: ["H1", "H2", "H3"],
+        }}
+        correctAnswer={{ matches: { A: "H1", B: "H1" } }}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/share the same heading/)).toBeInTheDocument();
+
+    rerender(
+      <MatchingEditor
+        sectionType="R9_MATCHING_HEADINGS"
+        options={{
+          sourceItems: ["A", "B"],
+          targetItems: ["H1", "H2", "H3"],
+        }}
+        correctAnswer={{ matches: { A: "H1", B: "H2" } }}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/share the same heading/)).not.toBeInTheDocument();
+  });
+
+  it("does not show warning for R10 with duplicate target values", () => {
+    render(
+      <MatchingEditor
+        sectionType="R10_MATCHING_INFORMATION"
+        options={{
+          sourceItems: ["Statement 1", "Statement 2"],
+          targetItems: ["A", "B", "C"],
+        }}
+        correctAnswer={{ matches: { "0": "A", "1": "A" } }}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/share the same heading/)).not.toBeInTheDocument();
+  });
+
+  it("warning container has role='status' for a11y", () => {
+    render(
+      <MatchingEditor
+        sectionType="R9_MATCHING_HEADINGS"
+        options={{
+          sourceItems: ["A", "B"],
+          targetItems: ["Dup", "Other", "Extra"],
+        }}
+        correctAnswer={{ matches: { A: "Dup", B: "Dup" } }}
+        onChange={vi.fn()}
+      />,
+    );
+    const status = screen.getByRole("status");
+    expect(status).toBeInTheDocument();
+    expect(status).toHaveTextContent(/share the same heading/);
+  });
+});
+
 // --- D4: Empty source value preserves match ---
 describe("empty source value match preservation", () => {
   it("clearing a source value preserves match under index fallback key", () => {

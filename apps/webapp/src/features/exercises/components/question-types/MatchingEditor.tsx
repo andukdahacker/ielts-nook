@@ -380,6 +380,19 @@ export function MatchingEditor({
     });
   }, [sourceItems, targetItems, matches, config?.sourceKeyType]);
 
+  // Detect duplicate heading assignments (R9 only — sourceKeyType "value")
+  const duplicateMatches = useMemo(() => {
+    if (config?.sourceKeyType !== "value") return [];
+    const headingToSources: Record<string, string[]> = {};
+    for (const [key, val] of Object.entries(matches)) {
+      if (!val) continue;
+      (headingToSources[val] ??= []).push(key);
+    }
+    return Object.entries(headingToSources)
+      .filter(([, sources]) => sources.length > 1)
+      .map(([heading, paragraphs]) => ({ heading, paragraphs }));
+  }, [matches, config?.sourceKeyType]);
+
   if (!config) return null;
 
   const needsMoreTargets = targetItems.length <= sourceItems.length;
@@ -504,6 +517,17 @@ export function MatchingEditor({
           </span>
         )}
       </div>
+
+      {/* Duplicate heading warning (R9 only, non-blocking) */}
+      {duplicateMatches.length > 0 && (
+        <div className="space-y-1" role="status">
+          {duplicateMatches.map(({ heading, paragraphs }) => (
+            <p key={heading} className="text-xs text-amber-600">
+              Paragraphs {paragraphs.join(", ")} share the same heading: &quot;{heading}&quot;
+            </p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
