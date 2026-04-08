@@ -43,11 +43,13 @@ import {
   ArrowLeft,
   Check,
   ChevronDown,
+  ClipboardList,
   Eye,
   Loader2,
   Plus,
   Save,
   Settings,
+  Upload,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
@@ -66,6 +68,7 @@ import { TimerSettingsEditor } from "./TimerSettingsEditor";
 import { DocumentUploadPanel } from "./DocumentUploadPanel";
 import { AIGenerationPanel } from "./AIGenerationPanel";
 import { useAIGeneration } from "../hooks/use-ai-generation";
+import { CreateAssignmentDialog } from "@/features/assignments/components/create-assignment-dialog";
 import { useBreadcrumbOverrides } from "@/core/context/breadcrumb-context";
 import type { Exercise } from "@workspace/types";
 
@@ -370,6 +373,7 @@ export function ExerciseEditor() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [showPreview, setShowPreview] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [deleteSectionId, setDeleteSectionId] = useState<string | null>(null);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userHasEdited = useRef(false);
@@ -637,7 +641,6 @@ export function ExerciseEditor() {
       await handleSaveDraft();
       await publishExercise(id);
       toast.success("Exercise published");
-      navigate("../exercises", { replace: true });
     } catch {
       toast.error("Failed to publish exercise");
     } finally {
@@ -878,13 +881,22 @@ export function ExerciseEditor() {
               <Eye className="sm:mr-2 size-4" />
               <span className="hidden sm:inline">Preview</span>
             </Button>
-            <Button variant="outline" size="sm" aria-label="Save Draft" onClick={handleSaveDraft}>
-              <Save className="sm:mr-2 size-4" />
-              <span className="hidden sm:inline">Save Draft</span>
-            </Button>
             {exercise?.status === "DRAFT" && (
-              <Button size="sm" onClick={() => setShowPublishDialog(true)}>
-                Publish
+              <Button variant="outline" size="sm" aria-label="Save Draft" onClick={handleSaveDraft}>
+                <Save className="sm:mr-2 size-4" />
+                <span className="hidden sm:inline">Save Draft</span>
+              </Button>
+            )}
+            {exercise?.status === "DRAFT" && (
+              <Button size="sm" aria-label="Publish" onClick={() => setShowPublishDialog(true)}>
+                <Upload className="sm:mr-2 size-4" />
+                <span className="hidden sm:inline">Publish</span>
+              </Button>
+            )}
+            {exercise?.status === "PUBLISHED" && (
+              <Button size="sm" aria-label="Assign to Class" onClick={() => setShowAssignDialog(true)}>
+                <ClipboardList className="sm:mr-2 size-4" />
+                <span className="hidden sm:inline">Assign</span>
               </Button>
             )}
           </div>
@@ -1249,6 +1261,12 @@ export function ExerciseEditor() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CreateAssignmentDialog
+        open={showAssignDialog}
+        onOpenChange={setShowAssignDialog}
+        defaultExerciseId={id}
+      />
       </div>
     </div>
   );
