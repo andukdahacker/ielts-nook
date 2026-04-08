@@ -375,6 +375,8 @@ export function ExerciseEditor() {
   const userHasEdited = useRef(false);
   const editCountRef = useRef(0);
   const sectionFlushCallbacks = useRef(new Set<() => void>());
+  const newSectionIdRef = useRef<string | null>(null);
+  const [scrollTrigger, setScrollTrigger] = useState(0);
 
   const registerSectionFlush = useCallback((flush: () => void) => {
     sectionFlushCallbacks.current.add(flush);
@@ -417,7 +419,23 @@ export function ExerciseEditor() {
   // Reset edit tracking when switching to a different exercise
   useEffect(() => {
     userHasEdited.current = false;
+    newSectionIdRef.current = null;
   }, [id]);
+
+  // Auto-scroll to newly created section — triggered by scrollTrigger state,
+  // which is set AFTER the ref, guaranteeing the effect sees the correct ID.
+  useEffect(() => {
+    if (!newSectionIdRef.current) return;
+    const sectionId = newSectionIdRef.current;
+    const timer = setTimeout(() => {
+      const el = document.querySelector(`[data-section-id="${CSS.escape(sectionId)}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      newSectionIdRef.current = null;
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [scrollTrigger]);
 
   // Load existing exercise data — only on initial load or when user hasn't edited.
   // This prevents refetches (e.g. after auto-section creation) from overwriting user edits.
@@ -630,10 +648,12 @@ export function ExerciseEditor() {
   const handleAddSection = async () => {
     if (!id || !selectedSkill) return;
     try {
-      await createSection({
+      const newSection = await createSection({
         sectionType: DEFAULT_SECTION_TYPE[selectedSkill],
         orderIndex: exercise?.sections?.length ?? 0,
       });
+      newSectionIdRef.current = newSection.id;
+      setScrollTrigger(c => c + 1);
     } catch {
       toast.error("Failed to add section");
     }
@@ -1014,8 +1034,18 @@ export function ExerciseEditor() {
             exerciseId={id}
             hasPassage={!!passageContent?.trim()}
             existingSections={exercise?.sections ?? []}
-            onGenerationComplete={() => {
-              refetchExercise();
+            onGenerationComplete={async () => {
+              try {
+                const prevSectionIds = new Set(exercise?.sections?.map(s => s.id) ?? []);
+                const { data: updated } = await refetchExercise();
+                const firstNew = updated?.sections?.find(s => !prevSectionIds.has(s.id));
+                if (firstNew) {
+                  newSectionIdRef.current = firstNew.id;
+                  setScrollTrigger(c => c + 1);
+                }
+              } catch {
+                toast.error("Failed to refresh sections");
+              }
             }}
           />
         </div>
@@ -1137,6 +1167,7 @@ export function ExerciseEditor() {
                       <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}
+                        data-section-id={section.id}
                       >
                         <QuestionSectionEditor
                           section={section}
