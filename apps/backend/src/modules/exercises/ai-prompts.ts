@@ -236,6 +236,7 @@ export function getPromptAndSchema(
     case "R13_NOTE_TABLE_FLOWCHART":
       return {
         systemPrompt: buildPrompt(
+          // Storage format uses ___N___ markers; frontend renders them as (N) for display
           "Generate Note/Table/Flowchart Completion. Choose a subFormat (note, table, or flowchart). Create a structure string with blanks (marked as ___1___, ___2___, etc.). Provide answers for each blank with accepted variants. Set an appropriate word limit.",
           count, difficulty,
         ),

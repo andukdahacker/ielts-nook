@@ -27,10 +27,11 @@ interface WordBankEditorProps {
   ) => void;
 }
 
+import { extractBlankNumbers } from "./blank-format";
+
 /** Parse ___N___ blanks from summary text */
 function parseBlanks(text: string): string[] {
-  const matches = text.match(/___(\d+)___/g) ?? [];
-  return matches.map((m) => m.replace(/___/g, ""));
+  return extractBlankNumbers(text);
 }
 
 export function WordBankEditor({
@@ -87,12 +88,12 @@ export function WordBankEditor({
     <div className="space-y-3">
       <div className="space-y-1.5">
         <Label className="text-xs">
-          Summary Text (use ___1___, ___2___, etc. for blanks)
+          Summary Text (use ___1___, ___2___, etc. for blanks — displayed as (1), (2))
         </Label>
         <Textarea
           defaultValue={summaryText}
           onChange={(e) => update(wordBank, e.target.value, blanks)}
-          placeholder="The main factor affecting urban growth was ___1___. This led to increased ___2___ in cities."
+          placeholder="The main factor affecting urban growth was ___1___. This led to increased ___2___ in cities. (Blanks display as (1), (2) in preview)"
           className="text-sm min-h-[80px]"
         />
       </div>

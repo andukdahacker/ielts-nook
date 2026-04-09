@@ -5,6 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
+import { splitByBlanks, formatBlankDisplay } from "../../../exercises/components/question-types/blank-format";
 
 interface WordBankInputProps {
   questionIndex: number;
@@ -25,7 +26,7 @@ export function WordBankInput({
   const wordBank = options?.wordBank ?? [];
   const blanks = (value as { blanks?: Record<string, string> })?.blanks ?? {};
 
-  const parts = summaryText.split(/___(\d+)___/);
+  const parts = splitByBlanks(summaryText);
 
   const handleBlankChange = (blankNum: string, word: string) => {
     onChange({ blanks: { ...blanks, [blankNum]: word } });
@@ -48,7 +49,7 @@ export function WordBankInput({
                 disabled={readOnly}
               >
                 <SelectTrigger className="h-8 text-xs w-[160px] inline-flex">
-                  <SelectValue placeholder={`Blank ${blankNum}`} />
+                  <SelectValue placeholder={formatBlankDisplay(blankNum)} />
                 </SelectTrigger>
                 <SelectContent>
                   {wordBank.map((word, wi) => (

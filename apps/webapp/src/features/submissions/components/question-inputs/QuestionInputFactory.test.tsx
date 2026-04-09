@@ -281,8 +281,8 @@ describe("NoteTableFlowchartInput", () => {
       />,
     );
     expect(screen.getByText(/The answer is/)).toBeInTheDocument();
-    const inputs = screen.getAllByPlaceholderText("...");
-    expect(inputs).toHaveLength(2);
+    expect(screen.getByPlaceholderText("(1)")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("(2)")).toBeInTheDocument();
   });
 
   it("shows fallback when no structure", () => {

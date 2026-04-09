@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group
 import { Plus, Trash2 } from "lucide-react";
 import { AnswerVariantManager } from "./AnswerVariantManager";
 import { safeParseJson } from "./utils";
+import { BLANK_PATTERN, extractBlankNumbers } from "./blank-format";
 
 type SubFormat = "note" | "table" | "flowchart";
 
@@ -45,12 +46,9 @@ interface FlowchartStructure {
   steps: string[];
 }
 
-const BLANK_REGEX = /___(\d+)___/g;
-
 /** Parse ___N___ blanks from text, filtering empty IDs (H3 fix) */
 function parseBlanks(text: string): string[] {
-  const matches = [...text.matchAll(BLANK_REGEX)];
-  return matches.map((m) => m[1]).filter((id) => id.length > 0);
+  return extractBlankNumbers(text);
 }
 
 
@@ -259,7 +257,7 @@ function NoteEditor({
   return (
     <div className="space-y-1.5">
       <Label className="text-xs">
-        Structured Text (use ___1___, ___2___, etc. for blanks)
+        Structured Text (use ___1___, ___2___, etc. for blanks — displayed as (1), (2))
       </Label>
       <Textarea
         defaultValue={structure}
@@ -320,7 +318,7 @@ function TableEditor({
   const toggleCellBlank = (rowIndex: number, colIndex: number) => {
     const newRows = rows.map((row) => [...row]);
     const cell = newRows[rowIndex][colIndex];
-    if (/___\d+___/.test(cell)) {
+    if (BLANK_PATTERN.test(cell)) {
       // Convert blank back to empty text
       newRows[rowIndex][colIndex] = "";
     } else {
@@ -385,7 +383,7 @@ function TableEditor({
             {rows.map((row, ri) => (
               <tr key={ri}>
                 {row.map((cell, ci) => {
-                  const isBlank = /___\d+___/.test(cell);
+                  const isBlank = BLANK_PATTERN.test(cell);
                   return (
                     <td key={ci} className="border p-1">
                       {isBlank ? (
@@ -484,7 +482,7 @@ function FlowchartEditor({
   return (
     <div className="space-y-1.5">
       <Label className="text-xs">
-        Flowchart Steps (use ___1___, ___2___, etc. for blanks)
+        Flowchart Steps (use ___1___, ___2___, etc. for blanks — displayed as (1), (2))
       </Label>
       <div className="space-y-0">
         {steps.map((step, i) => (
@@ -498,7 +496,7 @@ function FlowchartEditor({
                 <Input
                   defaultValue={step}
                   onBlur={(e) => updateStep(i, e.target.value)}
-                  placeholder="Step text with ___1___ blanks..."
+                  placeholder="Step text with ___1___ blanks (displayed as (1))..."
                   className="h-6 text-xs border-0 shadow-none bg-transparent"
                 />
                 {steps.length > 1 && (

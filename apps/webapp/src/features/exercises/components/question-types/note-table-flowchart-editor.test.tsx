@@ -154,7 +154,7 @@ describe("NoteTableFlowchartPreview", () => {
       />,
     );
     expect(screen.getByText("Topic")).toBeInTheDocument();
-    expect(screen.getByText("2w")).toBeInTheDocument();
+    expect(screen.getByText("(1)")).toBeInTheDocument();
   });
 
   it("renders table preview", () => {
@@ -174,7 +174,7 @@ describe("NoteTableFlowchartPreview", () => {
     expect(screen.getByText("Country")).toBeInTheDocument();
     expect(screen.getByText("Pop")).toBeInTheDocument();
     expect(screen.getByText("Vietnam")).toBeInTheDocument();
-    expect(screen.getByText("3w")).toBeInTheDocument();
+    expect(screen.getByText("(1)")).toBeInTheDocument();
   });
 
   it("renders flowchart preview", () => {
@@ -189,7 +189,8 @@ describe("NoteTableFlowchartPreview", () => {
       />,
     );
     expect(screen.getByText("Seeds in")).toBeInTheDocument();
-    expect(screen.getAllByText("2w")).toHaveLength(2);
+    expect(screen.getByText("(1)")).toBeInTheDocument();
+    expect(screen.getByText("(2)")).toBeInTheDocument();
   });
 
   it("renders empty state when options is null", () => {

@@ -1,3 +1,5 @@
+import { splitByBlanks, formatBlankDisplay } from "./blank-format";
+
 interface WordBankPreviewProps {
   questionIndex: number;
   options: {
@@ -13,7 +15,7 @@ export function WordBankPreview({
   const summaryText = options?.summaryText ?? "";
 
   // Split text by ___N___ blanks and interleave with blank indicators
-  const parts = summaryText.split(/___(\d+)___/);
+  const parts = splitByBlanks(summaryText);
 
   return (
     <div className="space-y-2">
@@ -27,9 +29,9 @@ export function WordBankPreview({
           return (
             <span
               key={idx}
-              className="inline-flex items-end justify-center min-w-[6rem] mx-1 pb-0.5 border-b-2 border-foreground/40"
+              className="inline-flex items-center justify-center mx-1 font-medium text-primary"
             >
-              <span className="text-[10px] text-muted-foreground/60">{part}</span>
+              {formatBlankDisplay(part)}
             </span>
           );
         })}

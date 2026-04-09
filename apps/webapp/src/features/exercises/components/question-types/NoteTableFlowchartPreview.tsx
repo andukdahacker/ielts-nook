@@ -1,6 +1,5 @@
-import { Badge } from "@workspace/ui/components/badge";
-import { Input } from "@workspace/ui/components/input";
 import { safeParseJson } from "./utils";
+import { splitByBlanks, formatBlankDisplay } from "./blank-format";
 
 interface NoteTableFlowchartOptions {
   subFormat: "note" | "table" | "flowchart";
@@ -49,31 +48,15 @@ export function NoteTableFlowchartPreview({
         <span className="font-medium">{questionIndex + 1}.</span> {questionText}
       </p>
       {subFormat === "note" && (
-        <NotePreviewContent structure={structure} wordLimit={wordLimit ?? 2} />
+        <NotePreviewContent structure={structure} />
       )}
       {subFormat === "table" && (
-        <TablePreviewContent structure={structure} wordLimit={wordLimit ?? 2} />
+        <TablePreviewContent structure={structure} />
       )}
       {subFormat === "flowchart" && (
-        <FlowchartPreviewContent structure={structure} wordLimit={wordLimit ?? 2} />
+        <FlowchartPreviewContent structure={structure} />
       )}
     </div>
-  );
-}
-
-/** Render inline blank with word limit badge */
-function BlankInput({ wordLimit }: { wordLimit: number }) {
-  return (
-    <span className="inline-flex items-center gap-1 mx-1">
-      <Input
-        disabled
-        placeholder="..."
-        className="h-6 w-24 text-xs inline-flex"
-      />
-      <Badge variant="outline" className="text-[9px] h-4 shrink-0">
-        {wordLimit}w
-      </Badge>
-    </span>
   );
 }
 
@@ -81,10 +64,8 @@ function BlankInput({ wordLimit }: { wordLimit: number }) {
 
 function NotePreviewContent({
   structure,
-  wordLimit,
 }: {
   structure: string;
-  wordLimit: number;
 }) {
   // Render line by line to preserve indentation/hierarchy
   const lines = structure.split("\n");
@@ -92,14 +73,14 @@ function NotePreviewContent({
   return (
     <div className="pl-4 space-y-0.5">
       {lines.map((line, lineIdx) => {
-        const lineParts = line.split(/___(\d+)___/);
+        const lineParts = splitByBlanks(line);
         return (
           <div key={lineIdx} className="text-sm whitespace-pre-wrap">
             {lineParts.map((part, partIdx) => {
               if (partIdx % 2 === 0) {
                 return <span key={partIdx}>{part}</span>;
               }
-              return <BlankInput key={partIdx} wordLimit={wordLimit} />;
+              return <span key={partIdx} className="font-medium text-primary">{formatBlankDisplay(part)}</span>;
             })}
           </div>
         );
@@ -112,10 +93,8 @@ function NotePreviewContent({
 
 function TablePreviewContent({
   structure,
-  wordLimit,
 }: {
   structure: string;
-  wordLimit: number;
 }) {
   const parsed = safeParseJson<TableStructure>(structure);
   if (!parsed) {
@@ -144,14 +123,16 @@ function TablePreviewContent({
           {rows.map((row, ri) => (
             <tr key={ri}>
               {row.map((cell, ci) => {
-                const isBlank = /___\d+___/.test(cell);
+                const parts = splitByBlanks(cell);
                 return (
                   <td key={ci} className="border p-2">
-                    {isBlank ? (
-                      <BlankInput wordLimit={wordLimit} />
-                    ) : (
-                      <span className="text-sm">{cell}</span>
-                    )}
+                    <span className="text-sm">
+                      {parts.map((part, partIdx) =>
+                        partIdx % 2 === 0
+                          ? <span key={partIdx}>{part}</span>
+                          : <span key={partIdx} className="font-medium text-primary">{formatBlankDisplay(part)}</span>
+                      )}
+                    </span>
                   </td>
                 );
               })}
@@ -167,10 +148,8 @@ function TablePreviewContent({
 
 function FlowchartPreviewContent({
   structure,
-  wordLimit,
 }: {
   structure: string;
-  wordLimit: number;
 }) {
   const parsed = safeParseJson<FlowchartStructure>(structure);
   if (!parsed) {
@@ -186,7 +165,7 @@ function FlowchartPreviewContent({
   return (
     <div className="pl-4 flex flex-col items-start">
       {steps.map((step, i) => {
-        const parts = step.split(/___(\d+)___/);
+        const parts = splitByBlanks(step);
         return (
           <div key={i} className="flex flex-col items-center">
             <div className="border rounded px-3 py-2 bg-muted/30 min-w-[200px]">
@@ -195,7 +174,7 @@ function FlowchartPreviewContent({
                   if (partIdx % 2 === 0) {
                     return <span key={partIdx}>{part}</span>;
                   }
-                  return <BlankInput key={partIdx} wordLimit={wordLimit} />;
+                  return <span key={partIdx} className="font-medium text-primary">{formatBlankDisplay(part)}</span>;
                 })}
               </div>
             </div>
