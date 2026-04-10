@@ -26,7 +26,13 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from "@hello-pangea/dnd";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import {
@@ -69,7 +75,7 @@ export function MockTestEditor() {
 
   const { mockTest, isLoading, refetch } = useMockTest(centerId, id);
   const { publishMockTest } = useMockTests(centerId);
-  const { updateSection, addExercise, removeExercise } =
+  const { updateSection, addExercise, removeExercise, reorderExercises } =
     useMockTestSections(id);
 
   const [selectorOpen, setSelectorOpen] = useState(false);
@@ -77,6 +83,11 @@ export function MockTestEditor() {
   const [selectedSectionId, setSelectedSectionId] = useState("");
   const [timeLimits, setTimeLimits] = useState<Record<string, string>>({});
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+
+  // Ref to avoid stale closure in handleDragEnd during concurrent mutations
+  const sectionsRef = useRef(mockTest?.sections);
+  sectionsRef.current = mockTest?.sections;
 
   // Sync time limit inputs from mock test data
   useEffect(() => {
@@ -110,6 +121,31 @@ export function MockTestEditor() {
       }
     },
     [timeLimits, updateSection],
+  );
+
+  const handleDragEnd = useCallback(
+    async (result: DropResult) => {
+      if (!result.destination) return;
+      if (result.source.index === result.destination.index) return;
+      const sectionId = result.source.droppableId;
+      const section = sectionsRef.current?.find((s) => s.id === sectionId);
+      if (!section?.exercises) return;
+      const items = Array.from(section.exercises);
+      const [moved] = items.splice(result.source.index, 1);
+      items.splice(result.destination.index, 0, moved);
+      setIsReordering(true);
+      try {
+        await reorderExercises({
+          sectionId,
+          exerciseIds: items.map((se) => se.exerciseId),
+        });
+      } catch {
+        toast.error("Failed to reorder exercises");
+      } finally {
+        setIsReordering(false);
+      }
+    },
+    [reorderExercises],
   );
 
   const handleAddExercise = useCallback(
@@ -275,6 +311,71 @@ export function MockTestEditor() {
                   <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-md">
                     No exercises added yet. Click &quot;Add Exercise&quot; to start.
                   </div>
+                ) : mockTest.status === "DRAFT" ? (
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <Droppable droppableId={section.id}>
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className="space-y-2"
+                        >
+                          {section.exercises.map((se, idx) => (
+                            <Draggable key={se.id} draggableId={se.id} index={idx} isDragDisabled={isReordering}>
+                              {(provided) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  className="flex items-center gap-3 rounded-md border p-3"
+                                >
+                                  <div
+                                    {...provided.dragHandleProps}
+                                    className="cursor-grab"
+                                  >
+                                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                  </div>
+                                  <span className="text-sm font-mono text-muted-foreground w-6">
+                                    {idx + 1}.
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium truncate">
+                                      {se.exercise?.title ?? "Unknown"}
+                                    </div>
+                                    <div className="flex gap-2 mt-1">
+                                      <Badge variant="outline" className="text-xs">
+                                        {se.exercise
+                                          ? getQuestionCount(se.exercise)
+                                          : 0}{" "}
+                                        questions
+                                      </Badge>
+                                      {se.exercise?.bandLevel && (
+                                        <Badge variant="secondary" className="text-xs">
+                                          Band {se.exercise.bandLevel}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                      handleRemoveExercise(
+                                        section.id,
+                                        se.exerciseId,
+                                      )
+                                    }
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
                 ) : (
                   <div className="space-y-2">
                     {section.exercises.map((se, idx) => (
@@ -282,7 +383,6 @@ export function MockTestEditor() {
                         key={se.id}
                         className="flex items-center gap-3 rounded-md border p-3"
                       >
-                        <GripVertical className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm font-mono text-muted-foreground w-6">
                           {idx + 1}.
                         </span>
@@ -304,20 +404,6 @@ export function MockTestEditor() {
                             )}
                           </div>
                         </div>
-                        {mockTest.status === "DRAFT" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() =>
-                              handleRemoveExercise(
-                                section.id,
-                                se.exerciseId,
-                              )
-                            }
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
                       </div>
                     ))}
                   </div>

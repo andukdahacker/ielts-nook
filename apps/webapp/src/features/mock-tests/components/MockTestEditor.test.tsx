@@ -1,7 +1,29 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import { describe, it, vi, expect, beforeEach } from "vitest";
 import { MockTestEditor } from "./MockTestEditor";
 import { BrowserRouter } from "react-router";
+
+// Mock @hello-pangea/dnd to capture onDragEnd for testing
+const dndMock = vi.hoisted(() => ({
+  onDragEnd: null as ((result: unknown) => void) | null,
+}));
+
+vi.mock("@hello-pangea/dnd", () => ({
+  DragDropContext: ({ onDragEnd, children }: { onDragEnd: (result: unknown) => void; children: React.ReactNode }) => {
+    dndMock.onDragEnd = onDragEnd;
+    return <div data-testid="drag-drop-context">{children}</div>;
+  },
+  Droppable: ({ children, droppableId }: { children: (provided: unknown, snapshot: unknown) => React.ReactNode; droppableId: string }) =>
+    children(
+      { innerRef: () => {}, droppableProps: { "data-rbd-droppable-id": droppableId }, placeholder: null },
+      { isDraggingOver: false },
+    ),
+  Draggable: ({ children }: { children: (provided: unknown, snapshot: unknown) => React.ReactNode }) =>
+    children(
+      { innerRef: () => {}, draggableProps: {}, dragHandleProps: {} },
+      { isDragging: false },
+    ),
+}));
 
 // Mock auth context
 vi.mock("@/features/auth/auth-context", () => ({
@@ -64,6 +86,20 @@ const mockSections = [
           status: "PUBLISHED",
           bandLevel: "6.0",
           sections: [{ id: "s1", sectionType: "SECTION_1", questions: [{ id: "q1" }, { id: "q2" }] }],
+        },
+      },
+      {
+        id: "se-2",
+        sectionId: "sec-1",
+        exerciseId: "ex-2",
+        orderIndex: 1,
+        exercise: {
+          id: "ex-2",
+          title: "Listening Exercise 2",
+          skill: "LISTENING",
+          status: "PUBLISHED",
+          bandLevel: "7.0",
+          sections: [{ id: "s2", sectionType: "SECTION_2", questions: [{ id: "q3" }] }],
         },
       },
     ],
@@ -318,5 +354,120 @@ describe("MockTestEditor", () => {
     expect(
       screen.getByText('No exercises added yet. Click "Add Exercise" to start.'),
     ).toBeInTheDocument();
+  });
+
+  it("renders drag handles with cursor-grab class for DRAFT mock tests", () => {
+    mockUseMockTest.mockReturnValue({
+      mockTest: defaultMockTest,
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <BrowserRouter>
+        <MockTestEditor />
+      </BrowserRouter>,
+    );
+
+    // DRAFT mock test should have functional drag handles with cursor-grab
+    const grabHandles = document.querySelectorAll(".cursor-grab");
+    expect(grabHandles.length).toBeGreaterThan(0);
+
+    // Both exercises should be rendered
+    expect(screen.getByText("Listening Exercise 1")).toBeInTheDocument();
+    expect(screen.getByText("Listening Exercise 2")).toBeInTheDocument();
+  });
+
+  it("does not render DragDropContext for PUBLISHED mock tests", () => {
+    mockUseMockTest.mockReturnValue({
+      mockTest: { ...defaultMockTest, status: "PUBLISHED" },
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <BrowserRouter>
+        <MockTestEditor />
+      </BrowserRouter>,
+    );
+
+    // PUBLISHED mock test should NOT have cursor-grab drag handles
+    const grabHandles = document.querySelectorAll(".cursor-grab");
+    expect(grabHandles.length).toBe(0);
+
+    // Exercises should still render
+    expect(screen.getByText("Listening Exercise 1")).toBeInTheDocument();
+    expect(screen.getByText("Listening Exercise 2")).toBeInTheDocument();
+  });
+
+  it("calls reorderExercises when drag ends with new position", async () => {
+    const mockReorderExercises = vi.fn().mockResolvedValue(undefined);
+    const mockRefetch = vi.fn();
+    mockUseMockTestSections.mockReturnValue({
+      updateSection: vi.fn(),
+      addExercise: vi.fn(),
+      removeExercise: vi.fn(),
+      reorderExercises: mockReorderExercises,
+    });
+
+    mockUseMockTest.mockReturnValue({
+      mockTest: defaultMockTest,
+      isLoading: false,
+      refetch: mockRefetch,
+    });
+
+    render(
+      <BrowserRouter>
+        <MockTestEditor />
+      </BrowserRouter>,
+    );
+
+    // DragDropContext should have captured the onDragEnd callback
+    expect(dndMock.onDragEnd).toBeTruthy();
+
+    // Simulate dragging exercise from index 0 to index 1
+    await act(async () => {
+      dndMock.onDragEnd!({
+        source: { droppableId: "sec-1", index: 0 },
+        destination: { droppableId: "sec-1", index: 1 },
+      });
+    });
+
+    // reorderExercises should be called with swapped order: ex-2 first, ex-1 second
+    expect(mockReorderExercises).toHaveBeenCalledWith({
+      sectionId: "sec-1",
+      exerciseIds: ["ex-2", "ex-1"],
+    });
+  });
+
+  it("does not call reorderExercises when dropped in same position", async () => {
+    const mockReorderExercises = vi.fn().mockResolvedValue(undefined);
+    mockUseMockTestSections.mockReturnValue({
+      updateSection: vi.fn(),
+      addExercise: vi.fn(),
+      removeExercise: vi.fn(),
+      reorderExercises: mockReorderExercises,
+    });
+
+    mockUseMockTest.mockReturnValue({
+      mockTest: defaultMockTest,
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <BrowserRouter>
+        <MockTestEditor />
+      </BrowserRouter>,
+    );
+
+    await act(async () => {
+      dndMock.onDragEnd!({
+        source: { droppableId: "sec-1", index: 0 },
+        destination: { droppableId: "sec-1", index: 0 },
+      });
+    });
+
+    expect(mockReorderExercises).not.toHaveBeenCalled();
   });
 });
