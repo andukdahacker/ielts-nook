@@ -4,6 +4,7 @@ import { cn } from "@workspace/ui/lib/utils";
 
 interface WritingInputProps {
   questionText: string;
+  writingPrompt?: string | null;
   questionIndex: number;
   wordCountMin?: number | null;
   wordCountMax?: number | null;
@@ -21,6 +22,7 @@ function countWords(text: string): number {
 
 export function WritingInput({
   questionText,
+  writingPrompt,
   questionIndex,
   wordCountMin,
   wordCountMax,
@@ -37,7 +39,7 @@ export function WritingInput({
   return (
     <div className="space-y-3">
       <p className="text-sm">
-        <span className="font-medium">{questionIndex + 1}.</span> {questionText}
+        <span className="font-medium">{questionIndex + 1}.</span> {writingPrompt ?? questionText}
       </p>
       <Textarea
         value={text}

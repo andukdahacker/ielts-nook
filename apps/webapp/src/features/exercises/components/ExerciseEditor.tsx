@@ -326,6 +326,7 @@ function ExercisePreview({
                 questionIndex={qIdx}
                 speakingPrepTime={isSpeaking ? speakingPrepTime : undefined}
                 speakingTime={isSpeaking ? speakingTime : undefined}
+                writingPrompt={isWriting ? writingPrompt : undefined}
               />
             ))}
           </div>
@@ -990,6 +991,14 @@ export function ExerciseEditor() {
             onWordCountModeChange={(v) => { setWordCountMode(v); userHasEdited.current = true; editCountRef.current++; }}
             onSampleResponseChange={(v) => { setSampleResponse(v); userHasEdited.current = true; editCountRef.current++; }}
             onShowSampleAfterGradingChange={(v) => { setShowSampleAfterGrading(v); userHasEdited.current = true; editCountRef.current++; }}
+            onSectionTypeChange={(v) => {
+              const sectionId = exercise?.sections?.[0]?.id;
+              if (sectionId) {
+                handleUpdateSection(sectionId, { sectionType: v });
+              }
+              userHasEdited.current = true;
+              editCountRef.current++;
+            }}
           />
         </div>
       )}
@@ -1211,8 +1220,9 @@ export function ExerciseEditor() {
 
         {(exercise?.sections?.length ?? 0) === 0 && (
           <div className="text-center py-8 text-muted-foreground rounded-md border border-dashed">
-            No question sections yet. Click &ldquo;Add Section&rdquo; to start
-            building questions.
+            {isWriting
+              ? "Writing section is being created…"
+              : <>No question sections yet. Click &ldquo;Add Section&rdquo; to start building questions.</>}
           </div>
         )}
       </div>

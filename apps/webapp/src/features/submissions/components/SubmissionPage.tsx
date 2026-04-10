@@ -38,6 +38,7 @@ interface FlatQuestion {
   sectionInstructions: string | null;
   speakingPrepTime?: number | null;
   speakingTime?: number | null;
+  writingPrompt?: string | null;
 }
 
 export function SubmissionPage() {
@@ -128,6 +129,8 @@ export function SubmissionPage() {
     const sections = exercise.sections as Array<Record<string, unknown>> | undefined;
     if (!sections) return [];
 
+    const writingPrompt = (exercise.writingPrompt as string) || null;
+
     const result: FlatQuestion[] = [];
     for (const section of sections) {
       const sectionType = section.sectionType as IeltsQuestionType;
@@ -147,6 +150,7 @@ export function SubmissionPage() {
           sectionInstructions,
           speakingPrepTime,
           speakingTime,
+          writingPrompt,
         });
       }
     }
@@ -453,6 +457,7 @@ export function SubmissionPage() {
               questionType: currentQuestion.sectionType,
               options: currentQuestion.options,
               wordLimit: currentQuestion.wordLimit,
+              writingPrompt: currentQuestion.writingPrompt,
             }}
             questionIndex={currentIndex}
             value={answers[currentQuestion.id] ?? null}

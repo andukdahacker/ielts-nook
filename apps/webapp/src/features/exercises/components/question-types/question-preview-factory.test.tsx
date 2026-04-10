@@ -263,6 +263,42 @@ describe("QuestionPreviewFactory", () => {
     expect(screen.getByText("Test question")).toBeInTheDocument();
   });
 
+  it("displays writingPrompt instead of questionText when provided for Writing types", () => {
+    render(
+      <QuestionPreviewFactory
+        sectionType="W1_TASK1_ACADEMIC"
+        question={baseQuestion}
+        questionIndex={0}
+        writingPrompt="Describe the chart below"
+      />,
+    );
+    expect(screen.getByText("Describe the chart below")).toBeInTheDocument();
+    expect(screen.queryByText("Test question")).not.toBeInTheDocument();
+  });
+
+  it("falls back to questionText when writingPrompt is not provided for Writing types", () => {
+    render(
+      <QuestionPreviewFactory
+        sectionType="W1_TASK1_ACADEMIC"
+        question={baseQuestion}
+        questionIndex={0}
+      />,
+    );
+    expect(screen.getByText("Test question")).toBeInTheDocument();
+  });
+
+  it("displays empty writingPrompt (empty string) instead of falling back to questionText", () => {
+    render(
+      <QuestionPreviewFactory
+        sectionType="W1_TASK1_ACADEMIC"
+        question={baseQuestion}
+        questionIndex={0}
+        writingPrompt=""
+      />,
+    );
+    expect(screen.queryByText("Test question")).not.toBeInTheDocument();
+  });
+
   // --- S1/S2/S3 Speaking question type preview wiring ---
 
   it("renders S1_PART1_QA preview with question text and record prompt", () => {

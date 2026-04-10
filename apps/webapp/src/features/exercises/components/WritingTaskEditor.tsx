@@ -19,8 +19,21 @@ import {
   useStimulusUpload,
   useStimulusDelete,
 } from "../hooks/use-stimulus-upload";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
 import { WritingRubricDisplay } from "./WritingRubricDisplay";
 import type { IeltsQuestionType } from "@workspace/types";
+
+const WRITING_TASK_TYPES: { value: IeltsQuestionType; label: string }[] = [
+  { value: "W1_TASK1_ACADEMIC", label: "Task 1 - Academic" },
+  { value: "W2_TASK1_GENERAL", label: "Task 1 - General Training" },
+  { value: "W3_TASK2_ESSAY", label: "Task 2 - Essay" },
+];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_TYPES = ".png,.jpg,.jpeg,.svg";
@@ -49,6 +62,7 @@ interface WritingTaskEditorProps {
   onWordCountModeChange: (value: string) => void;
   onSampleResponseChange: (value: string) => void;
   onShowSampleAfterGradingChange: (value: boolean) => void;
+  onSectionTypeChange?: (value: IeltsQuestionType) => void;
 }
 
 function getTaskType(
@@ -77,6 +91,7 @@ export function WritingTaskEditor({
   onWordCountModeChange,
   onSampleResponseChange,
   onShowSampleAfterGradingChange,
+  onSectionTypeChange,
 }: WritingTaskEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useStimulusUpload();
@@ -156,6 +171,28 @@ export function WritingTaskEditor({
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
         Writing Task Settings
       </h3>
+
+      {/* Task Type Selector */}
+      {onSectionTypeChange && (
+        <div className="space-y-2">
+          <Label>Task Type</Label>
+          <Select
+            value={sectionType ?? "W1_TASK1_ACADEMIC"}
+            onValueChange={(v) => onSectionTypeChange(v as IeltsQuestionType)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {WRITING_TASK_TYPES.map((qt) => (
+                <SelectItem key={qt.value} value={qt.value}>
+                  {qt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Writing Prompt */}
       <div className="space-y-2">

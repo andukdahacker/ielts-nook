@@ -16,6 +16,7 @@ interface QuestionForInput {
   questionType: string;
   options: unknown;
   wordLimit: number | null;
+  writingPrompt?: string | null;
 }
 
 interface QuestionInputFactoryProps {
@@ -132,6 +133,7 @@ export function QuestionInputFactory({
       return (
         <WritingInput
           questionText={question.questionText}
+          writingPrompt={question.writingPrompt}
           questionIndex={questionIndex}
           wordCountMin={sectionType === "W3_TASK2_ESSAY" ? 250 : 150}
           wordCountMax={null}

@@ -73,6 +73,7 @@ interface MemoizedQuestionRowProps {
   correctAnswer: unknown;
   wordLimit?: number | null;
   sectionType: IeltsQuestionType;
+  skill: ExerciseSkill;
   exerciseId?: string;
   onToggleExpand: (questionId: string) => void;
   onDelete: (questionId: string) => void;
@@ -89,6 +90,7 @@ const MemoizedQuestionRow = React.memo(function QuestionRow({
   correctAnswer,
   wordLimit,
   sectionType,
+  skill,
   exerciseId,
   onToggleExpand,
   onDelete,
@@ -141,14 +143,16 @@ const MemoizedQuestionRow = React.memo(function QuestionRow({
       {/* Expanded inline editor */}
       {isExpanded && (
         <div className="px-3 pb-3 pt-1 border-t space-y-3">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Question Text</Label>
-            <Input
-              defaultValue={questionText}
-              onChange={(e) => onQuestionTextChange(questionId, e.target.value)}
-              className="h-8 text-sm"
-            />
-          </div>
+          {skill !== "WRITING" && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Question Text</Label>
+              <Input
+                defaultValue={questionText}
+                onChange={(e) => onQuestionTextChange(questionId, e.target.value)}
+                className="h-8 text-sm"
+              />
+            </div>
+          )}
           <QuestionEditorFactory
             sectionType={sectionType}
             options={options}
@@ -170,6 +174,7 @@ const MemoizedQuestionRow = React.memo(function QuestionRow({
     prev.questionIndex === next.questionIndex &&
     prev.isExpanded === next.isExpanded &&
     prev.sectionType === next.sectionType &&
+    prev.skill === next.skill &&
     prev.exerciseId === next.exerciseId &&
     prev.wordLimit === next.wordLimit &&
     prev.onToggleExpand === next.onToggleExpand &&
@@ -301,36 +306,39 @@ export function QuestionSectionEditor({
   }, []);
 
   return (
-    <div className="rounded-lg border p-4 space-y-4">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <div {...dragHandleProps} className="cursor-grab">
-            <GripVertical className="size-4 text-muted-foreground" />
+    <div className={`${skill !== "WRITING" ? "rounded-lg border p-4 " : ""}space-y-4`}>
+      {skill !== "WRITING" && (
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <div {...dragHandleProps} className="cursor-grab">
+              <GripVertical className="size-4 text-muted-foreground" />
+            </div>
+            <h4 className="font-semibold">Section {index + 1}</h4>
           </div>
-          <h4 className="font-semibold">Section {index + 1}</h4>
-        </div>
-        <div className="flex items-center gap-1">
-          {onRegenerate && (
+          <div className="flex items-center gap-1">
+            {onRegenerate && (
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Regenerate this section with AI"
+                onClick={() => onRegenerate(section.id)}
+              >
+                <RefreshCw className="size-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
-              title="Regenerate this section with AI"
-              onClick={() => onRegenerate(section.id)}
+              className="text-destructive hover:text-destructive"
+              onClick={() => onDeleteSection(section.id)}
             >
-              <RefreshCw className="size-4" />
+              <Trash2 className="size-4" />
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-destructive hover:text-destructive"
-            onClick={() => onDeleteSection(section.id)}
-          >
-            <Trash2 className="size-4" />
-          </Button>
+          </div>
         </div>
-      </div>
+      )}
 
+      {skill !== "WRITING" && (
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>Question Type</Label>
@@ -421,6 +429,7 @@ export function QuestionSectionEditor({
           </div>
         )}
       </div>
+      )}
 
       {/* Questions list */}
       <div className="space-y-2">
@@ -436,6 +445,7 @@ export function QuestionSectionEditor({
             correctAnswer={q.correctAnswer}
             wordLimit={q.wordLimit}
             sectionType={section.sectionType}
+            skill={skill}
             exerciseId={exerciseId}
             onToggleExpand={toggleExpand}
             onDelete={handleDeleteQuestion}
@@ -445,6 +455,7 @@ export function QuestionSectionEditor({
         ))}
 
         {/* Add question inline */}
+        {skill !== "WRITING" && (
         <div className="flex items-center gap-2">
           <Input
             value={newQuestionText}
@@ -468,6 +479,7 @@ export function QuestionSectionEditor({
             Add
           </Button>
         </div>
+        )}
       </div>
     </div>
   );
