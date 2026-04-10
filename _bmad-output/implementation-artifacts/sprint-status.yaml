@@ -69,7 +69,7 @@
 #   - Epic 8: Added 8.4-8.5 (i18n, golden sample UI)
 
 generated: 2026-01-29
-last_updated: 2026-04-10 # Story 12-9 ready-for-dev
+last_updated: 2026-04-10 # Story 12-10 in-progress
 project: classlite
 project_key: classlite
 tracking_system: file-system
@@ -229,8 +229,8 @@ development_status:
   12-6-matching-headings-duplicate-warning: done
   12-7-blank-placeholder-format: done
   12-8-rename-categories-to-features: done
-  12-9-writing-exercise-remove-redundant-fields: review
-  12-10-correct-answer-discoverability: backlog
+  12-9-writing-exercise-remove-redundant-fields: done
+  12-10-correct-answer-discoverability: review
   12-11-mock-test-drag-fix: backlog
   12-12-edit-after-publish-before-submissions-only: backlog
   12-13-section-navigation-for-long-exercises: backlog

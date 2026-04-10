@@ -18,9 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
-import { ChevronDown, ChevronRight, GripVertical, Plus, RefreshCw, Trash2 } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { AlertCircle, CheckCircle2, ChevronDown, ChevronRight, GripVertical, Plus, RefreshCw, Trash2 } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { QuestionEditorFactory } from "./question-types/QuestionEditorFactory";
+import { getAnswerCompletionStatus } from "./question-types/answer-status";
 
 const QUESTION_TYPES_BY_SKILL: Record<
   ExerciseSkill,
@@ -61,6 +62,7 @@ const QUESTION_TYPES_BY_SKILL: Record<
     { value: "S3_PART3_DISCUSSION", label: "Part 3 - Discussion" },
   ],
 };
+
 
 // --- Memoized Question Row Component ---
 
@@ -103,6 +105,11 @@ const MemoizedQuestionRow = React.memo(function QuestionRow({
     [questionId, onEditorChange],
   );
 
+  const answerStatus = useMemo(
+    () => getAnswerCompletionStatus(sectionType, correctAnswer, options),
+    [sectionType, correctAnswer, options],
+  );
+
   return (
     <div className="rounded border">
       {/* Question header — click to expand */}
@@ -126,6 +133,8 @@ const MemoizedQuestionRow = React.memo(function QuestionRow({
         <span className="text-sm font-medium text-muted-foreground min-w-[2rem]">
           Q{questionIndex + 1}
         </span>
+        {answerStatus === "complete" && <CheckCircle2 className="size-3 text-green-600 shrink-0" aria-label="Answers complete" data-testid="answer-complete" />}
+        {answerStatus === "incomplete" && <AlertCircle className="size-3 text-amber-500 shrink-0" aria-label="Answers incomplete" data-testid="answer-incomplete" />}
         <span className="flex-1 text-sm truncate">{questionText}</span>
         <Button
           variant="ghost"

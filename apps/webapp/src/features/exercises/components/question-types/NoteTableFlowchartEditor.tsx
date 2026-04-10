@@ -5,10 +5,11 @@ import { Label } from "@workspace/ui/components/label";
 import { Badge } from "@workspace/ui/components/badge";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group";
-import { Plus, Trash2 } from "lucide-react";
+import { AlertCircle, KeyRound, Plus, Trash2 } from "lucide-react";
 import { AnswerVariantManager } from "./AnswerVariantManager";
 import { safeParseJson } from "./utils";
 import { BLANK_PATTERN, extractBlankNumbers } from "./blank-format";
+import { isBlankAnswered } from "./answer-status";
 
 type SubFormat = "note" | "table" | "flowchart";
 
@@ -165,7 +166,16 @@ export function NoteTableFlowchartEditor({
       {/* Answer assignment panel */}
       {blankIds.length > 0 && (
         <div className="space-y-3">
-          <Label className="text-xs">Answer Assignment</Label>
+          <div className="flex items-center gap-1.5">
+            <KeyRound className="size-4 text-primary" />
+            <Label className="text-primary font-semibold">Correct Answers</Label>
+            {blankIds.some((id) => !isBlankAnswered(blanks[id])) && (
+              <span className="inline-flex items-center gap-1 text-xs text-amber-500" data-testid="ntf-incomplete-warning">
+                <AlertCircle className="size-3" />
+                Some blanks need answers
+              </span>
+            )}
+          </div>
           {blankIds.map((id) => {
             const rawBlank = blanks[id];
             // Handle both old flat format (string) and new structured format

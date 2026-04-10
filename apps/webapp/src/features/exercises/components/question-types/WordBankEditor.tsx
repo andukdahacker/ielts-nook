@@ -10,8 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
-import { Plus, X } from "lucide-react";
+import { AlertCircle, KeyRound, Plus, X } from "lucide-react";
 import { useState } from "react";
+import { isBlankAnswered } from "./answer-status";
 
 interface WordBankEditorProps {
   options: {
@@ -143,7 +144,16 @@ export function WordBankEditor({
 
       {blankNumbers.length > 0 && (
         <div className="space-y-1.5">
-          <Label className="text-xs">Blank Assignments</Label>
+          <div className="flex items-center gap-1.5">
+            <KeyRound className="size-4 text-primary" />
+            <Label className="text-primary font-semibold">Correct Answers</Label>
+            {blankNumbers.some((num) => !isBlankAnswered(blanks[num])) && (
+              <span className="inline-flex items-center gap-1 text-xs text-amber-500" data-testid="wb-incomplete-warning">
+                <AlertCircle className="size-3" />
+                Some blanks need answers
+              </span>
+            )}
+          </div>
           <div className="space-y-1">
             {blankNumbers.map((num) => (
               <div key={num} className="flex items-center gap-2">

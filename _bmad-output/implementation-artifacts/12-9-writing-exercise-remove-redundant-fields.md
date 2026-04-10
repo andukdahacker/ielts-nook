@@ -1,6 +1,6 @@
 # Story 12.9: Writing Exercise — Remove Redundant Fields
 
-Status: review
+Status: done
 
 ## Story
 
