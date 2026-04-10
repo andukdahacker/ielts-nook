@@ -1,5 +1,5 @@
 import type { IeltsQuestionType } from "@workspace/types";
-import type { MatchingSectionType } from "./MatchingEditor";
+import { MATCHING_CONFIGS, type MatchingSectionType } from "./MatchingEditor";
 import {
   Select,
   SelectContent,
@@ -7,14 +7,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
-
-const PREVIEW_LABELS: Record<MatchingSectionType, { sourceLabel: string; targetLabel: string }> = {
-  R9_MATCHING_HEADINGS: { sourceLabel: "Paragraph", targetLabel: "heading" },
-  R10_MATCHING_INFORMATION: { sourceLabel: "Statement", targetLabel: "paragraph" },
-  R11_MATCHING_FEATURES: { sourceLabel: "Item", targetLabel: "feature" },
-  R12_MATCHING_SENTENCE_ENDINGS: { sourceLabel: "Sentence", targetLabel: "ending" },
-  L3_MATCHING: { sourceLabel: "Item", targetLabel: "option" },
-};
 
 interface MatchingPreviewProps {
   sectionType: IeltsQuestionType;
@@ -34,9 +26,9 @@ export function MatchingPreview({
 }: MatchingPreviewProps) {
   const sourceItems = options?.sourceItems ?? [];
   const targetItems = options?.targetItems ?? [];
-  const labels = PREVIEW_LABELS[sectionType as MatchingSectionType];
+  const config = MATCHING_CONFIGS[sectionType as MatchingSectionType];
 
-  if (!labels) return null;
+  if (!config) return null;
 
   // M1 fix: show message when no items configured
   if (sourceItems.length === 0) {
@@ -66,7 +58,7 @@ export function MatchingPreview({
             <span className="text-sm flex-1">{item}</span>
             <Select disabled>
               <SelectTrigger className="h-7 text-xs w-[180px]">
-                <SelectValue placeholder={`Select ${labels.targetLabel}...`} />
+                <SelectValue placeholder={`Select ${config.previewTargetLabel}...`} />
               </SelectTrigger>
               <SelectContent>
                 {targetItems.map((target, ti) => (

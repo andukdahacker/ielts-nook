@@ -23,6 +23,7 @@ export type MatchingSectionType =
 interface MatchingConfig {
   sourceLabel: string;
   targetLabel: string;
+  previewTargetLabel: string;
   sourcePlaceholder: string;
   targetPlaceholder: string;
   sourceKeyType: "value" | "index";
@@ -32,6 +33,7 @@ export const MATCHING_CONFIGS: Record<MatchingSectionType, MatchingConfig> = {
   R9_MATCHING_HEADINGS: {
     sourceLabel: "Paragraphs",
     targetLabel: "Headings",
+    previewTargetLabel: "heading",
     sourcePlaceholder: "e.g., A",
     targetPlaceholder: "e.g., The impact of climate change",
     sourceKeyType: "value",
@@ -39,6 +41,7 @@ export const MATCHING_CONFIGS: Record<MatchingSectionType, MatchingConfig> = {
   R10_MATCHING_INFORMATION: {
     sourceLabel: "Statements",
     targetLabel: "Paragraphs",
+    previewTargetLabel: "paragraph",
     sourcePlaceholder: "e.g., a reference to the size of...",
     targetPlaceholder: "e.g., A",
     sourceKeyType: "index",
@@ -46,6 +49,7 @@ export const MATCHING_CONFIGS: Record<MatchingSectionType, MatchingConfig> = {
   R11_MATCHING_FEATURES: {
     sourceLabel: "Items",
     targetLabel: "Features",
+    previewTargetLabel: "feature",
     sourcePlaceholder: "e.g., Dr. Smith",
     targetPlaceholder: "e.g., Supports Theory X",
     sourceKeyType: "index",
@@ -53,6 +57,7 @@ export const MATCHING_CONFIGS: Record<MatchingSectionType, MatchingConfig> = {
   R12_MATCHING_SENTENCE_ENDINGS: {
     sourceLabel: "Sentence Beginnings",
     targetLabel: "Sentence Endings",
+    previewTargetLabel: "ending",
     sourcePlaceholder: "e.g., The research team discovered that",
     targetPlaceholder: "e.g., climate change accelerated.",
     sourceKeyType: "index",
@@ -60,6 +65,7 @@ export const MATCHING_CONFIGS: Record<MatchingSectionType, MatchingConfig> = {
   L3_MATCHING: {
     sourceLabel: "Items",
     targetLabel: "Options",
+    previewTargetLabel: "option",
     sourcePlaceholder: "e.g., Speaker 1",
     targetPlaceholder: "e.g., Supports renewable energy",
     sourceKeyType: "index",
