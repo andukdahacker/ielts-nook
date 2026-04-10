@@ -218,7 +218,7 @@ export function getPromptAndSchema(
     case "R11_MATCHING_FEATURES":
       return {
         systemPrompt: buildPrompt(
-          "Generate Matching Features questions. Items must be matched to categories/people/features from the passage. sourceItems = items to match, targetItems = categories. Provide correct matches.",
+          "Generate Matching Features questions. Items must be matched to features/people/findings from the passage. sourceItems = items to match, targetItems = features. Provide correct matches.",
           count, difficulty,
         ),
         schema: MatchingOutputSchema,

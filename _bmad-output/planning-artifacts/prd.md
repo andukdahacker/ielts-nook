@@ -381,7 +381,7 @@ This section defines all supported IELTS question types that the Exercise Builde
 |:---|:-----|:------------|:-----------|:--------------|:-----------------|
 | **R9** | Matching Headings | Match headings to paragraphs | Drag-drop or dropdown per paragraph | Heading letter per paragraph | Exact match |
 | **R10** | Matching Information | Match statements to paragraphs | Dropdown per statement | Paragraph letter | Exact match |
-| **R11** | Matching Features | Match items to categories | Dropdown per item | Category letter | Exact match |
+| **R11** | Matching Features | Match items to features | Dropdown per item | Feature letter | Exact match |
 | **R12** | Matching Sentence Endings | Connect sentence beginnings to endings | Dropdown or drag-drop | Ending letter | Exact match |
 
 #### Auto-Gradable Types (MVP Priority: Low - Phase 2)

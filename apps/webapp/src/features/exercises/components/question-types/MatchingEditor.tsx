@@ -45,7 +45,7 @@ export const MATCHING_CONFIGS: Record<MatchingSectionType, MatchingConfig> = {
   },
   R11_MATCHING_FEATURES: {
     sourceLabel: "Items",
-    targetLabel: "Categories",
+    targetLabel: "Features",
     sourcePlaceholder: "e.g., Dr. Smith",
     targetPlaceholder: "e.g., Supports Theory X",
     sourceKeyType: "index",

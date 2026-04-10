@@ -11,7 +11,7 @@ import {
 const PREVIEW_LABELS: Record<MatchingSectionType, { sourceLabel: string; targetLabel: string }> = {
   R9_MATCHING_HEADINGS: { sourceLabel: "Paragraph", targetLabel: "heading" },
   R10_MATCHING_INFORMATION: { sourceLabel: "Statement", targetLabel: "paragraph" },
-  R11_MATCHING_FEATURES: { sourceLabel: "Item", targetLabel: "category" },
+  R11_MATCHING_FEATURES: { sourceLabel: "Item", targetLabel: "feature" },
   R12_MATCHING_SENTENCE_ENDINGS: { sourceLabel: "Sentence", targetLabel: "ending" },
   L3_MATCHING: { sourceLabel: "Item", targetLabel: "option" },
 };

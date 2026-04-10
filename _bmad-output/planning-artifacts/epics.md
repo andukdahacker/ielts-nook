@@ -509,7 +509,7 @@ This document defines the high-level Epics and granular User Stories for ClassLi
 
 - **AC1: Matching Headings (R9):** Teacher creates list of headings (more than paragraphs). Links each paragraph to correct heading. Student sees drag-drop or dropdown per paragraph.
 - **AC2: Matching Information (R10):** Teacher creates statements and links each to a paragraph letter. Student matches statements to paragraphs.
-- **AC3: Matching Features (R11):** Teacher creates items (e.g., researchers) and categories (e.g., findings). Maps items to categories. Student sees dropdowns.
+- **AC3: Matching Features (R11):** Teacher creates items (e.g., researchers) and features (e.g., findings). Maps items to features. Student sees dropdowns.
 - **AC4: Matching Sentence Endings (R12):** Teacher creates sentence beginnings and endings (more endings than beginnings). Links correct pairs. Student completes sentences.
 - **AC5: Distractor Management:** For all matching types, teacher can add extra options (distractors) that aren't correct answers.
 

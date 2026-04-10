@@ -66,7 +66,7 @@ describe("MatchingEditor", () => {
       />,
     );
     expect(screen.getByText("Items")).toBeInTheDocument();
-    expect(screen.getByText("Categories")).toBeInTheDocument();
+    expect(screen.getByText("Features")).toBeInTheDocument();
   });
 
   it("renders labels for R12_MATCHING_SENTENCE_ENDINGS", () => {
@@ -533,7 +533,7 @@ describe("MatchingPreview", () => {
     expect(screen.getByText("Statement 1")).toBeInTheDocument();
   });
 
-  it("renders R11 preview with items", () => {
+  it("renders R11 preview with items and 'Select feature...' placeholder", () => {
     render(
       <MatchingPreview
         sectionType="R11_MATCHING_FEATURES"
@@ -546,6 +546,8 @@ describe("MatchingPreview", () => {
     );
     expect(screen.getByText("Dr. Smith")).toBeInTheDocument();
     expect(screen.getByText("Prof. Jones")).toBeInTheDocument();
+    const placeholders = screen.getAllByText("Select feature...");
+    expect(placeholders).toHaveLength(2);
   });
 
   it("renders R12 preview with sentence beginnings", () => {

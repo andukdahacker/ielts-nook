@@ -69,7 +69,7 @@
 #   - Epic 8: Added 8.4-8.5 (i18n, golden sample UI)
 
 generated: 2026-01-29
-last_updated: 2026-04-08 # Story 12-7 review
+last_updated: 2026-04-09 # Story 12-8 review
 project: classlite
 project_key: classlite
 tracking_system: file-system
@@ -228,7 +228,7 @@ development_status:
   12-5-stay-on-page-after-publish: done
   12-6-matching-headings-duplicate-warning: done
   12-7-blank-placeholder-format: review
-  12-8-rename-categories-to-features: backlog
+  12-8-rename-categories-to-features: review
   12-9-writing-exercise-remove-redundant-fields: backlog
   12-10-correct-answer-discoverability: backlog
   12-11-mock-test-drag-fix: backlog

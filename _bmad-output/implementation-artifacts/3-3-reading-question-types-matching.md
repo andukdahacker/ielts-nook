@@ -12,7 +12,7 @@ so that my students can practice paragraph matching, feature matching, and sente
 
 1. **AC1: Matching Headings (R9)** - When section type is R9_MATCHING_HEADINGS, teacher creates a list of headings (more headings than paragraphs as distractors). Teacher links each paragraph letter (A, B, C...) to the correct heading. Student preview shows a dropdown per paragraph to select a heading. Auto-grade: exact match per paragraph.
 2. **AC2: Matching Information (R10)** - When section type is R10_MATCHING_INFORMATION, teacher creates statement items and links each to a paragraph letter. Student preview shows a dropdown per statement to select a paragraph. Auto-grade: exact match per statement.
-3. **AC3: Matching Features (R11)** - When section type is R11_MATCHING_FEATURES, teacher creates items (e.g., researchers, dates) and categories (e.g., findings, theories). Teacher maps each item to a category. Student preview shows a dropdown per item to select a category. Auto-grade: exact match per item.
+3. **AC3: Matching Features (R11)** - When section type is R11_MATCHING_FEATURES, teacher creates items (e.g., researchers, dates) and features (e.g., findings, theories). Teacher maps each item to a feature. Student preview shows a dropdown per item to select a feature. Auto-grade: exact match per item.
 4. **AC4: Matching Sentence Endings (R12)** - When section type is R12_MATCHING_SENTENCE_ENDINGS, teacher creates sentence beginnings and a list of endings (more endings than beginnings as distractors). Teacher links each beginning to its correct ending. Student preview shows a dropdown per sentence beginning to select an ending. Auto-grade: exact match per beginning.
 5. **AC5: Distractor Management** - For all matching types (R9-R12), teacher can add extra options (distractors) that are not correct answers. The number of options must exceed the number of items to match (enforced in editor UI with validation message).
 
@@ -21,7 +21,7 @@ so that my students can practice paragraph matching, feature matching, and sente
 ### Backend Tasks
 
 - [x] **Task 1: Add Unified Matching Zod Schemas** (AC: #1-5)
-  - [x] 1.1 Add `MatchingOptionsSchema` to `packages/types/src/exercises.ts` — `{ sourceItems: string[], targetItems: string[] }` where `sourceItems` are the items being matched (paragraphs/statements/items/beginnings) and `targetItems` are the options to match against (headings/paragraphs/categories/endings, including distractors). Both arrays require `.min(1)`.
+  - [x] 1.1 Add `MatchingOptionsSchema` to `packages/types/src/exercises.ts` — `{ sourceItems: string[], targetItems: string[] }` where `sourceItems` are the items being matched (paragraphs/statements/items/beginnings) and `targetItems` are the options to match against (headings/paragraphs/features/endings, including distractors). Both arrays require `.min(1)`.
   - [x] 1.2 Add `MatchingAnswerSchema` — `{ matches: Record<string, string> }` mapping source item index (0-based string) to the selected target item text. For R9 specifically, keys are paragraph letters (A, B, C) instead of indices.
   - [x] 1.3 Add R9-R12 entries to `QuestionOptionsSchema` discriminated union (after line 171, before closing bracket). All four types use the same `MatchingOptionsSchema` and `MatchingAnswerSchema`.
   - [x] 1.4 Add unit tests for new schemas in `packages/types/src/exercises.test.ts` — valid and invalid inputs for each R9-R12 type, including empty arrays, missing fields.
@@ -36,7 +36,7 @@ so that my students can practice paragraph matching, feature matching, and sente
   - [x] 3.1 Create `apps/webapp/src/features/exercises/components/question-types/MatchingEditor.tsx` — A **single shared editor** for all R9-R12 types, parameterized by `sectionType`
   - [x] 3.2 **R9 Mode (MATCHING_HEADINGS):** Left column = paragraph letter list (manually entered by teacher, e.g. A, B, C, D, E). Right column = heading list (add/remove/edit). Mapping = dropdown per paragraph to select heading.
   - [x] 3.3 **R10 Mode (MATCHING_INFORMATION):** Left column = statement list (add/remove/edit). Right column = paragraph letters (manually entered). Mapping = dropdown per statement to select paragraph.
-  - [x] 3.4 **R11 Mode (MATCHING_FEATURES):** Left column = items list (add/remove/edit). Right column = categories list (add/remove/edit). Mapping = dropdown per item to select category.
+  - [x] 3.4 **R11 Mode (MATCHING_FEATURES):** Left column = items list (add/remove/edit). Right column = features list (add/remove/edit). Mapping = dropdown per item to select feature.
   - [x] 3.5 **R12 Mode (MATCHING_SENTENCE_ENDINGS):** Left column = sentence beginnings (add/remove/edit). Right column = endings list (add/remove/edit, includes distractors). Mapping = dropdown per beginning to select ending.
   - [x] 3.6 Distractor indicator: Badge showing "X options, Y to match" count. Validation warning if `targetItems.length <= sourceItems.length`: "Add more options — matching questions need extra choices as distractors."
   - [x] 3.7 Handle null options/correctAnswer gracefully (legacy question support — render empty form state)
@@ -45,7 +45,7 @@ so that my students can practice paragraph matching, feature matching, and sente
   - [x] 4.1 Create `apps/webapp/src/features/exercises/components/question-types/MatchingPreview.tsx` — Shared preview for all R9-R12 types
   - [x] 4.2 **R9 Preview:** Numbered paragraph letters with disabled dropdown showing heading options
   - [x] 4.3 **R10 Preview:** Numbered statements with disabled dropdown showing paragraph letter options
-  - [x] 4.4 **R11 Preview:** Numbered items with disabled dropdown showing category options
+  - [x] 4.4 **R11 Preview:** Numbered items with disabled dropdown showing feature options
   - [x] 4.5 **R12 Preview:** Numbered sentence beginnings with disabled dropdown showing ending options
 
 - [x] **Task 5: Integrate into factory components** (AC: #1-5)
@@ -189,7 +189,7 @@ All R9-R12 types use the **same JSON shape** with generic field names. The `sect
   }
 }
 ```
-`sourceItems` = items to classify. `targetItems` = categories. Multiple items CAN map to the same category. Match keys are 0-based indices.
+`sourceItems` = items to classify. `targetItems` = features. Multiple items CAN map to the same feature. Match keys are 0-based indices.
 
 **R12_MATCHING_SENTENCE_ENDINGS:**
 ```json
@@ -321,7 +321,7 @@ sectionType → config mapping:
   }
   R11_MATCHING_FEATURES → {
     sourceLabel: "Items",
-    targetLabel: "Categories",
+    targetLabel: "Features",
     sourcePlaceholder: "e.g., Dr. Smith",
     targetPlaceholder: "e.g., Supports Theory X",
     sourceKeyType: "index"

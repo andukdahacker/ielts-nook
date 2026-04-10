@@ -160,7 +160,7 @@ describe("QuestionEditorFactory", () => {
       />,
     );
     expect(screen.getByText("Items")).toBeInTheDocument();
-    expect(screen.getByText("Categories")).toBeInTheDocument();
+    expect(screen.getByText("Features")).toBeInTheDocument();
   });
 
   it("renders MatchingEditor for R12_MATCHING_SENTENCE_ENDINGS", () => {
