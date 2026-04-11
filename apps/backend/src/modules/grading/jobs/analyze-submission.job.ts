@@ -1,6 +1,7 @@
 import { inngest } from "../../inngest/client.js";
 import { Prisma, getTenantedClient } from "@workspace/db";
 import { createPrisma } from "../../../plugins/create-prisma.js";
+import { ModerationService } from "../../moderation/moderation.service.js";
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 import { getGradingPromptAndSchema } from "../ai-grading-prompts.js";
@@ -263,6 +264,47 @@ export const analyzeSubmissionJob = inngest.createFunction(
               confidence: highlight.confidence,
             })),
           });
+        }
+      } finally {
+        await prisma.$disconnect();
+      }
+    });
+
+    // Step 4.5: Content moderation scan on AI feedback (non-blocking)
+    await step.run("scan-ai-feedback", async () => {
+      const prisma = createPrisma();
+      try {
+        const moderationService = new ModerationService(prisma);
+        const feedbackText = [
+          aiResult.generalFeedback,
+          ...aiResult.highlights.map((h) => h.content),
+          ...aiResult.highlights.map((h) => h.suggestedFix).filter(Boolean),
+        ].join(" ");
+
+        if (feedbackText.length > 0) {
+          const scanResult = await moderationService.scanContent(feedbackText, centerId);
+          if (scanResult.matches.length > 0) {
+            const db = getTenantedClient(prisma, centerId);
+            const feedback = await db.submissionFeedback.findFirst({
+              where: { submissionId },
+              select: { id: true },
+            });
+            if (feedback) {
+              await moderationService.flagContent({
+                centerId,
+                contentType: "AI_FEEDBACK",
+                contentId: feedback.id,
+                flaggedText: feedbackText,
+                matchedTerms: scanResult.matches,
+              });
+              // Compliance hold: replace visible feedback with hold notice until admin review
+              await db.submissionFeedback.update({
+                where: { id: feedback.id },
+                data: { generalFeedback: "[Feedback held for compliance review]" },
+              });
+              console.warn(`[moderation] AI feedback ${feedback.id} held for compliance review. Matched: ${scanResult.matches.join(", ")}`);
+            }
+          }
         }
       } finally {
         await prisma.$disconnect();

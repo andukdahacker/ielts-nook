@@ -1,20 +1,26 @@
 import { Badge } from "@workspace/ui/components/badge";
 import { useNavigate, useLocation, Outlet } from "react-router";
 import { settingsTabs } from "../config/settings-nav";
+import { useAuth } from "@/features/auth/auth-context";
 
 export function SettingsLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+
+  const visibleTabs = settingsTabs.filter(
+    (tab) => !tab.roles || (user?.role && tab.roles.includes(user.role)),
+  );
 
   const currentTab =
-    settingsTabs.find(
+    visibleTabs.find(
       (tab) =>
         (tab.path && location.pathname.endsWith(`/settings/${tab.path}`)) ||
         (tab.path === "" && location.pathname.endsWith("/settings"))
     )?.id || "general";
 
   const handleTabChange = (tabId: string) => {
-    const tab = settingsTabs.find((t) => t.id === tabId);
+    const tab = visibleTabs.find((t) => t.id === tabId);
     if (tab && !tab.disabled) {
       navigate(tab.path || ".");
     }
@@ -33,7 +39,7 @@ export function SettingsLayout() {
         {/* Desktop: Vertical tabs */}
         <aside className="hidden md:block w-48 shrink-0">
           <nav className="flex flex-col gap-1" aria-label="Settings navigation">
-            {settingsTabs.map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
@@ -64,7 +70,7 @@ export function SettingsLayout() {
             className="flex gap-1 pb-2 min-w-max"
             aria-label="Settings navigation"
           >
-            {settingsTabs.map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}

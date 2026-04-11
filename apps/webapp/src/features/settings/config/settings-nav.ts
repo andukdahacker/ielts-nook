@@ -5,6 +5,7 @@ export interface SettingsTabConfig {
   order: number;
   disabled?: boolean;
   badge?: string;
+  roles?: string[];
 }
 
 export const settingsTabs: SettingsTabConfig[] = [
@@ -14,6 +15,7 @@ export const settingsTabs: SettingsTabConfig[] = [
   { id: "tags", label: "Tags", path: "tags", order: 2.7 },
   { id: "integrations", label: "Integrations", path: "integrations", order: 3 },
   { id: "privacy", label: "Privacy", path: "privacy", order: 4 },
+  { id: "compliance", label: "Compliance", path: "compliance", order: 4.3, roles: ["ADMIN", "OWNER"] },
   { id: "ai", label: "AI Customization", path: "ai", order: 4.5 },
   { id: "billing", label: "Billing", path: "billing", order: 5 },
 ];

@@ -99,7 +99,9 @@ model Center {
   subscription          Subscription?
   billingEvents         BillingEvent[]
   studentCountSnapshots StudentCountSnapshot[]
-  goldenSamples         GoldenSample[]
+  goldenSamples            GoldenSample[]
+  contentModerationFlags   ContentModerationFlag[]
+  moderationTermList       ModerationTermList?
 
   @@map("center")
 }
@@ -113,9 +115,10 @@ model CenterMembership {
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  center                Center                 @relation(fields: [centerId], references: [id], onDelete: Cascade)
-  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  membershipPermissions MembershipPermission[]
+  center                    Center                 @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  user                      User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  membershipPermissions     MembershipPermission[]
+  resolvedModerationFlags   ContentModerationFlag[]
 
   @@unique([centerId, userId])
   @@unique([id, centerId])
@@ -1007,4 +1010,56 @@ model GoldenSample {
   @@index([centerId])
   @@index([centerId, skillType])
   @@map("golden_sample")
+}
+
+// ── Content Moderation (Story 8-3) ──────────────────────────────────
+
+enum ModerationFlagStatus {
+  PENDING
+  APPROVED
+  REDACTED
+  DELETED
+}
+
+enum ModerationContentType {
+  EXERCISE
+  SUBMISSION
+  AI_FEEDBACK
+}
+
+model ContentModerationFlag {
+  id           String                @id @default(cuid())
+  centerId     String                @map("center_id")
+  contentType  ModerationContentType @map("content_type")
+  contentId    String                @map("content_id")
+  flaggedText  String                @map("flagged_text") @db.Text
+  matchedTerms String[]              @map("matched_terms")
+  status       ModerationFlagStatus  @default(PENDING)
+  resolvedById String?               @map("resolved_by_id")
+  resolvedAt   DateTime?             @map("resolved_at")
+  redactedText String?               @map("redacted_text") @db.Text
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+
+  center     Center            @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  resolvedBy CenterMembership? @relation(fields: [resolvedById], references: [id])
+
+  @@index([centerId, status])
+  @@index([centerId, contentType])
+  @@index([contentId])
+  @@map("content_moderation_flag")
+}
+
+model ModerationTermList {
+  id        String   @id @default(cuid())
+  centerId  String   @unique @map("center_id")
+  terms     String[]
+  isCustom  Boolean  @default(false) @map("is_custom")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
+
+  center Center @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@map("moderation_term_list")
 }

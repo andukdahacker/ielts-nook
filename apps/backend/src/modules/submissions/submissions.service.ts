@@ -2,6 +2,7 @@ import { Prisma, PrismaClient, getTenantedClient } from "@workspace/db";
 import { Storage } from "firebase-admin/storage";
 import { AppError } from "../../errors/app-error.js";
 import { inngest } from "../inngest/client.js";
+import { ModerationService } from "../moderation/moderation.service.js";
 
 /** Question types that can be auto-graded by comparing student answer to correctAnswer */
 const AUTO_GRADABLE_TYPES = new Set([
@@ -237,6 +238,30 @@ export class SubmissionsService {
       },
       include: SUBMISSION_INCLUDE,
     });
+
+    // Content moderation scan on student answers (non-blocking)
+    try {
+      const answerTexts = submission.answers
+        .map((a) => (typeof a.answer === "string" ? a.answer : ""))
+        .filter(Boolean)
+        .join(" ");
+      if (answerTexts.length > 0) {
+        const moderationService = new ModerationService(this.prisma);
+        const scanResult = await moderationService.scanContent(answerTexts, centerId);
+        if (scanResult.matches.length > 0) {
+          await moderationService.flagContent({
+            centerId,
+            contentType: "SUBMISSION",
+            contentId: submission.id,
+            flaggedText: answerTexts,
+            matchedTerms: scanResult.matches,
+          });
+        }
+      }
+    } catch (error) {
+      // Non-blocking: moderation failure should not prevent submission
+      console.error("[moderation] Submission scan failed:", error instanceof Error ? error.message : error);
+    }
 
     // Trigger AI analysis for Writing/Speaking submissions (fire-and-forget)
     const exerciseSkill = exercise.skill;

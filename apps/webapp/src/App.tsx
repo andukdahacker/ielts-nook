@@ -38,6 +38,7 @@ import { RoomsPage } from "./features/settings/pages/RoomsPage";
 import { TagsSettingsPage } from "./features/settings/pages/TagsSettingsPage";
 import { BillingPage } from "./features/settings/pages/BillingPage";
 import { AICustomizationPage } from "./features/settings/pages/AICustomizationPage";
+import { ModerationPage } from "./features/settings/pages/ModerationPage";
 
 function App() {
   const queryClient = new QueryClient({
@@ -131,6 +132,7 @@ function App() {
                         element={<IntegrationsPage />}
                       />
                       <Route path="privacy" element={<PrivacyPage />} />
+                      <Route path="compliance" element={<ModerationPage />} />
                       <Route path="ai" element={<AICustomizationPage />} />
                       <Route path="billing" element={<BillingPage />} />
                     </Route>

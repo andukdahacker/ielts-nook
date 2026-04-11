@@ -31,6 +31,8 @@ const TENANTED_MODELS = [
   "BillingEvent",
   "StudentCountSnapshot",
   "GoldenSample",
+  "ContentModerationFlag",
+  "ModerationTermList",
 ];
 
 /**

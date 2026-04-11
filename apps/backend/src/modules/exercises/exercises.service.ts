@@ -7,6 +7,7 @@ import type {
 } from "@workspace/types";
 import type { Storage } from "firebase-admin/storage";
 import { AppError } from "../../errors/app-error.js";
+import { ModerationService } from "../moderation/moderation.service.js";
 
 const EXERCISE_INCLUDE = {
   createdBy: { select: { id: true, name: true } },
@@ -571,6 +572,48 @@ export class ExercisesService {
       id,
       "Only draft exercises can be published",
     );
+
+    // Content moderation scan before publish (synchronous, blocking)
+    const exerciseWithContent = await db.exercise.findUnique({
+      where: { id },
+      include: { sections: { include: { questions: true } } },
+    });
+    if (exerciseWithContent) {
+      const textParts = [
+        exerciseWithContent.title,
+        exerciseWithContent.passageContent ?? "",
+        exerciseWithContent.instructions ?? "",
+        exerciseWithContent.writingPrompt ?? "",
+        ...exerciseWithContent.sections.flatMap((s) => [
+          s.instructions ?? "",
+          ...s.questions.map((q) => q.questionText ?? ""),
+        ]),
+      ];
+      const fullText = textParts.filter(Boolean).join(" ");
+      if (fullText.length > 0) {
+        const moderationService = new ModerationService(this.prisma);
+        const scanResult = await moderationService.scanContent(fullText, centerId);
+        if (scanResult.matches.length > 0) {
+          // Check for existing pending flag to avoid duplicates on repeated publish attempts
+          const existingFlag = await db.contentModerationFlag.findFirst({
+            where: { contentId: id, contentType: "EXERCISE", status: "PENDING" },
+          });
+          let flag = existingFlag;
+          if (!existingFlag) {
+            flag = await moderationService.flagContent({
+              centerId,
+              contentType: "EXERCISE",
+              contentId: exerciseWithContent.id,
+              flaggedText: fullText,
+              matchedTerms: scanResult.matches,
+            });
+          }
+          throw AppError.conflict(
+            `Content flagged for compliance review. Publishing blocked. Matched terms: ${scanResult.matches.join(", ")}. Flag ID: ${flag?.id ?? "unknown"}`,
+          );
+        }
+      }
+    }
 
     return await db.exercise.update({
       where: { id },

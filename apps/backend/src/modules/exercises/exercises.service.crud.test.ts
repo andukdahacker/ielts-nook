@@ -80,6 +80,28 @@ describe("ExercisesService", () => {
       authAccount: {
         findUniqueOrThrow: vi.fn(),
       },
+      moderationTermList: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "tl-1",
+          centerId,
+          terms: [],
+          isCustom: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+        create: vi.fn(),
+        upsert: vi.fn().mockResolvedValue({
+          id: "tl-1",
+          centerId,
+          terms: [],
+          isCustom: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+      },
+      contentModerationFlag: {
+        create: vi.fn(),
+      },
       $transaction: vi.fn((fn: (tx: typeof mockDb) => Promise<unknown>) => fn(mockDb)),
     };
 
