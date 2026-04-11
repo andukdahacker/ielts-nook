@@ -677,7 +677,7 @@ export function ExercisesPage() {
 
       {/* Content: List or Grid View */}
       {viewMode === "list" ? (
-        <div className="rounded-md border">
+        <div className="overflow-x-auto rounded-md border" tabIndex={0} role="region" aria-label="Exercise list table">
           <Table>
             <TableHeader>
               <TableRow>

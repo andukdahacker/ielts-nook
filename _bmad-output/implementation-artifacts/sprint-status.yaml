@@ -69,7 +69,7 @@
 #   - Epic 8: Added 8.4-8.5 (i18n, golden sample UI)
 
 generated: 2026-01-29
-last_updated: 2026-04-11 # Story 12-13 ready-for-dev
+last_updated: 2026-04-11 # Epic 17 consolidated into 3 stories
 project: classlite
 project_key: classlite
 tracking_system: file-system
@@ -234,7 +234,7 @@ development_status:
   12-11-mock-test-drag-fix: done
   12-12-edit-after-publish-before-submissions-only: done
   12-13-section-navigation-for-long-exercises: done
-  12-14-table-overflow-with-sidebar: backlog
+  12-14-table-overflow-with-sidebar: review
   epic-12-retrospective: optional
 
   # Epic 13: Grading & Feedback Improvements
@@ -276,21 +276,13 @@ development_status:
   epic-16-retrospective: optional
 
   # Epic 17: UI Polish & Quick Wins
-  # Status: BACKLOG — Sprint N (H1-H3, H12) + Sprint N+3 (H4-H11)
+  # Status: IN-PROGRESS — Consolidated from 12 stories into 3
   # Scope: Remove AI assistant, hide unused features, responsive fixes, avatars, tooltips, timezone, dark mode, session extension
-  epic-17: backlog
-  17-1-remove-ai-assistant: backlog
-  17-2-hide-language-toggle: backlog
-  17-3-hide-achievement-and-streak: backlog
-  17-4-hide-already-added-students-in-roster: backlog
-  17-5-add-exercise-modal-responsive: backlog
-  17-6-mark-attendance-responsive-padding: backlog
-  17-7-delete-session-responsive: backlog
-  17-8-google-account-avatar: backlog
-  17-9-collapsed-navbar-tooltips: backlog
-  17-10-selectable-timezone-in-settings: backlog
-  17-11-light-dark-mode-toggle: backlog
-  17-12-extend-login-session: backlog
+  # Consolidation: 17.1-17.3 → 17-01, 17.4-17.7+17.9 → 17-02, 17.8+17.10-17.12 → 17-03
+  epic-17: in-progress
+  17-01-hide-remove-features: ready-for-dev        # Consolidates: 17.1 (remove AI assistant), 17.2 (hide language toggle), 17.3 (hide achievement/streak)
+  17-02-responsive-and-polish: ready-for-dev        # Consolidates: 17.4 (roster filter), 17.5 (exercise modal), 17.6 (attendance), 17.7 (delete session), 17.9 (tooltips)
+  17-03-user-account-features: ready-for-dev        # Consolidates: 17.8 (Google avatar), 17.10 (timezone), 17.11 (dark mode), 17.12 (extend session)
   epic-17-retrospective: optional
 
   # Epic 18: Knowledge Hub

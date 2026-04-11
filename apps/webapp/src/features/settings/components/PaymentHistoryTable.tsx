@@ -41,7 +41,7 @@ export function PaymentHistoryTable({ items, total }: PaymentHistoryTableProps) 
           No payments yet. Billing will start after pilot.
         </div>
       ) : (
-        <div className="border rounded-lg">
+        <div className="overflow-x-auto border rounded-lg">
           <Table>
             <TableHeader>
               <TableRow>

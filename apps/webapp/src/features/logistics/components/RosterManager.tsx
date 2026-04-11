@@ -75,7 +75,7 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
             <h3 className="text-lg font-medium">Class Roster</h3>
             <Badge variant="secondary">{roster.length} Students</Badge>
           </div>
-          <div className="rounded-md border">
+          <div className="overflow-x-auto rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -141,7 +141,7 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="rounded-md border">
+          <div className="overflow-x-auto rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
