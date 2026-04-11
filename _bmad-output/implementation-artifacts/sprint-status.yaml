@@ -69,7 +69,7 @@
 #   - Epic 8: Added 8.4-8.5 (i18n, golden sample UI)
 
 generated: 2026-01-29
-last_updated: 2026-04-12 # Story 8-5 → review
+last_updated: 2026-04-12 # Story 17-02 → done, Story 8-5 → review
 project: classlite
 project_key: classlite
 tracking_system: file-system
@@ -188,7 +188,7 @@ development_status:
   8-2-data-sovereignty-privacy-center: in-progress
   8-3-content-moderation-system: done
   8-4-language-preference-i18n: done # Dev + code review fixes complete 2026-04-11 — 1046 tests passing
-  8-5-golden-sample-management-interface: review # Dev complete 2026-04-12
+  8-5-golden-sample-management-interface: done # Dev + review complete 2026-04-12
   epic-8-retrospective: optional
 
   # Epic 10: Public Website
@@ -281,7 +281,7 @@ development_status:
   # Consolidation: 17.1-17.3 → 17-01, 17.4-17.7+17.9 → 17-02, 17.8+17.10-17.12 → 17-03
   epic-17: in-progress
   17-01-hide-remove-features: done # Consolidates: 17.1 (remove AI assistant), 17.2 (hide language toggle), 17.3 (hide achievement/streak)
-  17-02-responsive-and-polish: ready-for-dev # Consolidates: 17.4 (roster filter), 17.5 (exercise modal), 17.6 (attendance), 17.7 (delete session), 17.9 (tooltips)
+  17-02-responsive-and-polish: done # Consolidates: 17.4 (roster filter), 17.5 (exercise modal), 17.6 (attendance), 17.7 (delete session), 17.9 (tooltips)
   17-03-user-account-features: ready-for-dev # Consolidates: 17.8 (Google avatar), 17.10 (timezone), 17.11 (dark mode), 17.12 (extend session)
   epic-17-retrospective: optional
 
