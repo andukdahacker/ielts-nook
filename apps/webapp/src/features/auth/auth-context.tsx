@@ -19,6 +19,7 @@ import {
 } from "./auth.hooks.js";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import i18n from "@/i18n";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -74,7 +75,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const params = new URLSearchParams(window.location.search);
     if (params.get("expired") === "true") {
       setSessionExpired(true);
-      toast.error("Your session has expired. Please sign in again.");
+      // Defer the toast until i18n has loaded the auth namespace, otherwise
+      // the user can briefly see the raw key string.
+      const showExpiredToast = () => {
+        toast.error(i18n.t("context.sessionExpired", { ns: "auth" }));
+      };
+      if (i18n.isInitialized) {
+        showExpiredToast();
+      } else {
+        i18n.on("initialized", showExpiredToast);
+      }
       // Clean up the URL
       params.delete("expired");
       const newUrl =
@@ -177,6 +187,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     return () => clearInterval(intervalId);
   }, [logout]);
+
+  // Sync i18n language with user's preferredLanguage on login.
+  // Narrow to supported languages so legacy values (e.g. "en-GB", "vietnamese",
+  // empty string) don't crash the dynamic-import path.
+  useEffect(() => {
+    const pref = user?.preferredLanguage;
+    if (!pref) return;
+    const normalized = pref === "vi" ? "vi" : "en";
+    if (i18n.language !== normalized) {
+      void i18n.changeLanguage(normalized);
+    }
+  }, [user?.preferredLanguage]);
 
   return (
     <AuthContext.Provider

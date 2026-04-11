@@ -58,6 +58,7 @@ import {
 } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useAssignments } from "./hooks/use-assignments";
@@ -79,14 +80,17 @@ const SKILL_ICONS: Record<string, React.ReactNode> = {
   SPEAKING: <Mic className="size-4" />,
 };
 
-function formatDueDate(dueDate: string | null) {
-  if (!dueDate) return { text: "No deadline", className: "" };
+function formatDueDate(
+  dueDate: string | null,
+  t: (key: string) => string,
+) {
+  if (!dueDate) return { text: t("page.noDeadline"), className: "" };
   const due = new Date(dueDate);
   const now = new Date();
   const isToday = due.toDateString() === now.toDateString();
   const isPast = due < now;
-  if (isPast) return { text: "Overdue", className: "text-red-600 font-medium" };
-  if (isToday) return { text: "Due today", className: "text-orange-600 font-medium" };
+  if (isPast) return { text: t("page.overdue"), className: "text-red-600 font-medium" };
+  if (isToday) return { text: t("page.dueToday"), className: "text-orange-600 font-medium" };
   return { text: due.toLocaleDateString(), className: "" };
 }
 
@@ -100,6 +104,7 @@ function formatTimeLimit(seconds: number | null) {
 }
 
 export default function AssignmentsPage() {
+  const { t } = useTranslation("assignments");
   const { user } = useAuth();
   const centerId = user?.centerId;
   const navigate = useNavigate();
@@ -175,9 +180,9 @@ export default function AssignmentsPage() {
     if (!closeTarget) return;
     try {
       await closeAssignment(closeTarget.id);
-      toast.success("Assignment closed");
+      toast.success(t("page.toastClosed"));
     } catch {
-      toast.error("Failed to close assignment");
+      toast.error(t("page.toastClosedError"));
     }
     setCloseTarget(null);
   };
@@ -189,9 +194,9 @@ export default function AssignmentsPage() {
         id: reopenTarget.id,
         input: reopenDueDate ? { dueDate: new Date(reopenDueDate).toISOString() } : {},
       });
-      toast.success("Assignment reopened");
+      toast.success(t("page.toastReopened"));
     } catch {
-      toast.error("Failed to reopen assignment");
+      toast.error(t("page.toastReopenedError"));
     }
     setReopenTarget(null);
     setReopenDueDate("");
@@ -201,9 +206,9 @@ export default function AssignmentsPage() {
     if (!archiveTarget) return;
     try {
       await archiveAssignment(archiveTarget.id);
-      toast.success("Assignment archived");
+      toast.success(t("page.toastArchived"));
     } catch {
-      toast.error("Failed to archive assignment");
+      toast.error(t("page.toastArchivedError"));
     }
     setArchiveTarget(null);
   };
@@ -212,9 +217,9 @@ export default function AssignmentsPage() {
     if (!deleteTarget) return;
     try {
       await deleteAssignment(deleteTarget.id);
-      toast.success("Assignment deleted");
+      toast.success(t("page.toastDeleted"));
     } catch {
-      toast.error("Failed to delete assignment");
+      toast.error(t("page.toastDeletedError"));
     }
     setDeleteTarget(null);
   };
@@ -224,7 +229,7 @@ export default function AssignmentsPage() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon">
           <MoreHorizontal className="size-4" />
-          <span className="sr-only">Actions</span>
+          <span className="sr-only">{t("table.actions", { ns: "common" })}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -237,27 +242,27 @@ export default function AssignmentsPage() {
             }
           >
             <ClipboardList className="mr-2 h-4 w-4" />
-            View Submissions
+            {t("page.viewSubmissions")}
           </DropdownMenuItem>
         )}
         {assignment.status !== "ARCHIVED" && (
           <DropdownMenuItem onClick={() => setEditTarget(assignment)}>
-            Edit
+            {t("button.edit", { ns: "common" })}
           </DropdownMenuItem>
         )}
         {assignment.status === "OPEN" && (
           <DropdownMenuItem onClick={() => setCloseTarget(assignment)}>
-            Close
+            {t("page.close")}
           </DropdownMenuItem>
         )}
         {(assignment.status === "CLOSED" || assignment.status === "ARCHIVED") && (
           <DropdownMenuItem onClick={() => { setReopenTarget(assignment); setReopenDueDate(""); }}>
-            Reopen
+            {t("page.reopen")}
           </DropdownMenuItem>
         )}
         {assignment.status !== "ARCHIVED" && (
           <DropdownMenuItem onClick={() => setArchiveTarget(assignment)}>
-            Archive
+            {t("page.archive")}
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
@@ -265,7 +270,7 @@ export default function AssignmentsPage() {
           className="text-destructive"
           onClick={() => setDeleteTarget(assignment)}
         >
-          Delete
+          {t("button.delete", { ns: "common" })}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -275,10 +280,10 @@ export default function AssignmentsPage() {
     <div className="space-y-4 p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Assignments</h1>
+        <h1 className="text-2xl font-bold">{t("page.title")}</h1>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 size-4" />
-          Assign Exercise
+          {t("page.createButton")}
         </Button>
       </div>
 
@@ -287,7 +292,7 @@ export default function AssignmentsPage() {
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search by exercise title..."
+            placeholder={t("page.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -305,13 +310,13 @@ export default function AssignmentsPage() {
           }}
         >
           <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t("page.statusLabel")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Statuses</SelectItem>
-            <SelectItem value="OPEN">Open</SelectItem>
-            <SelectItem value="CLOSED">Closed</SelectItem>
-            <SelectItem value="ARCHIVED">Archived</SelectItem>
+            <SelectItem value="ALL">{t("page.statusAll")}</SelectItem>
+            <SelectItem value="OPEN">{t("page.statusOpen")}</SelectItem>
+            <SelectItem value="CLOSED">{t("page.statusClosed")}</SelectItem>
+            <SelectItem value="ARCHIVED">{t("page.statusArchived")}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -323,10 +328,10 @@ export default function AssignmentsPage() {
           }}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Class" />
+            <SelectValue placeholder={t("page.classLabel")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Classes</SelectItem>
+            <SelectItem value="ALL">{t("page.classAll")}</SelectItem>
             {classOptions.map((c) => (
               <SelectItem key={c.id} value={c.id}>
                 {c.name}
@@ -343,14 +348,14 @@ export default function AssignmentsPage() {
           }}
         >
           <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Skill" />
+            <SelectValue placeholder={t("page.skillLabel")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Skills</SelectItem>
-            <SelectItem value="READING">Reading</SelectItem>
-            <SelectItem value="LISTENING">Listening</SelectItem>
-            <SelectItem value="WRITING">Writing</SelectItem>
-            <SelectItem value="SPEAKING">Speaking</SelectItem>
+            <SelectItem value="ALL">{t("page.skillAll")}</SelectItem>
+            <SelectItem value="READING">{t("skill.reading", { ns: "common" })}</SelectItem>
+            <SelectItem value="LISTENING">{t("skill.listening", { ns: "common" })}</SelectItem>
+            <SelectItem value="WRITING">{t("skill.writing", { ns: "common" })}</SelectItem>
+            <SelectItem value="SPEAKING">{t("skill.speaking", { ns: "common" })}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -360,17 +365,17 @@ export default function AssignmentsPage() {
             value={dueDateStart}
             onChange={(e) => { setDueDateStart(e.target.value); setCurrentPage(1); }}
             className="w-[140px]"
-            placeholder="From"
-            aria-label="Due date from"
+            placeholder={t("page.dateRangeFrom")}
+            aria-label={t("page.dueDateFromAria")}
           />
-          <span className="text-muted-foreground text-sm">to</span>
+          <span className="text-muted-foreground text-sm">{t("page.dateRangeTo")}</span>
           <Input
             type="date"
             value={dueDateEnd}
             onChange={(e) => { setDueDateEnd(e.target.value); setCurrentPage(1); }}
             className="w-[140px]"
-            placeholder="To"
-            aria-label="Due date to"
+            placeholder={t("page.dateRangeTo")}
+            aria-label={t("page.dueDateToAria")}
           />
         </div>
       </div>
@@ -384,14 +389,14 @@ export default function AssignmentsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Exercise</TableHead>
-              <TableHead>Skill</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Time Limit</TableHead>
-              <TableHead>Submissions</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("page.tableExercise")}</TableHead>
+              <TableHead>{t("page.tableSkill")}</TableHead>
+              <TableHead>{t("page.tableClass")}</TableHead>
+              <TableHead>{t("page.tableDueDate")}</TableHead>
+              <TableHead>{t("page.tableTimeLimit")}</TableHead>
+              <TableHead>{t("page.tableSubmissions")}</TableHead>
+              <TableHead>{t("table.status", { ns: "common" })}</TableHead>
+              <TableHead className="text-right">{t("table.actions", { ns: "common" })}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -399,13 +404,13 @@ export default function AssignmentsPage() {
               <TableRow>
                 <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                   {assignments.length === 0
-                    ? "No assignments yet. Click \"Assign Exercise\" to create one."
-                    : "No assignments match your filters."}
+                    ? t("page.noAssignments")
+                    : t("page.noMatches")}
                 </TableCell>
               </TableRow>
             ) : (
               paginatedAssignments.map((assignment: Assignment) => {
-                const due = formatDueDate(assignment.dueDate);
+                const due = formatDueDate(assignment.dueDate, t);
                 return (
                   <TableRow
                     key={assignment.id}
@@ -418,7 +423,7 @@ export default function AssignmentsPage() {
                         <span className="text-sm">{assignment.exercise?.skill}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{assignment.class?.name ?? "Individual"}</TableCell>
+                    <TableCell>{assignment.class?.name ?? t("page.individual")}</TableCell>
                     <TableCell>
                       <span className={due.className}>{due.text}</span>
                     </TableCell>
@@ -454,7 +459,7 @@ export default function AssignmentsPage() {
             <ChevronLeft className="size-4" />
           </Button>
           <span className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
+            {t("pagination.page", { ns: "common" })} {currentPage} {t("pagination.of", { ns: "common" })} {totalPages}
           </span>
           <Button
             variant="outline"
@@ -485,16 +490,16 @@ export default function AssignmentsPage() {
       <AlertDialog open={!!closeTarget} onOpenChange={(open) => !open && setCloseTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Close Assignment</AlertDialogTitle>
+            <AlertDialogTitle>{t("page.closeTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Close this assignment? Students will no longer be able to submit.
+              {t("page.closeDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("button.cancel", { ns: "common" })}</AlertDialogCancel>
             <AlertDialogAction onClick={handleClose} disabled={isClosing}>
               {isClosing ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-              Close
+              {t("page.close")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -504,16 +509,16 @@ export default function AssignmentsPage() {
       <AlertDialog open={!!archiveTarget} onOpenChange={(open) => !open && setArchiveTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Archive Assignment</AlertDialogTitle>
+            <AlertDialogTitle>{t("page.archiveTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Archive this assignment? It can be reopened later.
+              {t("page.archiveDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("button.cancel", { ns: "common" })}</AlertDialogCancel>
             <AlertDialogAction onClick={handleArchive} disabled={isArchiving}>
               {isArchiving ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-              Archive
+              {t("page.archive")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -523,29 +528,29 @@ export default function AssignmentsPage() {
       <Dialog open={!!reopenTarget} onOpenChange={(open) => { if (!open) { setReopenTarget(null); setReopenDueDate(""); } }}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>Reopen Assignment</DialogTitle>
+            <DialogTitle>{t("page.reopenTitle")}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Reopen this assignment? Students will be able to submit again.
+            {t("page.reopenDesc")}
           </p>
           <div className="space-y-2 py-2">
-            <Label>New Due Date (optional)</Label>
+            <Label>{t("page.reopenDueDateLabel")}</Label>
             <Input
               type="datetime-local"
               value={reopenDueDate}
               onChange={(e) => setReopenDueDate(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Leave empty to keep the original due date.
+              {t("page.reopenDueDateHint")}
             </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setReopenTarget(null); setReopenDueDate(""); }}>
-              Cancel
+              {t("button.cancel", { ns: "common" })}
             </Button>
             <Button onClick={handleReopen} disabled={isReopening}>
               {isReopening ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-              Reopen
+              {t("page.reopen")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -555,20 +560,20 @@ export default function AssignmentsPage() {
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Assignment</AlertDialogTitle>
+            <AlertDialogTitle>{t("page.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this assignment? This action cannot be undone.
+              {t("page.deleteDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("button.cancel", { ns: "common" })}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-              Delete
+              {t("button.delete", { ns: "common" })}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

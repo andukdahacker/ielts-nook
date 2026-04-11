@@ -8,6 +8,7 @@ import {
 } from "@workspace/ui/components/avatar";
 import { Badge } from "@workspace/ui/components/badge";
 import { Flag } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TrafficLightBadge } from "./TrafficLightBadge";
 
 const BORDER_COLORS = {
@@ -43,6 +44,7 @@ export const StudentHealthCardComponent = memo(function StudentHealthCard({
   student,
   onClick,
 }: StudentHealthCardProps) {
+  const { t } = useTranslation("student-health");
   const visibleClasses = student.classes.slice(0, MAX_VISIBLE_CLASSES);
   const overflowCount = student.classes.length - MAX_VISIBLE_CLASSES;
 
@@ -66,15 +68,15 @@ export const StudentHealthCardComponent = memo(function StudentHealthCard({
             <Avatar>
               <AvatarImage
                 src={student.avatarUrl ?? undefined}
-                alt={student.name ?? "Student"}
+                alt={student.name ?? t("student.defaultAlt")}
               />
               <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
             </Avatar>
-            <span className="font-semibold">{student.name ?? "Unknown"}</span>
+            <span className="font-semibold">{student.name ?? t("student.unknown")}</span>
           </div>
           <div className="flex items-center gap-1.5">
             {student.hasOpenFlags && (
-              <Flag className="h-4 w-4 text-orange-500" aria-label="Has open flags" />
+              <Flag className="h-4 w-4 text-orange-500" aria-label={t("card.hasFlags")} />
             )}
             <TrafficLightBadge status={student.healthStatus} />
           </div>
@@ -83,7 +85,7 @@ export const StudentHealthCardComponent = memo(function StudentHealthCard({
         {/* Metrics row */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Attendance</p>
+            <p className="text-sm text-muted-foreground mb-1">{t("card.attendance")}</p>
             <div className="flex items-center gap-1.5">
               <span className="font-medium">
                 {student.metrics.attendanceRate}%
@@ -94,7 +96,7 @@ export const StudentHealthCardComponent = memo(function StudentHealthCard({
             </div>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Assignments</p>
+            <p className="text-sm text-muted-foreground mb-1">{t("card.assignments")}</p>
             <div className="flex items-center gap-1.5">
               <span className="font-medium">
                 {student.metrics.completedAssignments}/
@@ -116,7 +118,7 @@ export const StudentHealthCardComponent = memo(function StudentHealthCard({
               </Badge>
             ))}
             {overflowCount > 0 && (
-              <Badge variant="outline">+{overflowCount} more</Badge>
+              <Badge variant="outline">{t("card.moreClasses", { count: overflowCount })}</Badge>
             )}
           </div>
         )}

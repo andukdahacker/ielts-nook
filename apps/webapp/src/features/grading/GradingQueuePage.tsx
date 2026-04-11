@@ -20,6 +20,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import type { TeacherComment } from "@workspace/types";
 import { useAuth } from "@/features/auth/auth-context";
@@ -69,6 +70,7 @@ function GradingQueuePageInner() {
 }
 
 function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSubmissionId: string }) {
+  const { t } = useTranslation("grading");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const workbenchRef = useRef<HTMLDivElement>(null);
@@ -440,9 +442,9 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
     if (is403) {
       return (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-          <p className="font-medium">No Classes Assigned</p>
+          <p className="font-medium">{t("page.noClassesAssigned")}</p>
           <p className="text-sm text-muted-foreground">
-            You don&apos;t have any classes assigned. Contact your center admin.
+            {t("page.noClassesMessage")}
           </p>
         </div>
       );
@@ -451,7 +453,7 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
         <p className="font-medium text-destructive">
-          Failed to load grading queue
+          {t("page.failedToLoad")}
         </p>
         <Button variant="outline" size="sm" onClick={() => refetchQueue()}>
           <RefreshCw className="mr-2 h-4 w-4" />
@@ -466,9 +468,9 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
         <CircleCheck className="h-10 w-10 text-green-500" />
-        <h2 className="text-lg font-semibold">All caught up!</h2>
+        <h2 className="text-lg font-semibold">{t("page.allCaughtUp")}</h2>
         <p className="text-sm text-muted-foreground">
-          No submissions to review right now.
+          {t("page.noSubmissions")}
         </p>
       </div>
     );
@@ -508,7 +510,7 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
           {formatRelativeTime(submittedAt ?? null)}
         </span>
         {isFinalized && (
-          <Badge variant="secondary" className="ml-auto">Graded</Badge>
+          <Badge variant="secondary" className="ml-auto">{t("aiFeedback.graded")}</Badge>
         )}
         {submission && submission.status !== "IN_PROGRESS" && (
           <AlertDialog>
@@ -520,14 +522,14 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
                 disabled={unlockSubmission.isPending}
               >
                 <LockOpen className="size-3.5" />
-                Unlock
+                {t("page.unlockButton")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Unlock for Re-submission?</AlertDialogTitle>
+                <AlertDialogTitle>{t("page.unlockConfirmTitle")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will reset all grading data and allow the student to re-submit. This action cannot be undone.
+                  {t("page.unlockConfirmDescription")}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -536,7 +538,7 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
                   onClick={() => unlockSubmission.mutate()}
                   disabled={unlockSubmission.isPending}
                 >
-                  {unlockSubmission.isPending ? "Unlocking..." : "Unlock"}
+                  {unlockSubmission.isPending ? t("page.unlocking") : t("page.unlockButton")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -564,7 +566,7 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
       ) : detailError ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
           <p className="text-sm text-destructive">
-            Failed to load submission details
+            {t("page.failedToLoadDetails")}
           </p>
           <Button
             variant="outline"

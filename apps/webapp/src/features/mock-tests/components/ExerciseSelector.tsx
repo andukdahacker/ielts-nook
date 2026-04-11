@@ -12,6 +12,7 @@ import { Input } from "@workspace/ui/components/input";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { Loader2, Plus, Search } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface ExerciseSelectorProps {
   open: boolean;
@@ -28,6 +29,7 @@ export function ExerciseSelector({
   existingExerciseIds,
   onAdd,
 }: ExerciseSelectorProps) {
+  const { t } = useTranslation("mock-tests");
   const { user } = useAuth();
   const centerId = user?.centerId || undefined;
   const [search, setSearch] = useState("");
@@ -64,13 +66,15 @@ export function ExerciseSelector({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add {skill} Exercise</DialogTitle>
+          <DialogTitle>
+            {t("exerciseSelector.title", { skill })}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search exercises..."
+            placeholder={t("exerciseSelector.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -84,7 +88,9 @@ export function ExerciseSelector({
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No published {skill.toLowerCase()} exercises found.
+              {t("exerciseSelector.noExercises", {
+                skill: skill.toLowerCase(),
+              })}
             </div>
           ) : (
             <div className="space-y-2 pr-4">
@@ -101,11 +107,15 @@ export function ExerciseSelector({
                       <div className="font-medium truncate">{ex.title}</div>
                       <div className="flex gap-2 mt-1">
                         <Badge variant="outline" className="text-xs">
-                          {getQuestionCount(ex)} questions
+                          {t("exerciseSelector.questionCount", {
+                            count: getQuestionCount(ex),
+                          })}
                         </Badge>
                         {ex.bandLevel && (
                           <Badge variant="secondary" className="text-xs">
-                            Band {ex.bandLevel}
+                            {t("exerciseSelector.bandLevel", {
+                              level: ex.bandLevel,
+                            })}
                           </Badge>
                         )}
                       </div>
@@ -119,11 +129,11 @@ export function ExerciseSelector({
                       {addingId === ex.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : isAdded ? (
-                        "Added"
+                        t("exerciseSelector.addedButton")
                       ) : (
                         <>
                           <Plus className="mr-1 h-3 w-3" />
-                          Add
+                          {t("exerciseSelector.addButton")}
                         </>
                       )}
                     </Button>

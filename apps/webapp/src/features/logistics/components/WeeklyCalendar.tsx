@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import type { ClassSessionWithConflicts, Suggestion } from "@workspace/types";
 import {
   format,
@@ -62,6 +63,7 @@ export function WeeklyCalendar({
   isUpdating,
   isDeleting,
 }: WeeklyCalendarProps) {
+  const { t } = useTranslation("logistics");
   const [selectedSession, setSelectedSession] = useState<ClassSessionWithConflicts | null>(
     null,
   );
@@ -650,7 +652,7 @@ export function WeeklyCalendar({
             className="hidden sm:flex"
           >
             <Calendar className="size-4 mr-2" />
-            Today
+            {t("weeklyCalendar.today")}
           </Button>
         </div>
         <h2 className="text-lg font-semibold hidden sm:block">
@@ -873,8 +875,8 @@ export function WeeklyCalendar({
                                 hasConflict ? "text-red-700" : "text-green-700",
                               )}
                             >
-                              {draggedSession?.class?.name || "Session"}
-                              {hasConflict && " (Conflict)"}
+                              {draggedSession?.class?.name || t("weeklyCalendar.sessionFallback")}
+                              {hasConflict && ` (${t("weeklyCalendar.conflictLabel")})`}
                             </span>
                           </div>
                         </div>
@@ -920,7 +922,7 @@ export function WeeklyCalendar({
 
       {isUpdating && (
         <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
-          <div className="text-muted-foreground">Updating...</div>
+          <div className="text-muted-foreground">{t("weeklyCalendar.updating")}</div>
         </div>
       )}
 
@@ -936,7 +938,7 @@ export function WeeklyCalendar({
         }}
         sessionName={
           conflictSession
-            ? `${conflictSession.class?.course?.name ?? "Course"} - ${conflictSession.class?.name ?? "Class"}`
+            ? `${conflictSession.class?.course?.name ?? t("sessionBlock.courseFallback")} - ${conflictSession.class?.name ?? t("sessionBlock.classFallback")}`
             : undefined
         }
         roomConflicts={roomConflicts}

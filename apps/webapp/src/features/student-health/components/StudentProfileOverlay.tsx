@@ -30,6 +30,7 @@ import { useStudentFlags } from "../hooks/use-student-flags";
 import { useAuth } from "@/features/auth/auth-context";
 import { useState } from "react";
 import { Flag } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { HealthStatus } from "@workspace/types";
 
 function getInitials(name: string | null): string {
@@ -60,23 +61,23 @@ const ATTENDANCE_STATUS_STYLES: Record<
 
 const SUBMISSION_STATUS_STYLES: Record<
   string,
-  { className: string; label: string }
+  { className: string; labelKey: string }
 > = {
   "not-submitted": {
     className: "bg-gray-100 text-gray-800",
-    label: "Not Submitted",
+    labelKey: "submission.notSubmitted",
   },
   "in-progress": {
     className: "bg-blue-100 text-blue-800",
-    label: "In Progress",
+    labelKey: "submission.inProgress",
   },
   submitted: {
     className: "bg-amber-100 text-amber-800",
-    label: "Submitted",
+    labelKey: "submission.submitted",
   },
   graded: {
     className: "bg-emerald-100 text-emerald-800",
-    label: "Graded",
+    labelKey: "submission.graded",
   },
 };
 
@@ -91,6 +92,7 @@ export function StudentProfileOverlay({
   open,
   onOpenChange,
 }: StudentProfileOverlayProps) {
+  const { t } = useTranslation("student-health");
   const { profile, isLoading, isError, refetch } = useStudentProfile(
     open ? studentId : null,
   );
@@ -118,7 +120,7 @@ export function StudentProfileOverlay({
                   <Avatar className="h-12 w-12">
                     <AvatarImage
                       src={profile.student.avatarUrl ?? undefined}
-                      alt={profile.student.name ?? "Student"}
+                      alt={profile.student.name ?? t("student.defaultAlt")}
                     />
                     <AvatarFallback>
                       {getInitials(profile.student.name)}
@@ -126,7 +128,7 @@ export function StudentProfileOverlay({
                   </Avatar>
                   <div>
                     <SheetTitle className="text-lg">
-                      {profile.student.name ?? "Unknown"}
+                      {profile.student.name ?? t("student.unknown")}
                     </SheetTitle>
                     <SheetDescription>
                       {profile.student.email ?? ""}
@@ -140,7 +142,7 @@ export function StudentProfileOverlay({
                       size="sm"
                       onClick={() => setComposeOpen(true)}
                     >
-                      Contact Parent
+                      {t("profile.contactParent")}
                     </Button>
                   )}
                   {isTeacher && (
@@ -150,11 +152,11 @@ export function StudentProfileOverlay({
                       onClick={() => setFlagModalOpen(true)}
                     >
                       <Flag className="h-4 w-4 mr-1" />
-                      Flag for Admin
+                      {t("profile.flagStudent")}
                     </Button>
                   )}
                   {isAdminOrOwner && openFlagCount > 0 && (
-                    <span className="w-2.5 h-2.5 rounded-full bg-orange-500" title={`${openFlagCount} open flag(s)`} />
+                    <span className="w-2.5 h-2.5 rounded-full bg-orange-500" title={t("profile.openFlagsTitle", { count: openFlagCount })} />
                   )}
                   <TrafficLightBadge
                     status={profile.student.healthStatus}
@@ -179,7 +181,7 @@ export function StudentProfileOverlay({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-lg border p-3">
                     <p className="text-sm text-muted-foreground mb-1">
-                      Attendance
+                      {t("profile.attendanceLabel")}
                     </p>
                     <div className="flex items-center gap-1.5">
                       <span className="text-2xl font-bold">
@@ -190,13 +192,15 @@ export function StudentProfileOverlay({
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {profile.student.metrics.attendedSessions}/
-                      {profile.student.metrics.totalSessions} sessions
+                      {t("profile.attendanceSessions", {
+                        attended: profile.student.metrics.attendedSessions,
+                        total: profile.student.metrics.totalSessions,
+                      })}
                     </p>
                   </div>
                   <div className="rounded-lg border p-3">
                     <p className="text-sm text-muted-foreground mb-1">
-                      Assignments
+                      {t("profile.assignmentsLabel")}
                     </p>
                     <div className="flex items-center gap-1.5">
                       <span className="text-2xl font-bold">
@@ -207,12 +211,16 @@ export function StudentProfileOverlay({
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {profile.student.metrics.completedAssignments}/
-                      {profile.student.metrics.totalAssignments} completed
+                      {t("profile.assignmentsCompleted", {
+                        completed: profile.student.metrics.completedAssignments,
+                        total: profile.student.metrics.totalAssignments,
+                      })}
                     </p>
                     {profile.student.metrics.overdueAssignments > 0 && (
                       <p className="text-red-600 text-sm">
-                        {profile.student.metrics.overdueAssignments} overdue
+                        {t("profile.overdueAssignments", {
+                          count: profile.student.metrics.overdueAssignments,
+                        })}
                       </p>
                     )}
                   </div>
@@ -243,17 +251,17 @@ export function StudentProfileOverlay({
                 <Tabs defaultValue="trends">
                   <TabsList className="w-full">
                     <TabsTrigger value="trends" className="flex-1">
-                      Trends
+                      {t("profile.tabTrends")}
                     </TabsTrigger>
                     <TabsTrigger value="attendance" className="flex-1">
-                      Attendance
+                      {t("profile.tabAttendance")}
                     </TabsTrigger>
                     <TabsTrigger value="assignments" className="flex-1">
-                      Assignments
+                      {t("profile.tabAssignments")}
                     </TabsTrigger>
                     {!isTeacher && (
                       <TabsTrigger value="interventions" className="flex-1">
-                        Interventions
+                        {t("profile.tabInterventions")}
                       </TabsTrigger>
                     )}
                   </TabsList>
@@ -313,6 +321,7 @@ function RootCauseAlert({
   assignmentStatus: HealthStatus;
   completionRate: number;
 }) {
+  const { t } = useTranslation("student-health");
   if (healthStatus === "on-track") return null;
 
   const isAtRisk = healthStatus === "at-risk";
@@ -323,19 +332,26 @@ function RootCauseAlert({
   const reasons: string[] = [];
   if (attendanceStatus !== "on-track") {
     reasons.push(
-      `Attendance below ${attendanceStatus === "at-risk" ? "80" : "90"}% (${attendanceRate}%)`,
+      t("profile.rootCauseAttendance", {
+        threshold: attendanceStatus === "at-risk" ? "80" : "90",
+        rate: attendanceRate,
+      }),
     );
   }
   if (assignmentStatus !== "on-track") {
     reasons.push(
-      `Assignment completion below ${assignmentStatus === "at-risk" ? "50" : "75"}% (${completionRate}%)`,
+      t("profile.rootCauseAssignment", {
+        threshold: assignmentStatus === "at-risk" ? "50" : "75",
+        rate: completionRate,
+      }),
     );
   }
 
   return (
     <div className={`rounded-lg border p-3 ${bgClass}`} role="alert">
       <p className="font-medium mb-1">
-        {isAtRisk ? "At Risk" : "Warning"} — Root Cause
+        {isAtRisk ? t("profile.rootCauseAtRisk") : t("profile.rootCauseWarning")}
+        {t("profile.rootCauseLabel")}
       </p>
       <ul className="text-sm space-y-1">
         {reasons.map((reason) => (
@@ -356,10 +372,11 @@ function TrendsTab({
     completionRate: number;
   }>;
 }) {
+  const { t } = useTranslation("student-health");
   if (trends.length === 0) {
     return (
       <p className="text-sm text-muted-foreground text-center py-4">
-        Not enough data for trends
+        {t("profile.noTrends")}
       </p>
     );
   }
@@ -369,11 +386,11 @@ function TrendsTab({
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
           <span className="w-3 h-3 rounded-sm bg-blue-500" />
-          Attendance
+          {t("profile.trendAttendance")}
         </span>
         <span className="flex items-center gap-1">
           <span className="w-3 h-3 rounded-sm bg-emerald-500" />
-          Assignments
+          {t("profile.trendAssignments")}
         </span>
       </div>
       {trends.map((week) => (
@@ -421,10 +438,11 @@ function AttendanceTab({
     status: string;
   }>;
 }) {
+  const { t } = useTranslation("student-health");
   if (history.length === 0) {
     return (
       <p className="text-sm text-muted-foreground text-center py-4">
-        No attendance records yet
+        {t("profile.noAttendance")}
       </p>
     );
   }
@@ -467,10 +485,11 @@ function AssignmentsTab({
     submittedAt: string | null;
   }>;
 }) {
+  const { t } = useTranslation("student-health");
   if (history.length === 0) {
     return (
       <p className="text-sm text-muted-foreground text-center py-4">
-        No assignments yet
+        {t("profile.noAssignments")}
       </p>
     );
   }
@@ -480,9 +499,11 @@ function AssignmentsTab({
   return (
     <div className="space-y-3">
       {history.map((assignment) => {
-        const statusStyle = SUBMISSION_STATUS_STYLES[
-          assignment.submissionStatus
-        ] ?? { className: "", label: assignment.submissionStatus };
+        const mapped = SUBMISSION_STATUS_STYLES[assignment.submissionStatus];
+        const statusStyle = {
+          className: mapped?.className ?? "",
+          label: mapped ? t(mapped.labelKey) : assignment.submissionStatus,
+        };
         const isOverdue =
           assignment.dueDate &&
           new Date(assignment.dueDate) < now &&
@@ -509,10 +530,14 @@ function AssignmentsTab({
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                  {t("profile.assignmentDue", {
+                    date: new Date(assignment.dueDate).toLocaleDateString(),
+                  })}
                 </p>
                 {isOverdue && (
-                  <p className="text-red-600 text-xs">Overdue</p>
+                  <p className="text-red-600 text-xs">
+                    {t("profile.assignmentOverdue")}
+                  </p>
                 )}
               </div>
               <div className="flex flex-col items-end gap-1 ml-2">
@@ -558,15 +583,16 @@ function LoadingSkeleton() {
 }
 
 function ErrorState({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation("student-health");
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <SheetHeader>
-        <SheetTitle>Error</SheetTitle>
+        <SheetTitle>{t("profile.errorTitle")}</SheetTitle>
       </SheetHeader>
       <p className="text-muted-foreground mb-4">
-        Failed to load student profile.
+        {t("profile.errorMessage")}
       </p>
-      <Button onClick={onRetry}>Retry</Button>
+      <Button onClick={onRetry}>{t("button.retry", { ns: "common" })}</Button>
     </div>
   );
 }

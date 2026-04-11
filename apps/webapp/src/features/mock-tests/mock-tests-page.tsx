@@ -46,6 +46,7 @@ import {
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Loader2, MoreHorizontal, Plus } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useMockTests } from "./hooks/use-mock-tests";
@@ -56,14 +57,15 @@ const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline"> = {
   ARCHIVED: "outline",
 };
 
-const TEST_TYPE_LABELS: Record<string, string> = {
-  ACADEMIC: "Academic",
-  GENERAL_TRAINING: "General Training",
-};
-
 export function MockTestsPage() {
+  const { t } = useTranslation("mock-tests");
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  const TEST_TYPE_LABELS: Record<string, string> = {
+    ACADEMIC: t("page.testTypeAcademic"),
+    GENERAL_TRAINING: t("page.testTypeGeneralTraining"),
+  };
   const centerId = user?.centerId || undefined;
 
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
@@ -99,10 +101,10 @@ export function MockTestsPage() {
       setNewTitle("");
       setNewTestType("ACADEMIC");
       setNewDescription("");
-      toast.success("Mock test created");
+      toast.success(t("page.toastCreated"));
       navigate(`../mock-tests/${created.id}/edit`);
     } catch {
-      toast.error("Failed to create mock test");
+      toast.error(t("page.toastCreateError"));
     }
   };
 
@@ -111,18 +113,19 @@ export function MockTestsPage() {
     try {
       await deleteMockTest(deleteTarget.id);
       setDeleteTarget(null);
-      toast.success("Mock test deleted");
+      toast.success(t("page.toastDeleted"));
     } catch {
-      toast.error("Failed to delete mock test");
+      toast.error(t("page.toastDeleteError"));
     }
   };
 
   const handlePublish = async (id: string) => {
     try {
       await publishMockTest(id);
-      toast.success("Mock test published");
+      toast.success(t("page.toastPublished"));
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to publish";
+      const msg =
+        err instanceof Error ? err.message : t("editor.toastPublishError");
       toast.error(msg);
     }
   };
@@ -130,9 +133,9 @@ export function MockTestsPage() {
   const handleArchive = async (id: string) => {
     try {
       await archiveMockTest(id);
-      toast.success("Mock test archived");
+      toast.success(t("page.toastArchived"));
     } catch {
-      toast.error("Failed to archive mock test");
+      toast.error(t("page.toastArchiveError"));
     }
   };
 
@@ -149,10 +152,10 @@ export function MockTestsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Mock Tests</h1>
+        <h1 className="text-2xl font-bold">{t("page.title")}</h1>
         <Button onClick={() => setShowCreateDialog(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Create Mock Test
+          {t("page.createButton")}
         </Button>
       </div>
 
@@ -162,13 +165,15 @@ export function MockTestsPage() {
           onValueChange={(v) => setStatusFilter(v === "all" ? undefined : v)}
         >
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t("page.statusFilter")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="DRAFT">Draft</SelectItem>
-            <SelectItem value="PUBLISHED">Published</SelectItem>
-            <SelectItem value="ARCHIVED">Archived</SelectItem>
+            <SelectItem value="all">{t("page.statusAll")}</SelectItem>
+            <SelectItem value="DRAFT">{t("page.statusDraft")}</SelectItem>
+            <SelectItem value="PUBLISHED">
+              {t("page.statusPublished")}
+            </SelectItem>
+            <SelectItem value="ARCHIVED">{t("page.statusArchived")}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -177,12 +182,16 @@ export function MockTestsPage() {
           onValueChange={(v) => setTestTypeFilter(v === "all" ? undefined : v)}
         >
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="Test Type" />
+            <SelectValue placeholder={t("page.testTypeFilter")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="ACADEMIC">Academic</SelectItem>
-            <SelectItem value="GENERAL_TRAINING">General Training</SelectItem>
+            <SelectItem value="all">{t("page.testTypeAll")}</SelectItem>
+            <SelectItem value="ACADEMIC">
+              {t("page.testTypeAcademic")}
+            </SelectItem>
+            <SelectItem value="GENERAL_TRAINING">
+              {t("page.testTypeGeneralTraining")}
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -193,18 +202,17 @@ export function MockTestsPage() {
         </div>
       ) : mockTests.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          No mock tests yet. Create your first mock test to simulate full IELTS
-          conditions.
+          {t("page.noTests")}
         </div>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Test Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Sections</TableHead>
-              <TableHead>Created By</TableHead>
+              <TableHead>{t("page.tableTitle")}</TableHead>
+              <TableHead>{t("page.tableTestType")}</TableHead>
+              <TableHead>{t("page.tableStatus")}</TableHead>
+              <TableHead>{t("page.tableSections")}</TableHead>
+              <TableHead>{t("page.tableCreatedBy")}</TableHead>
               <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
@@ -245,20 +253,20 @@ export function MockTestsPage() {
                       <DropdownMenuItem
                         onClick={() => navigate(`../mock-tests/${mt.id}/edit`)}
                       >
-                        Edit
+                        {t("page.menuEdit")}
                       </DropdownMenuItem>
                       {mt.status === "DRAFT" && (
                         <DropdownMenuItem
                           onClick={() => handlePublish(mt.id)}
                         >
-                          Publish
+                          {t("page.menuPublish")}
                         </DropdownMenuItem>
                       )}
                       {mt.status !== "ARCHIVED" && (
                         <DropdownMenuItem
                           onClick={() => handleArchive(mt.id)}
                         >
-                          Archive
+                          {t("page.menuArchive")}
                         </DropdownMenuItem>
                       )}
                       {mt.status === "DRAFT" && (
@@ -268,7 +276,7 @@ export function MockTestsPage() {
                             className="text-destructive"
                             onClick={() => setDeleteTarget(mt)}
                           >
-                            Delete
+                            {t("page.menuDelete")}
                           </DropdownMenuItem>
                         </>
                       )}
@@ -285,39 +293,43 @@ export function MockTestsPage() {
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Mock Test</DialogTitle>
+            <DialogTitle>{t("page.createTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="title">{t("page.titleLabel")}</Label>
               <Input
                 id="title"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="e.g., IELTS Academic Practice Test 1"
+                placeholder={t("page.titlePlaceholder")}
               />
             </div>
             <div className="space-y-2">
-              <Label>Test Type</Label>
+              <Label>{t("page.testTypeLabel")}</Label>
               <Select value={newTestType} onValueChange={setNewTestType}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ACADEMIC">Academic</SelectItem>
+                  <SelectItem value="ACADEMIC">
+                    {t("page.testTypeAcademic")}
+                  </SelectItem>
                   <SelectItem value="GENERAL_TRAINING">
-                    General Training
+                    {t("page.testTypeGeneralTraining")}
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description (optional)</Label>
+              <Label htmlFor="description">
+                {t("page.descriptionLabel")}
+              </Label>
               <Textarea
                 id="description"
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
-                placeholder="Optional description..."
+                placeholder={t("page.descriptionPlaceholder")}
                 rows={3}
               />
             </div>
@@ -327,14 +339,14 @@ export function MockTestsPage() {
               variant="outline"
               onClick={() => setShowCreateDialog(false)}
             >
-              Cancel
+              {t("editor.cancelButton")}
             </Button>
             <Button
               onClick={handleCreate}
               disabled={!newTitle.trim() || isCreating}
             >
               {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create
+              {t("page.createSubmitButton")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -347,15 +359,16 @@ export function MockTestsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete mock test?</AlertDialogTitle>
+            <AlertDialogTitle>{t("page.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete &quot;{deleteTarget?.title}&quot;. This action
-              cannot be undone.
+              {t("page.deleteDesc", { title: deleteTarget?.title ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t("editor.cancelButton")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>
+              {t("page.menuDelete")}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

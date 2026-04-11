@@ -18,6 +18,7 @@ import {
 } from "@workspace/ui/components/tabs";
 import { Edit2, HeartPulse, Loader2, Plus, Trash2, Users } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { ClassDrawer } from "./components/ClassDrawer";
@@ -25,6 +26,7 @@ import { CourseDrawer } from "./components/CourseDrawer";
 import { useClasses, useCourses } from "./hooks/use-logistics";
 
 export const ClassesPage = () => {
+  const { t } = useTranslation("logistics");
   const { user } = useAuth();
   const centerId = user?.centerId || undefined;
 
@@ -56,12 +58,12 @@ export const ClassesPage = () => {
   };
 
   const handleDeleteClass = async (id: string) => {
-    if (confirm("Are you sure you want to delete this class?")) {
+    if (confirm(t("classes.deleteConfirmClass"))) {
       try {
         await deleteClass(id);
-        toast.success("Class deleted successfully");
+        toast.success(t("classes.deleteSuccessClass"));
       } catch {
-        toast.error("Failed to delete class");
+        toast.error(t("classes.deleteErrorClass"));
       }
     }
   };
@@ -78,12 +80,12 @@ export const ClassesPage = () => {
   };
 
   const handleDeleteCourse = async (id: string) => {
-    if (confirm("Are you sure you want to delete this course?")) {
+    if (confirm(t("classes.deleteConfirmCourse"))) {
       try {
         await deleteCourse(id);
-        toast.success("Course deleted successfully");
+        toast.success(t("classes.deleteSuccessCourse"));
       } catch {
-        toast.error("Failed to delete course");
+        toast.error(t("classes.deleteErrorCourse"));
       }
     }
   };
@@ -101,26 +103,26 @@ export const ClassesPage = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Classes</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t("classes.pageTitle")}</h1>
             <p className="text-muted-foreground">
-              Manage your classes, rosters, and courses.
+              {t("classes.pageSubtitle")}
             </p>
           </div>
           <div className="flex items-center gap-4">
             <TabsList>
-              <TabsTrigger value="classes">Classes</TabsTrigger>
-              <TabsTrigger value="courses">Courses</TabsTrigger>
+              <TabsTrigger value="classes">{t("classes.tabClasses")}</TabsTrigger>
+              <TabsTrigger value="courses">{t("classes.tabCourses")}</TabsTrigger>
             </TabsList>
             <RBACWrapper requiredRoles={["OWNER", "ADMIN"]}>
               {activeTab === "classes" ? (
                 <Button onClick={handleCreateClass}>
                   <Plus className="mr-2 size-4" />
-                  New Class
+                  {t("classes.newClass")}
                 </Button>
               ) : (
                 <Button onClick={handleCreateCourse}>
                   <Plus className="mr-2 size-4" />
-                  New Course
+                  {t("classes.newCourse")}
                 </Button>
               )}
             </RBACWrapper>
@@ -132,10 +134,10 @@ export const ClassesPage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Class Name</TableHead>
-                  <TableHead>Course</TableHead>
-                  <TableHead>Students</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("classes.tableClassName")}</TableHead>
+                  <TableHead>{t("classes.tableCourse")}</TableHead>
+                  <TableHead>{t("classes.tableStudents")}</TableHead>
+                  <TableHead className="text-right">{t("table.actions", { ns: "common" })}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -145,7 +147,7 @@ export const ClassesPage = () => {
                       colSpan={4}
                       className="h-24 text-center text-muted-foreground"
                     >
-                      No classes found.
+                      {t("classes.emptyClasses")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -164,7 +166,7 @@ export const ClassesPage = () => {
                             >
                               <Link to={`/${centerId}/dashboard/students?classId=${cls.id}`}>
                                 <HeartPulse className="mr-2 size-4" />
-                                View Health
+                                {t("classes.viewHealth")}
                               </Link>
                             </Button>
                           )}
@@ -175,7 +177,7 @@ export const ClassesPage = () => {
                               onClick={() => handleEditClass(cls)}
                             >
                               <Users className="mr-2 size-4" />
-                              Roster
+                              {t("classes.roster")}
                             </Button>
                             <Button
                               variant="ghost"
@@ -183,7 +185,7 @@ export const ClassesPage = () => {
                               onClick={() => handleEditClass(cls)}
                             >
                               <Edit2 className="size-4" />
-                              <span className="sr-only">Edit</span>
+                              <span className="sr-only">{t("button.edit", { ns: "common" })}</span>
                             </Button>
                             <Button
                               variant="ghost"
@@ -192,7 +194,7 @@ export const ClassesPage = () => {
                               onClick={() => handleDeleteClass(cls.id)}
                             >
                               <Trash2 className="size-4" />
-                              <span className="sr-only">Delete</span>
+                              <span className="sr-only">{t("button.delete", { ns: "common" })}</span>
                             </Button>
                           </RBACWrapper>
                         </div>
@@ -210,11 +212,11 @@ export const ClassesPage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[80px]">Color</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Description</TableHead>
+                  <TableHead className="w-[80px]">{t("classes.tableColor")}</TableHead>
+                  <TableHead>{t("classes.tableName")}</TableHead>
+                  <TableHead>{t("classes.tableDescription")}</TableHead>
                   <RBACWrapper requiredRoles={["OWNER", "ADMIN"]}>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-right">{t("table.actions", { ns: "common" })}</TableHead>
                   </RBACWrapper>
                 </TableRow>
               </TableHeader>
@@ -225,7 +227,7 @@ export const ClassesPage = () => {
                       colSpan={4}
                       className="h-24 text-center text-muted-foreground"
                     >
-                      No courses found. Create one to get started.
+                      {t("classes.emptyCourses")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -239,7 +241,7 @@ export const ClassesPage = () => {
                       </TableCell>
                       <TableCell className="font-medium">{course.name}</TableCell>
                       <TableCell className="max-w-md truncate text-muted-foreground">
-                        {course.description || "No description"}
+                        {course.description || t("classes.noDescription")}
                       </TableCell>
                       <RBACWrapper requiredRoles={["OWNER", "ADMIN"]}>
                         <TableCell className="text-right">
@@ -250,7 +252,7 @@ export const ClassesPage = () => {
                               onClick={() => handleEditCourse(course)}
                             >
                               <Edit2 className="size-4" />
-                              <span className="sr-only">Edit</span>
+                              <span className="sr-only">{t("button.edit", { ns: "common" })}</span>
                             </Button>
                             <Button
                               variant="ghost"
@@ -259,7 +261,7 @@ export const ClassesPage = () => {
                               onClick={() => handleDeleteCourse(course.id)}
                             >
                               <Trash2 className="size-4" />
-                              <span className="sr-only">Delete</span>
+                              <span className="sr-only">{t("button.delete", { ns: "common" })}</span>
                             </Button>
                           </div>
                         </TableCell>

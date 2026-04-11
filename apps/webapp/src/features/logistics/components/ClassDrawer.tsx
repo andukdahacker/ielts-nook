@@ -48,6 +48,7 @@ import { addWeeks, startOfWeek } from "date-fns";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { useEffect, useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useClasses, useCourses } from "../hooks/use-logistics";
 import { useRooms } from "../hooks/use-rooms";
@@ -70,6 +71,7 @@ export function ClassDrawer({
   onCreated,
   centerId,
 }: ClassDrawerProps) {
+  const { t } = useTranslation("logistics");
   const isEditing = !!cls;
   const { createClass, updateClass } = useClasses(centerId);
   const { courses } = useCourses(centerId);
@@ -122,11 +124,11 @@ export function ClassDrawer({
     try {
       if (isEditing && cls) {
         await updateClass({ id: cls.id, input: values });
-        toast.success("Class updated successfully");
+        toast.success(t("classDrawer.toastUpdateSuccess"));
         onOpenChange(false);
       } else {
         const newClass = await createClass(values);
-        toast.success("Class created successfully");
+        toast.success(t("classDrawer.toastCreateSuccess"));
         if (onCreated && newClass) {
           onCreated(newClass);
         } else {
@@ -134,16 +136,14 @@ export function ClassDrawer({
         }
       }
     } catch {
-      toast.error("Failed to save class");
+      toast.error(t("classDrawer.toastError"));
     }
   };
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && form.formState.isDirty) {
       if (
-        confirm(
-          "You have unsaved changes. Are you sure you want to close this drawer?",
-        )
+        confirm(t("classDrawer.unsavedChanges"))
       ) {
         onOpenChange(false);
       }
@@ -157,10 +157,10 @@ export function ClassDrawer({
       <SheetContent className="sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>
-            {isEditing ? "Edit Class" : "Create New Class"}
+            {isEditing ? t("classDrawer.titleEdit") : t("classDrawer.titleCreate")}
           </SheetTitle>
           <SheetDescription>
-            Define the class name and link it to a course.
+            {t("classDrawer.description")}
           </SheetDescription>
         </SheetHeader>
 
@@ -175,9 +175,9 @@ export function ClassDrawer({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Class Name</FormLabel>
+                    <FormLabel>{t("classDrawer.className")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Class 10A" {...field} />
+                      <Input placeholder={t("classDrawer.classNamePlaceholder")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -189,7 +189,7 @@ export function ClassDrawer({
                 name="courseId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Course</FormLabel>
+                    <FormLabel>{t("classDrawer.course")}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -197,7 +197,7 @@ export function ClassDrawer({
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a course" />
+                          <SelectValue placeholder={t("classDrawer.coursePlaceholder")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -218,7 +218,7 @@ export function ClassDrawer({
                 name="defaultRoomName"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Default Room (Optional)</FormLabel>
+                    <FormLabel>{t("classDrawer.defaultRoom")}</FormLabel>
                     <Popover open={roomComboOpen} onOpenChange={setRoomComboOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -230,7 +230,7 @@ export function ClassDrawer({
                               !field.value && "text-muted-foreground"
                             )}
                           >
-                            {field.value || "Select or type room..."}
+                            {field.value || t("editSession.roomPlaceholder")}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </FormControl>
@@ -238,12 +238,12 @@ export function ClassDrawer({
                       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                         <Command>
                           <CommandInput
-                            placeholder="Search rooms..."
+                            placeholder={t("editSession.searchRooms")}
                             onValueChange={(val) => field.onChange(val)}
                           />
                           <CommandList>
                             <CommandEmpty>
-                              {field.value ? `Use "${field.value}"` : "No rooms found."}
+                              {field.value ? t("editSession.useRoomQuoted", { room: field.value }) : t("editSession.noRoomsFound")}
                             </CommandEmpty>
                             <CommandGroup>
                               {rooms.map((room) => (
@@ -279,7 +279,7 @@ export function ClassDrawer({
                   {form.formState.isSubmitting && (
                     <Loader2 className="mr-2 size-4 animate-spin" />
                   )}
-                  {isEditing ? "Save Changes" : "Create & Continue"}
+                  {isEditing ? t("button.saveChanges", { ns: "common" }) : t("classDrawer.createContinue")}
                 </Button>
               </SheetFooter>
             </form>
@@ -296,9 +296,9 @@ export function ClassDrawer({
               />
             ) : (
               <div className="space-y-2">
-                <h3 className="text-sm font-medium">Schedule</h3>
+                <h3 className="text-sm font-medium">{t("classDrawer.scheduleHeader")}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Create the class first to manage its schedule.
+                  {t("classDrawer.scheduleSubtitle")}
                 </p>
               </div>
             )}
@@ -311,9 +311,9 @@ export function ClassDrawer({
               <RosterManager classId={cls.id} centerId={centerId} />
             ) : (
               <div className="space-y-2">
-                <h3 className="text-sm font-medium">Roster</h3>
+                <h3 className="text-sm font-medium">{t("classDrawer.rosterHeader")}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Create the class first to manage its roster.
+                  {t("classDrawer.rosterSubtitle")}
                 </p>
               </div>
             )}

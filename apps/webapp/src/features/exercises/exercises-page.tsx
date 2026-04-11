@@ -75,6 +75,7 @@ import {
 } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useExercises } from "./hooks/use-exercises";
@@ -89,88 +90,98 @@ const SKILL_ICONS: Record<ExerciseSkill, React.ReactNode> = {
   SPEAKING: <Mic className="size-4" />,
 };
 
-const SKILL_LABELS: Record<ExerciseSkill, string> = {
-  READING: "Reading",
-  LISTENING: "Listening",
-  WRITING: "Writing",
-  SPEAKING: "Speaking",
-};
+type TFunc = (key: string, options?: Record<string, unknown>) => string;
 
-const STATUS_VARIANTS: Record<
-  ExerciseStatus,
-  { label: string; className: string }
-> = {
-  DRAFT: { label: "Draft", className: "bg-muted text-muted-foreground" },
+const getSkillLabels = (t: TFunc): Record<ExerciseSkill, string> => ({
+  READING: t("skill.reading", { ns: "common" }),
+  LISTENING: t("skill.listening", { ns: "common" }),
+  WRITING: t("skill.writing", { ns: "common" }),
+  SPEAKING: t("skill.speaking", { ns: "common" }),
+});
+
+const getStatusVariants = (
+  t: TFunc,
+): Record<ExerciseStatus, { label: string; className: string }> => ({
+  DRAFT: { label: t("status.draft"), className: "bg-muted text-muted-foreground" },
   PUBLISHED: {
-    label: "Published",
+    label: t("status.published"),
     className:
       "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
   },
   ARCHIVED: {
-    label: "Archived",
+    label: t("status.archived"),
     className: "bg-muted/50 text-muted-foreground/70",
   },
-};
+});
 
-const QUESTION_TYPE_GROUPS: { skill: string; types: { value: string; label: string }[] }[] = [
+const getQuestionTypeGroups = (
+  t: TFunc,
+): { skill: string; types: { value: string; label: string }[] }[] => [
   {
-    skill: "Reading",
+    skill: t("skill.reading", { ns: "common" }),
     types: [
-      { value: "R1_MCQ_SINGLE", label: "MCQ Single Answer" },
-      { value: "R2_MCQ_MULTI", label: "MCQ Multiple Answers" },
-      { value: "R3_TFNG", label: "True/False/Not Given" },
-      { value: "R4_YNNG", label: "Yes/No/Not Given" },
-      { value: "R5_SENTENCE_COMPLETION", label: "Sentence Completion" },
-      { value: "R6_SHORT_ANSWER", label: "Short Answer" },
-      { value: "R7_SUMMARY_WORD_BANK", label: "Summary (Word Bank)" },
-      { value: "R8_SUMMARY_PASSAGE", label: "Summary (Passage)" },
-      { value: "R9_MATCHING_HEADINGS", label: "Matching Headings" },
-      { value: "R10_MATCHING_INFORMATION", label: "Matching Information" },
-      { value: "R11_MATCHING_FEATURES", label: "Matching Features" },
-      { value: "R12_MATCHING_SENTENCE_ENDINGS", label: "Matching Endings" },
-      { value: "R13_NOTE_TABLE_FLOWCHART", label: "Note/Table/Flowchart" },
-      { value: "R14_DIAGRAM_LABELLING", label: "Diagram Labelling" },
+      { value: "R1_MCQ_SINGLE", label: t("questions.r1McqSingle") },
+      { value: "R2_MCQ_MULTI", label: t("questions.r2McqMulti") },
+      { value: "R3_TFNG", label: t("questions.r3Tfng") },
+      { value: "R4_YNNG", label: t("questions.r4Ynng") },
+      { value: "R5_SENTENCE_COMPLETION", label: t("questions.r5SentenceCompletion") },
+      { value: "R6_SHORT_ANSWER", label: t("questions.r6ShortAnswer") },
+      { value: "R7_SUMMARY_WORD_BANK", label: t("questions.r7SummaryWordBank") },
+      { value: "R8_SUMMARY_PASSAGE", label: t("questions.r8SummaryPassage") },
+      { value: "R9_MATCHING_HEADINGS", label: t("questions.r9MatchingHeadings") },
+      { value: "R10_MATCHING_INFORMATION", label: t("questions.r10MatchingInformation") },
+      { value: "R11_MATCHING_FEATURES", label: t("questions.r11MatchingFeatures") },
+      { value: "R12_MATCHING_SENTENCE_ENDINGS", label: t("questions.r12MatchingSentenceEndings") },
+      { value: "R13_NOTE_TABLE_FLOWCHART", label: t("questions.r13NoteTableFlowchart") },
+      { value: "R14_DIAGRAM_LABELLING", label: t("questions.r14DiagramLabelling") },
     ],
   },
   {
-    skill: "Listening",
+    skill: t("skill.listening", { ns: "common" }),
     types: [
-      { value: "L1_FORM_NOTE_TABLE", label: "Form/Note/Table" },
-      { value: "L2_MCQ", label: "Multiple Choice" },
-      { value: "L3_MATCHING", label: "Matching" },
-      { value: "L4_MAP_PLAN_LABELLING", label: "Map/Plan Labelling" },
-      { value: "L5_SENTENCE_COMPLETION", label: "Sentence Completion" },
-      { value: "L6_SHORT_ANSWER", label: "Short Answer" },
+      { value: "L1_FORM_NOTE_TABLE", label: t("questions.l1FormNoteTable") },
+      { value: "L2_MCQ", label: t("questions.l2Mcq") },
+      { value: "L3_MATCHING", label: t("questions.l3Matching") },
+      { value: "L4_MAP_PLAN_LABELLING", label: t("questions.l4MapPlanLabelling") },
+      { value: "L5_SENTENCE_COMPLETION", label: t("questions.l5SentenceCompletion") },
+      { value: "L6_SHORT_ANSWER", label: t("questions.l6ShortAnswer") },
     ],
   },
   {
-    skill: "Writing",
+    skill: t("skill.writing", { ns: "common" }),
     types: [
-      { value: "W1_TASK1_ACADEMIC", label: "Task 1 Academic" },
-      { value: "W2_TASK1_GENERAL", label: "Task 1 General" },
-      { value: "W3_TASK2_ESSAY", label: "Task 2 Essay" },
+      { value: "W1_TASK1_ACADEMIC", label: t("questions.w1Task1Academic") },
+      { value: "W2_TASK1_GENERAL", label: t("questions.w2Task1General") },
+      { value: "W3_TASK2_ESSAY", label: t("questions.w3Task2Essay") },
     ],
   },
   {
-    skill: "Speaking",
+    skill: t("skill.speaking", { ns: "common" }),
     types: [
-      { value: "S1_PART1_QA", label: "Part 1 Questions" },
-      { value: "S2_PART2_CUE_CARD", label: "Part 2 Cue Card" },
-      { value: "S3_PART3_DISCUSSION", label: "Part 3 Discussion" },
+      { value: "S1_PART1_QA", label: t("questions.s1Part1Qa") },
+      { value: "S2_PART2_CUE_CARD", label: t("questions.s2Part2CueCard") },
+      { value: "S3_PART3_DISCUSSION", label: t("questions.s3Part3Discussion") },
     ],
   },
 ];
 
-const QUESTION_TYPE_LABELS = Object.fromEntries(
-  QUESTION_TYPE_GROUPS.flatMap((g) => g.types.map((t) => [t.value, t.label])),
-);
+const getQuestionTypeLabels = (t: TFunc): Record<string, string> =>
+  Object.fromEntries(
+    getQuestionTypeGroups(t).flatMap((g) => g.types.map((ty) => [ty.value, ty.label])),
+  );
 
 const PAGE_SIZE = 20;
 
 export function ExercisesPage() {
+  const { t } = useTranslation("exercises");
   const { user } = useAuth();
   const centerId = user?.centerId || undefined;
   const navigate = useNavigate();
+
+  const SKILL_LABELS = useMemo(() => getSkillLabels(t), [t]);
+  const STATUS_VARIANTS = useMemo(() => getStatusVariants(t), [t]);
+  const QUESTION_TYPE_GROUPS = useMemo(() => getQuestionTypeGroups(t), [t]);
+  const QUESTION_TYPE_LABELS = useMemo(() => getQuestionTypeLabels(t), [t]);
 
   const [skillFilter, setSkillFilter] = useState<ExerciseSkill | "ALL">("ALL");
   const [statusFilter, setStatusFilter] = useState<ExerciseStatus | "ALL">("ALL");
@@ -259,7 +270,7 @@ export function ExercisesPage() {
 
   const handleDeleteClick = (exercise: Exercise) => {
     if (exercise.status !== "DRAFT") {
-      toast.error("Only draft exercises can be deleted");
+      toast.error(t("toast.onlyDraftDelete"));
       return;
     }
     setDeleteTarget(exercise);
@@ -269,9 +280,9 @@ export function ExercisesPage() {
     if (!deleteTarget) return;
     try {
       await deleteExercise(deleteTarget.id);
-      toast.success("Exercise deleted successfully");
+      toast.success(t("toast.deleteSuccess"));
     } catch {
-      toast.error("Failed to delete exercise");
+      toast.error(t("toast.deleteError"));
     } finally {
       setDeleteTarget(null);
     }
@@ -280,36 +291,36 @@ export function ExercisesPage() {
   const handlePublish = async (exercise: Exercise) => {
     try {
       await publishExercise(exercise.id);
-      toast.success("Exercise published successfully");
+      toast.success(t("toast.publishSuccess"));
     } catch {
-      toast.error("Failed to publish exercise");
+      toast.error(t("toast.publishError"));
     }
   };
 
   const handleArchive = async (exercise: Exercise) => {
     try {
       await archiveExercise(exercise.id);
-      toast.success("Exercise archived successfully");
+      toast.success(t("toast.archiveSuccess"));
     } catch {
-      toast.error("Failed to archive exercise");
+      toast.error(t("toast.archiveError"));
     }
   };
 
   const handleDuplicate = async (exercise: Exercise) => {
     try {
       await duplicateExercise(exercise.id);
-      toast.success("Exercise duplicated");
+      toast.success(t("toast.duplicateSuccess"));
     } catch {
-      toast.error("Failed to duplicate exercise");
+      toast.error(t("toast.duplicateError"));
     }
   };
 
   const handleRestore = async (exercise: Exercise) => {
     try {
       await restoreExercise(exercise.id);
-      toast.success("Exercise restored to draft");
+      toast.success(t("toast.restoreSuccess"));
     } catch {
-      toast.error("Failed to restore exercise");
+      toast.error(t("toast.restoreError"));
     }
   };
 
@@ -341,20 +352,20 @@ export function ExercisesPage() {
   const handleBulkArchive = async () => {
     try {
       await bulkArchive([...selectedIds]);
-      toast.success(`${selectedIds.size} exercises archived`);
+      toast.success(`${selectedIds.size} ${t("toast.bulkArchiveCount")}`);
       setSelectedIds(new Set());
     } catch {
-      toast.error("Failed to archive exercises");
+      toast.error(t("toast.bulkArchiveError"));
     }
   };
 
   const handleBulkDuplicate = async () => {
     try {
       await bulkDuplicate([...selectedIds]);
-      toast.success(`${selectedIds.size} exercises duplicated`);
+      toast.success(`${selectedIds.size} ${t("toast.bulkDuplicateCount")}`);
       setSelectedIds(new Set());
     } catch {
-      toast.error("Failed to duplicate exercises");
+      toast.error(t("toast.bulkDuplicateError"));
     }
   };
 
@@ -362,12 +373,12 @@ export function ExercisesPage() {
     if (bulkTagSelection.length === 0) return;
     try {
       await bulkTag({ exerciseIds: [...selectedIds], tagIds: bulkTagSelection });
-      toast.success("Tags applied to selected exercises");
+      toast.success(t("toast.tagsApplied"));
       setSelectedIds(new Set());
       setBulkTagPopoverOpen(false);
       setBulkTagSelection([]);
     } catch {
-      toast.error("Failed to tag exercises");
+      toast.error(t("toast.tagsError"));
     }
   };
 
@@ -385,36 +396,36 @@ export function ExercisesPage() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon">
           <MoreHorizontal className="size-4" />
-          <span className="sr-only">Actions</span>
+          <span className="sr-only">{t("table.actions", { ns: "common" })}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => handleEdit(exercise)}>
-          Edit
+          {t("menu.edit")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleDuplicate(exercise)}>
           <Copy className="mr-2 size-4" />
-          Duplicate
+          {t("menu.duplicate")}
         </DropdownMenuItem>
         {exercise.status === "PUBLISHED" && (
           <DropdownMenuItem onClick={() => setAssignExerciseId(exercise.id)}>
-            Assign
+            {t("menu.assign")}
           </DropdownMenuItem>
         )}
         {exercise.status === "DRAFT" && (
           <DropdownMenuItem onClick={() => handlePublish(exercise)}>
-            Publish
+            {t("menu.publish")}
           </DropdownMenuItem>
         )}
         {exercise.status !== "ARCHIVED" && (
           <DropdownMenuItem onClick={() => handleArchive(exercise)}>
-            Archive
+            {t("menu.archive")}
           </DropdownMenuItem>
         )}
         {exercise.status === "ARCHIVED" && (
           <DropdownMenuItem onClick={() => handleRestore(exercise)}>
             <RotateCcw className="mr-2 size-4" />
-            Restore
+            {t("menu.restore")}
           </DropdownMenuItem>
         )}
         {exercise.status === "DRAFT" && (
@@ -425,7 +436,7 @@ export function ExercisesPage() {
               disabled={isDeleting}
               onClick={() => handleDeleteClick(exercise)}
             >
-              Delete
+              {t("menu.delete")}
             </DropdownMenuItem>
           </>
         )}
@@ -445,14 +456,14 @@ export function ExercisesPage() {
     <div className="container space-y-6 py-10">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Exercises</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("page.title")}</h1>
           <p className="text-muted-foreground">
-            Create and manage IELTS exercises for your students.
+            {t("page.subtitle")}
           </p>
         </div>
         <Button onClick={handleCreate}>
           <Plus className="mr-2 size-4" />
-          Create Exercise
+          {t("page.createButton")}
         </Button>
       </div>
 
@@ -461,7 +472,7 @@ export function ExercisesPage() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search exercises..."
+            placeholder={t("list.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -472,14 +483,14 @@ export function ExercisesPage() {
           onValueChange={(v) => setSkillFilter(v as ExerciseSkill | "ALL")}
         >
           <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="All Skills" />
+            <SelectValue placeholder={t("skill.allSkills", { ns: "common" })} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Skills</SelectItem>
-            <SelectItem value="READING">Reading</SelectItem>
-            <SelectItem value="LISTENING">Listening</SelectItem>
-            <SelectItem value="WRITING">Writing</SelectItem>
-            <SelectItem value="SPEAKING">Speaking</SelectItem>
+            <SelectItem value="ALL">{t("skill.allSkills", { ns: "common" })}</SelectItem>
+            <SelectItem value="READING">{t("skill.reading", { ns: "common" })}</SelectItem>
+            <SelectItem value="LISTENING">{t("skill.listening", { ns: "common" })}</SelectItem>
+            <SelectItem value="WRITING">{t("skill.writing", { ns: "common" })}</SelectItem>
+            <SelectItem value="SPEAKING">{t("skill.speaking", { ns: "common" })}</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -487,12 +498,12 @@ export function ExercisesPage() {
           onValueChange={(v) => setStatusFilter(v as ExerciseStatus | "ALL")}
         >
           <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="All Statuses" />
+            <SelectValue placeholder={t("filters.allStatuses")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Statuses</SelectItem>
-            <SelectItem value="DRAFT">Draft</SelectItem>
-            <SelectItem value="PUBLISHED">Published</SelectItem>
+            <SelectItem value="ALL">{t("filters.allStatuses")}</SelectItem>
+            <SelectItem value="DRAFT">{t("filters.draft")}</SelectItem>
+            <SelectItem value="PUBLISHED">{t("filters.published")}</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -500,15 +511,15 @@ export function ExercisesPage() {
           onValueChange={(v) => setBandLevelFilter(v as BandLevel | "ALL")}
         >
           <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="All Bands" />
+            <SelectValue placeholder={t("filters.allBands")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Bands</SelectItem>
-            <SelectItem value="4-5">Band 4-5</SelectItem>
-            <SelectItem value="5-6">Band 5-6</SelectItem>
-            <SelectItem value="6-7">Band 6-7</SelectItem>
-            <SelectItem value="7-8">Band 7-8</SelectItem>
-            <SelectItem value="8-9">Band 8-9</SelectItem>
+            <SelectItem value="ALL">{t("filters.allBands")}</SelectItem>
+            <SelectItem value="4-5">{t("filters.band45")}</SelectItem>
+            <SelectItem value="5-6">{t("filters.band56")}</SelectItem>
+            <SelectItem value="6-7">{t("filters.band67")}</SelectItem>
+            <SelectItem value="7-8">{t("filters.band78")}</SelectItem>
+            <SelectItem value="8-9">{t("filters.band89")}</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -516,16 +527,16 @@ export function ExercisesPage() {
           onValueChange={(v) => setQuestionTypeFilter(v)}
         >
           <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="All Question Types" />
+            <SelectValue placeholder={t("filters.allQuestionTypes")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Question Types</SelectItem>
+            <SelectItem value="ALL">{t("filters.allQuestionTypes")}</SelectItem>
             {QUESTION_TYPE_GROUPS.map((group) => (
               <SelectGroup key={group.skill}>
                 <SelectLabel>{group.skill}</SelectLabel>
-                {group.types.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
+                {group.types.map((ty) => (
+                  <SelectItem key={ty.value} value={ty.value}>
+                    {ty.label}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -541,16 +552,16 @@ export function ExercisesPage() {
               className="w-[180px] justify-between"
             >
               {tagFilter.length > 0
-                ? `${tagFilter.length} tag${tagFilter.length > 1 ? "s" : ""}`
-                : "All Tags"}
+                ? t("filters.tagsCount", { count: tagFilter.length })
+                : t("filters.allTags")}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0">
             <Command>
-              <CommandInput placeholder="Search tags..." />
+              <CommandInput placeholder={t("filters.searchTags")} />
               <CommandList>
-                <CommandEmpty>No tags found.</CommandEmpty>
+                <CommandEmpty>{t("filters.noTags")}</CommandEmpty>
                 {centerTags.map((tag) => (
                   <CommandItem
                     key={tag.id}
@@ -589,7 +600,7 @@ export function ExercisesPage() {
             onCheckedChange={setShowArchived}
           />
           <label htmlFor="show-archived" className="text-sm text-muted-foreground cursor-pointer">
-            Show Archived
+            {t("filters.showArchived")}
           </label>
         </div>
         <div className="flex items-center gap-1">
@@ -597,7 +608,7 @@ export function ExercisesPage() {
             variant={viewMode === "list" ? "default" : "outline"}
             size="icon"
             onClick={() => setViewMode("list")}
-            aria-label="List view"
+            aria-label={t("listView.label")}
           >
             <LayoutList className="size-4" />
           </Button>
@@ -605,7 +616,7 @@ export function ExercisesPage() {
             variant={viewMode === "grid" ? "default" : "outline"}
             size="icon"
             onClick={() => setViewMode("grid")}
-            aria-label="Grid view"
+            aria-label={t("gridView.label")}
           >
             <LayoutGrid className="size-4" />
           </Button>
@@ -615,27 +626,27 @@ export function ExercisesPage() {
       {/* Bulk Action Toolbar */}
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-3 rounded-lg border bg-muted/50 p-3">
-          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <span className="text-sm font-medium">{t("bulkActions.countSelected", { count: selectedIds.size })}</span>
           <Button variant="outline" size="sm" onClick={handleBulkArchive}>
             <Archive className="mr-2 size-4" />
-            Archive
+            {t("bulkActions.archive")}
           </Button>
           <Button variant="outline" size="sm" onClick={handleBulkDuplicate}>
             <Copy className="mr-2 size-4" />
-            Duplicate
+            {t("bulkActions.duplicate")}
           </Button>
           <Popover open={bulkTagPopoverOpen} onOpenChange={setBulkTagPopoverOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm">
                 <Tag className="mr-2 size-4" />
-                Tag
+                {t("bulkActions.tag")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[220px] p-0">
               <Command>
-                <CommandInput placeholder="Search tags..." />
+                <CommandInput placeholder={t("filters.searchTags")} />
                 <CommandList>
-                  <CommandEmpty>No tags found.</CommandEmpty>
+                  <CommandEmpty>{t("filters.noTags")}</CommandEmpty>
                   {centerTags.map((tag) => (
                     <CommandItem
                       key={tag.id}
@@ -662,7 +673,7 @@ export function ExercisesPage() {
               {bulkTagSelection.length > 0 && (
                 <div className="border-t p-2">
                   <Button size="sm" className="w-full" onClick={handleBulkTag}>
-                    Apply {bulkTagSelection.length} tag{bulkTagSelection.length > 1 ? "s" : ""}
+                    {t("bulkActions.applyTags", { count: bulkTagSelection.length })}
                   </Button>
                 </div>
               )}
@@ -670,14 +681,14 @@ export function ExercisesPage() {
           </Popover>
           <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
             <X className="mr-2 size-4" />
-            Deselect All
+            {t("bulkActions.deselectAll")}
           </Button>
         </div>
       )}
 
       {/* Content: List or Grid View */}
       {viewMode === "list" ? (
-        <div className="overflow-x-auto rounded-md border" tabIndex={0} role="region" aria-label="Exercise list table">
+        <div className="overflow-x-auto rounded-md border" tabIndex={0} role="region" aria-label={t("table.ariaLabel")}>
           <Table>
             <TableHeader>
               <TableRow>
@@ -685,20 +696,20 @@ export function ExercisesPage() {
                   <Checkbox
                     checked={allPageSelected}
                     onCheckedChange={toggleSelectAll}
-                    aria-label="Select all"
+                    aria-label={t("table.selectAll", { ns: "common" })}
                   />
                 </TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Skill</TableHead>
-                <TableHead>Types</TableHead>
-                <TableHead>Band</TableHead>
-                <TableHead>Tags</TableHead>
-                <TableHead>Sections</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Assignments</TableHead>
-                <TableHead>Avg Score</TableHead>
-                <TableHead>Last Modified</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t("table.title")}</TableHead>
+                <TableHead>{t("table.skill")}</TableHead>
+                <TableHead>{t("table.types")}</TableHead>
+                <TableHead>{t("table.band")}</TableHead>
+                <TableHead>{t("table.tags")}</TableHead>
+                <TableHead>{t("table.sections")}</TableHead>
+                <TableHead>{t("table.status", { ns: "common" })}</TableHead>
+                <TableHead>{t("table.assignments")}</TableHead>
+                <TableHead>{t("table.avgScore")}</TableHead>
+                <TableHead>{t("table.lastModified")}</TableHead>
+                <TableHead className="text-right">{t("table.actions", { ns: "common" })}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -709,8 +720,8 @@ export function ExercisesPage() {
                     className="h-24 text-center text-muted-foreground"
                   >
                     {exercises.length === 0
-                      ? "No exercises found. Create one to get started."
-                      : "No exercises match your search."}
+                      ? t("table.noExercises")
+                      : t("table.noMatches")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -723,7 +734,7 @@ export function ExercisesPage() {
                       <Checkbox
                         checked={selectedIds.has(exercise.id)}
                         onCheckedChange={() => toggleSelect(exercise.id)}
-                        aria-label={`Select ${exercise.title}`}
+                        aria-label={t("table.selectAria", { title: exercise.title })}
                       />
                     </TableCell>
                     <TableCell className="font-medium">
@@ -741,9 +752,9 @@ export function ExercisesPage() {
                         if (types.length === 0) return <span className="text-muted-foreground">-</span>;
                         return (
                           <div className="flex flex-wrap gap-1">
-                            {types.slice(0, 2).map((t) => (
-                              <Badge key={t} variant="outline" className="text-xs">
-                                {QUESTION_TYPE_LABELS[t] ?? t}
+                            {types.slice(0, 2).map((typeKey) => (
+                              <Badge key={typeKey} variant="outline" className="text-xs">
+                                {QUESTION_TYPE_LABELS[typeKey] ?? typeKey}
                               </Badge>
                             ))}
                             {types.length > 2 && (
@@ -801,8 +812,8 @@ export function ExercisesPage() {
           {paginatedExercises.length === 0 ? (
             <div className="col-span-full h-24 flex items-center justify-center text-muted-foreground">
               {exercises.length === 0
-                ? "No exercises found. Create one to get started."
-                : "No exercises match your search."}
+                ? t("table.noExercises")
+                : t("table.noMatches")}
             </div>
           ) : (
             paginatedExercises.map((exercise) => (
@@ -817,7 +828,7 @@ export function ExercisesPage() {
                   <Checkbox
                     checked={selectedIds.has(exercise.id)}
                     onCheckedChange={() => toggleSelect(exercise.id)}
-                    aria-label={`Select ${exercise.title}`}
+                    aria-label={t("table.selectAria", { title: exercise.title })}
                   />
                 </div>
                 <CardHeader className="pb-2">
@@ -853,7 +864,7 @@ export function ExercisesPage() {
                     ))}
                     {(exercise.tags?.length ?? 0) > 3 && (
                       <Badge variant="secondary" className="text-xs">
-                        +{(exercise.tags?.length ?? 0) - 3} more
+                        {t("grid.moreCount", { count: (exercise.tags?.length ?? 0) - 3 })}
                       </Badge>
                     )}
                   </div>
@@ -861,10 +872,10 @@ export function ExercisesPage() {
                 <CardFooter className="flex items-center justify-between pt-0 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <span>{formatDate(exercise.updatedAt)}</span>
-                    <span>{exercise.sections?.length ?? 0} sections</span>
-                    <span>Assignments: {assignmentCountMap.get(exercise.id) ?? 0}</span>
+                    <span>{t("grid.sectionsCount", { count: exercise.sections?.length ?? 0 })}</span>
+                    <span>{t("grid.assignmentsCount", { count: assignmentCountMap.get(exercise.id) ?? 0 })}</span>
                     {/* TODO: Epic 5 — Replace stub with real avg score from grading data */}
-                    <span>Avg Score: &mdash;</span>
+                    <span>{t("grid.avgScoreDash")}</span>
                   </div>
                   {renderActionMenu(exercise)}
                 </CardFooter>
@@ -884,10 +895,10 @@ export function ExercisesPage() {
             onClick={() => setCurrentPage((p) => p - 1)}
           >
             <ChevronLeft className="mr-1 size-4" />
-            Previous
+            {t("pagination.previous", { ns: "common" })}
           </Button>
           <span className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
+            {t("pagination.page", { ns: "common" })} {currentPage} {t("pagination.of", { ns: "common" })} {totalPages}
           </span>
           <Button
             variant="outline"
@@ -895,7 +906,7 @@ export function ExercisesPage() {
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => p + 1)}
           >
-            Next
+            {t("pagination.next", { ns: "common" })}
             <ChevronRight className="ml-1 size-4" />
           </Button>
         </div>
@@ -907,19 +918,18 @@ export function ExercisesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Exercise</AlertDialogTitle>
+            <AlertDialogTitle>{t("delete.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &ldquo;{deleteTarget?.title}
-              &rdquo;? This action cannot be undone.
+              {t("delete.confirmation", { title: deleteTarget?.title ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("button.cancel", { ns: "common" })}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {t("button.delete", { ns: "common" })}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

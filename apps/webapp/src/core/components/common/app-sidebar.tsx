@@ -15,6 +15,7 @@ import {
 } from "@workspace/ui/components/sidebar";
 import { useTenant } from "@/features/tenants/tenant-context";
 import { useAuth } from "@/features/auth/auth-context";
+import { useTranslation } from "react-i18next";
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
 import { getNavigationConfig } from "@/core/config/navigation";
@@ -29,6 +30,7 @@ export type NavItem = {
 function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { tenant } = useTenant();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const centerId = user?.centerId;
 
   const navConfig = getNavigationConfig(centerId || "default");
@@ -39,8 +41,12 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: item.title,
       url: item.url,
       icon: <item.icon />,
-      // Teachers have read-only access to Classes
-      badge: user?.role === "TEACHER" && item.title === "Classes" ? "Read" : undefined,
+      // Teachers have read-only access to Classes. Match on the URL suffix
+      // (a stable identifier) rather than the i18n key string.
+      badge:
+        user?.role === "TEACHER" && item.url.endsWith("/classes")
+          ? t("sidebar.readOnlyBadge")
+          : undefined,
     }));
 
   return (
@@ -62,7 +68,7 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </div>
               <div className="flex flex-col text-left text-sm leading-tight">
                 <span className="truncate font-medium">
-                  {tenant?.name || "ClassLite"}
+                  {tenant?.name || t("sidebar.defaultName")}
                 </span>
                 <span className="truncate text-xs">{user?.role}</span>
               </div>

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { AnchorStatusIndicator } from "./AnchorStatusIndicator";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { AnchorStatus } from "../hooks/use-anchor-validation";
 
 type FeedbackType =
@@ -80,6 +81,7 @@ function FeedbackItemCardInner({
   onOverrideText,
   isFinalized = false,
 }: FeedbackItemCardProps) {
+  const { t } = useTranslation("grading");
   const Icon = TYPE_ICONS[item.type] ?? MessageCircle;
   const severityStyle = item.severity
     ? SEVERITY_STYLES[item.severity]
@@ -240,7 +242,7 @@ function FeedbackItemCardInner({
                   {item.content}
                 </p>
                 <p className="text-sm leading-relaxed">{item.teacherOverrideText}</p>
-                <Badge variant="secondary" className="text-xs">Edited</Badge>
+                <Badge variant="secondary" className="text-xs">{t("feedbackItem.edited")}</Badge>
               </>
             ) : (
               <p className={`text-sm leading-relaxed ${item.isApproved === false ? "line-through" : ""}`}>
@@ -274,7 +276,7 @@ function FeedbackItemCardInner({
                   className="text-sm"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Ctrl+Enter to save, Esc to cancel
+                  {t("feedbackItem.editHelper")}
                 </p>
               </div>
             )}
@@ -282,7 +284,7 @@ function FeedbackItemCardInner({
             {/* Edit button for approved items */}
             {item.isApproved === true && !isEditing && !isFinalized && onOverrideText && (
               <Button variant="ghost" size="sm" onClick={handleStartEdit} className="h-6 px-2 text-xs">
-                Edit
+                {t("feedbackItem.edit")}
               </Button>
             )}
 
@@ -313,7 +315,7 @@ function FeedbackItemCardInner({
                         : "text-green-600 hover:bg-green-100 hover:text-green-700"
                     }`}
                     onClick={handleApprove}
-                    aria-label="Approve"
+                    aria-label={t("feedbackItem.approve")}
                   >
                     <Check className="h-4 w-4" />
                   </Button>
@@ -326,7 +328,7 @@ function FeedbackItemCardInner({
                         : "text-red-500 hover:bg-red-100 hover:text-red-600"
                     }`}
                     onClick={handleReject}
-                    aria-label="Reject"
+                    aria-label={t("feedbackItem.reject")}
                   >
                     <X className="h-4 w-4" />
                   </Button>

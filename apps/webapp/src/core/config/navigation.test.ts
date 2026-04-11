@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import i18n from "i18next";
 import {
   getNavigationConfig,
   getMobileNavItems,
@@ -12,35 +13,47 @@ describe("navigation config", () => {
 
       expect(config).toHaveLength(10);
       expect(config[0]).toMatchObject({
-        title: "Dashboard",
+        title: "nav.dashboard",
         url: "/test-center/dashboard",
         order: 1,
         mobileVisible: true,
       });
     });
 
-    it("includes all required nav items per AC table", () => {
+    it("includes all required nav items per AC table (as i18n keys)", () => {
       const config = getNavigationConfig("test-center");
       const titles = config.map((item) => item.title);
 
-      expect(titles).toContain("Dashboard");
-      expect(titles).toContain("Schedule");
-      expect(titles).toContain("Classes");
-      expect(titles).toContain("Exercises");
-      expect(titles).toContain("Assignments");
-      expect(titles).toContain("Mock Tests");
-      expect(titles).toContain("Grading");
-      expect(titles).toContain("Students");
-      expect(titles).toContain("Settings");
-      expect(titles).toContain("My Profile");
+      expect(titles).toContain("nav.dashboard");
+      expect(titles).toContain("nav.schedule");
+      expect(titles).toContain("nav.classes");
+      expect(titles).toContain("nav.exercises");
+      expect(titles).toContain("nav.assignments");
+      expect(titles).toContain("nav.mockTests");
+      expect(titles).toContain("nav.grading");
+      expect(titles).toContain("nav.students");
+      expect(titles).toContain("nav.settings");
+      expect(titles).toContain("nav.profile");
     });
 
     it("does not include removed nav items (Users, Courses)", () => {
       const config = getNavigationConfig("test-center");
       const titles = config.map((item) => item.title);
 
-      expect(titles).not.toContain("Users");
-      expect(titles).not.toContain("Courses");
+      expect(titles).not.toContain("nav.users");
+      expect(titles).not.toContain("nav.courses");
+    });
+
+    it("every nav title key resolves to a translated string", () => {
+      const config = getNavigationConfig("test-center");
+      for (const item of config) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const translated = (i18n.t as any)(item.title, { ns: "common" });
+        expect(typeof translated).toBe("string");
+        // If the key is missing in resources, i18next returns the raw key.
+        // The translation should be a different (human-readable) string.
+        expect(translated).not.toBe(item.title);
+      }
     });
   });
 
@@ -67,16 +80,16 @@ describe("navigation config", () => {
       );
       const titles = teacherItems.map((item) => item.title);
 
-      expect(titles).toContain("Dashboard");
-      expect(titles).toContain("Schedule");
-      expect(titles).toContain("Classes");
-      expect(titles).toContain("Exercises");
-      expect(titles).toContain("Assignments");
-      expect(titles).toContain("Mock Tests");
-      expect(titles).toContain("Grading");
-      expect(titles).toContain("Students");
-      expect(titles).toContain("My Profile");
-      expect(titles).not.toContain("Settings");
+      expect(titles).toContain("nav.dashboard");
+      expect(titles).toContain("nav.schedule");
+      expect(titles).toContain("nav.classes");
+      expect(titles).toContain("nav.exercises");
+      expect(titles).toContain("nav.assignments");
+      expect(titles).toContain("nav.mockTests");
+      expect(titles).toContain("nav.grading");
+      expect(titles).toContain("nav.students");
+      expect(titles).toContain("nav.profile");
+      expect(titles).not.toContain("nav.settings");
       expect(teacherItems).toHaveLength(9);
     });
 
@@ -86,14 +99,14 @@ describe("navigation config", () => {
       );
       const titles = studentItems.map((item) => item.title);
 
-      expect(titles).toContain("Dashboard");
-      expect(titles).toContain("Schedule");
-      expect(titles).toContain("My Profile");
-      expect(titles).not.toContain("Classes");
-      expect(titles).not.toContain("Exercises");
-      expect(titles).not.toContain("Grading");
-      expect(titles).not.toContain("Students");
-      expect(titles).not.toContain("Settings");
+      expect(titles).toContain("nav.dashboard");
+      expect(titles).toContain("nav.schedule");
+      expect(titles).toContain("nav.profile");
+      expect(titles).not.toContain("nav.classes");
+      expect(titles).not.toContain("nav.exercises");
+      expect(titles).not.toContain("nav.grading");
+      expect(titles).not.toContain("nav.students");
+      expect(titles).not.toContain("nav.settings");
       expect(studentItems).toHaveLength(3);
     });
   });
@@ -121,7 +134,12 @@ describe("navigation config", () => {
       const mobileItems = getMobileNavItems(config);
       const titles = mobileItems.map((item) => item.title);
 
-      expect(titles).toEqual(["Dashboard", "Schedule", "Classes", "Exercises"]);
+      expect(titles).toEqual([
+        "nav.dashboard",
+        "nav.schedule",
+        "nav.classes",
+        "nav.exercises",
+      ]);
     });
   });
 
@@ -143,7 +161,14 @@ describe("navigation config", () => {
       const overflowItems = getOverflowNavItems(config);
       const titles = overflowItems.map((item) => item.title);
 
-      expect(titles).toEqual(["Assignments", "Mock Tests", "Grading", "Students", "Settings", "My Profile"]);
+      expect(titles).toEqual([
+        "nav.assignments",
+        "nav.mockTests",
+        "nav.grading",
+        "nav.students",
+        "nav.settings",
+        "nav.profile",
+      ]);
     });
 
     it("returns items sorted by order", () => {

@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@workspace/ui/components/alert-dialog";
+import { useTranslation } from "react-i18next";
 
 interface SubmitConfirmDialogProps {
   open: boolean;
@@ -26,34 +27,32 @@ export function SubmitConfirmDialog({
   answeredCount,
   isSubmitting,
 }: SubmitConfirmDialogProps) {
+  const { t } = useTranslation("submissions");
   const unanswered = totalQuestions - answeredCount;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Submit your answers?</AlertDialogTitle>
+          <AlertDialogTitle>{t("confirmDialog.title")}</AlertDialogTitle>
           <AlertDialogDescription>
             {unanswered > 0 ? (
               <>
-                You have answered {answeredCount} of {totalQuestions} questions.{" "}
+                {t("confirmDialog.answered", { answeredCount, totalQuestions })}{" "}
                 <span className="font-medium text-destructive">
-                  {unanswered} question{unanswered > 1 ? "s" : ""} unanswered.
+                  {t("confirmDialog.unanswered", { unanswered })}
                 </span>{" "}
-                You cannot change your answers after submitting.
+                {t("confirmDialog.warning")}
               </>
             ) : (
-              <>
-                You have answered all {totalQuestions} questions. You cannot change
-                your answers after submitting.
-              </>
+              t("confirmDialog.allAnswered", { totalQuestions })
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isSubmitting}>Go Back</AlertDialogCancel>
+          <AlertDialogCancel disabled={isSubmitting}>{t("confirmDialog.goBack")}</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit"}
+            {isSubmitting ? t("confirmDialog.submitting") : t("stepper.submit")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

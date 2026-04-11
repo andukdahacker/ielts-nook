@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@workspace/ui/components/button";
 import {
   AlertDialog,
@@ -25,6 +26,7 @@ export function BulkActionBar({
   selectedUserIds,
   onClear,
 }: BulkActionBarProps) {
+  const { t } = useTranslation("users");
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
   const bulkDeactivateMutation = useBulkDeactivate();
   const bulkRemindMutation = useBulkRemind();
@@ -36,7 +38,7 @@ export function BulkActionBar({
       const result = await bulkDeactivateMutation.mutateAsync({
         userIds: selectedUserIds,
       });
-      toast.success(`Deactivated ${result.data.processed} users`);
+      toast.success(t("bulkDeactivate.success", { count: result.data.processed }));
       setShowDeactivateDialog(false);
       onClear();
     } catch (error) {
@@ -49,10 +51,10 @@ export function BulkActionBar({
       const result = await bulkRemindMutation.mutateAsync({
         userIds: selectedUserIds,
       });
-      toast.success(`Sent reminders to ${result.data.processed} users`);
+      toast.success(t("bulkRemind.success", { count: result.data.processed }));
       onClear();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to send reminders");
+      toast.error(error instanceof Error ? error.message : t("bulkRemind.error"));
     }
   };
 
@@ -64,7 +66,7 @@ export function BulkActionBar({
         {isLoading && (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         )}
-        <span className="text-sm font-medium">{selectedCount} selected</span>
+        <span className="text-sm font-medium">{selectedCount} {t("bulkAction.selected")}</span>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -73,7 +75,7 @@ export function BulkActionBar({
             disabled={isLoading}
           >
             <UserMinus className="mr-2 h-4 w-4" />
-            Deactivate
+            {t("bulkAction.deactivate")}
           </Button>
           <Button
             variant="outline"
@@ -82,11 +84,11 @@ export function BulkActionBar({
             disabled={isLoading}
           >
             <Mail className="mr-2 h-4 w-4" />
-            {bulkRemindMutation.isPending ? "Sending..." : "Send Reminder"}
+            {bulkRemindMutation.isPending ? t("bulkAction.sending") : t("bulkAction.sendReminder")}
           </Button>
         </div>
         <Button variant="ghost" size="sm" onClick={onClear} className="ml-auto" disabled={isLoading}>
-          Clear selection
+          {t("bulkAction.clearSelection")}
         </Button>
       </div>
 
@@ -94,11 +96,9 @@ export function BulkActionBar({
       <AlertDialog open={showDeactivateDialog} onOpenChange={setShowDeactivateDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Deactivate {selectedCount} Users</AlertDialogTitle>
+            <AlertDialogTitle>{t("bulkDeactivate.title", { count: selectedCount })}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to deactivate {selectedCount} selected users? They will
-              immediately lose access to the platform and their sessions will be invalidated.
-              This action cannot be undone in bulk.
+              {t("bulkDeactivate.description", { count: selectedCount })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -110,7 +110,7 @@ export function BulkActionBar({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={bulkDeactivateMutation.isPending}
             >
-              {bulkDeactivateMutation.isPending ? "Deactivating..." : `Deactivate ${selectedCount} Users`}
+              {bulkDeactivateMutation.isPending ? t("bulkDeactivate.confirming") : t("bulkDeactivate.confirm", { count: selectedCount })}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

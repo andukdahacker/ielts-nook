@@ -2,6 +2,7 @@ import type { HealthStatus, HealthSummary } from "@workspace/types";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Users, AlertTriangle, AlertCircle, CheckCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface HealthSummaryBarProps {
   summary: HealthSummary;
@@ -12,28 +13,28 @@ interface HealthSummaryBarProps {
 const METRICS = [
   {
     key: "total" as const,
-    label: "Total Students",
+    labelKey: "summary.totalStudents",
     icon: Users,
     filterValue: null as HealthStatus | null,
     color: "",
   },
   {
     key: "atRisk" as const,
-    label: "At Risk",
+    labelKey: "summary.atRisk",
     icon: AlertTriangle,
     filterValue: "at-risk" as HealthStatus,
     color: "text-red-600",
   },
   {
     key: "warning" as const,
-    label: "Warning",
+    labelKey: "summary.warning",
     icon: AlertCircle,
     filterValue: "warning" as HealthStatus,
     color: "text-amber-600",
   },
   {
     key: "onTrack" as const,
-    label: "On Track",
+    labelKey: "summary.onTrack",
     icon: CheckCircle,
     filterValue: "on-track" as HealthStatus,
     color: "text-emerald-600",
@@ -45,6 +46,7 @@ export function HealthSummaryBar({
   isLoading,
   onFilterClick,
 }: HealthSummaryBarProps) {
+  const { t } = useTranslation("student-health");
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -78,7 +80,7 @@ export function HealthSummaryBar({
                 </span>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                {metric.label}
+                {t(metric.labelKey)}
               </p>
             </CardContent>
           </Card>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Sheet,
   SheetContent,
@@ -32,6 +33,7 @@ interface AttendanceModalProps {
 }
 
 export function AttendanceModal({ session, open, onOpenChange }: AttendanceModalProps) {
+  const { t } = useTranslation("logistics");
   const [confirmAction, setConfirmAction] = useState<"PRESENT" | "ABSENT" | null>(null);
 
   // Only fetch attendance data when we have a valid session
@@ -46,8 +48,8 @@ export function AttendanceModal({ session, open, onOpenChange }: AttendanceModal
   }
 
   const startTime = new Date(session.startTime);
-  const courseName = session.class?.course?.name ?? "Course";
-  const className = session.class?.name ?? "Class";
+  const courseName = session.class?.course?.name ?? t("sessionBlock.courseFallback");
+  const className = session.class?.name ?? t("sessionBlock.classFallback");
 
   const handleBulkAction = (status: "PRESENT" | "ABSENT") => {
     bulkMutation.mutate(status);
@@ -58,7 +60,7 @@ export function AttendanceModal({ session, open, onOpenChange }: AttendanceModal
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col">
         <SheetHeader className="flex-shrink-0">
-          <SheetTitle>Mark Attendance</SheetTitle>
+          <SheetTitle>{t("attendance.title")}</SheetTitle>
           <SheetDescription>
             {courseName} - {className} ({format(startTime, "MMM d, yyyy")})
           </SheetDescription>
@@ -81,24 +83,23 @@ export function AttendanceModal({ session, open, onOpenChange }: AttendanceModal
                 onClick={() => setConfirmAction("PRESENT")}
                 className="flex-1"
               >
-                Mark All Present
+                {t("attendance.markAllPresent")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Mark All Present?</AlertDialogTitle>
+                <AlertDialogTitle>{t("attendance.markAllPresentConfirm")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will mark all {studentCount} students as Present. This action
-                  can be undone by changing individual statuses.
+                  {t("attendance.markAllPresentDesc", { count: studentCount })}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{t("button.cancel", { ns: "common" })}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => handleBulkAction("PRESENT")}
                   className="bg-green-600 hover:bg-green-700"
                 >
-                  Confirm
+                  {t("button.confirm", { ns: "common" })}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -116,23 +117,23 @@ export function AttendanceModal({ session, open, onOpenChange }: AttendanceModal
                 onClick={() => setConfirmAction("ABSENT")}
                 className="flex-1"
               >
-                Mark All Absent
+                {t("attendance.markAllAbsent")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Mark All Absent?</AlertDialogTitle>
+                <AlertDialogTitle>{t("attendance.markAllAbsentConfirm")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will mark all {studentCount} students as Absent.
+                  {t("attendance.markAllAbsentDesc", { count: studentCount })}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{t("button.cancel", { ns: "common" })}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => handleBulkAction("ABSENT")}
                   className="bg-red-600 hover:bg-red-700"
                 >
-                  Confirm
+                  {t("button.confirm", { ns: "common" })}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

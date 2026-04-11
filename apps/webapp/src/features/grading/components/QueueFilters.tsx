@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "@workspace/ui/components/select";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { GradingQueueFilters } from "../hooks/use-grading-queue";
 
 interface QueueFiltersProps {
@@ -17,10 +18,10 @@ interface QueueFiltersProps {
 }
 
 const STATUS_OPTIONS = [
-  { value: "pending_ai", label: "Pending AI" },
-  { value: "ready", label: "Ready" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "graded", label: "Graded" },
+  { value: "pending_ai", labelKey: "queueList.statusPendingAi" },
+  { value: "ready", labelKey: "queueList.statusReady" },
+  { value: "in_progress", labelKey: "queueList.statusInProgress" },
+  { value: "graded", labelKey: "queueList.statusGraded" },
 ];
 
 export function QueueFilters({
@@ -29,6 +30,7 @@ export function QueueFilters({
   classOptions,
   assignmentOptions,
 }: QueueFiltersProps) {
+  const { t } = useTranslation("grading");
   const hasActiveFilters = !!(
     filters.classId ||
     filters.assignmentId ||
@@ -48,10 +50,10 @@ export function QueueFilters({
         }
       >
         <SelectTrigger className="w-[160px]">
-          <SelectValue placeholder="All Classes" />
+          <SelectValue placeholder={t("queueFilters.allClasses")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__all__">All Classes</SelectItem>
+          <SelectItem value="__all__">{t("queueFilters.allClasses")}</SelectItem>
           {classOptions.map((c) => (
             <SelectItem key={c.id} value={c.id}>
               {c.name}
@@ -71,10 +73,10 @@ export function QueueFilters({
         }
       >
         <SelectTrigger className="w-[200px]">
-          <SelectValue placeholder="All Assignments" />
+          <SelectValue placeholder={t("queueFilters.allAssignments")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__all__">All Assignments</SelectItem>
+          <SelectItem value="__all__">{t("queueFilters.allAssignments")}</SelectItem>
           {assignmentOptions.map((a) => (
             <SelectItem key={a.id} value={a.id}>
               {a.title}
@@ -97,13 +99,13 @@ export function QueueFilters({
         }
       >
         <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="All Statuses" />
+          <SelectValue placeholder={t("queueFilters.allStatuses")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__all__">All Statuses</SelectItem>
+          <SelectItem value="__all__">{t("queueFilters.allStatuses")}</SelectItem>
           {STATUS_OPTIONS.map((s) => (
             <SelectItem key={s.value} value={s.value}>
-              {s.label}
+              {t(s.labelKey)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -123,7 +125,7 @@ export function QueueFilters({
           }
         >
           <X className="mr-1 h-3 w-3" />
-          Clear
+          {t("queueFilters.clear")}
         </Button>
       )}
     </div>

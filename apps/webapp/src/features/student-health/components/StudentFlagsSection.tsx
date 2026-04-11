@@ -4,6 +4,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Flag } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { useStudentFlags, useResolveFlag } from "../hooks/use-student-flags";
 import type { StudentFlagRecord } from "@workspace/types";
 
@@ -11,6 +12,12 @@ const STATUS_STYLES: Record<string, string> = {
   OPEN: "bg-red-100 text-red-800",
   ACKNOWLEDGED: "bg-amber-100 text-amber-800",
   RESOLVED: "bg-emerald-100 text-emerald-800",
+};
+
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  OPEN: "flags.statusOpen",
+  ACKNOWLEDGED: "flags.statusAcknowledged",
+  RESOLVED: "flags.statusResolved",
 };
 
 function FlagItem({
@@ -24,8 +31,10 @@ function FlagItem({
   onResolve: (flagId: string, resolvedNote: string) => void;
   isResolving: boolean;
 }) {
+  const { t } = useTranslation("student-health");
   const [resolveNote, setResolveNote] = useState("");
   const [showResolve, setShowResolve] = useState(false);
+  const statusLabelKey = STATUS_LABEL_KEYS[flag.status];
 
   return (
     <div className="rounded-lg border p-3">
@@ -33,13 +42,13 @@ function FlagItem({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm font-medium">
-              {flag.createdByName ?? "Unknown"}
+              {flag.createdByName ?? t("student.unknown")}
             </span>
             <Badge
               className={`text-xs ${STATUS_STYLES[flag.status] ?? ""}`}
               variant="secondary"
             >
-              {flag.status}
+              {statusLabelKey ? t(statusLabelKey) : flag.status}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -48,7 +57,7 @@ function FlagItem({
           <p className="text-sm mt-1">{flag.note}</p>
           {flag.resolvedNote && (
             <p className="text-xs text-muted-foreground mt-1 italic">
-              Resolution: {flag.resolvedNote}
+              {t("flags.resolvedNote", { note: flag.resolvedNote })}
             </p>
           )}
         </div>
@@ -58,7 +67,7 @@ function FlagItem({
           {showResolve ? (
             <div className="flex items-center gap-2">
               <Input
-                placeholder="Resolution note (optional)"
+                placeholder={t("flags.resolvePlaceholder")}
                 value={resolveNote}
                 onChange={(e) => setResolveNote(e.target.value)}
                 className="text-sm"
@@ -68,14 +77,14 @@ function FlagItem({
                 onClick={() => onResolve(flag.id, resolveNote)}
                 disabled={isResolving}
               >
-                {isResolving ? "..." : "Resolve"}
+                {isResolving ? "..." : t("flags.resolveButton")}
               </Button>
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => setShowResolve(false)}
               >
-                Cancel
+                {t("button.cancel", { ns: "common" })}
               </Button>
             </div>
           ) : (
@@ -84,7 +93,7 @@ function FlagItem({
               variant="outline"
               onClick={() => setShowResolve(true)}
             >
-              Resolve
+              {t("flags.resolveButton")}
             </Button>
           )}
         </div>
@@ -102,6 +111,7 @@ export function StudentFlagsSection({
   studentId,
   isAdmin = false,
 }: StudentFlagsSectionProps) {
+  const { t } = useTranslation("student-health");
   const { flags, isLoading } = useStudentFlags(studentId);
   const resolveFlag = useResolveFlag(studentId);
 
@@ -110,10 +120,10 @@ export function StudentFlagsSection({
       { flagId, resolvedNote: resolvedNote || undefined },
       {
         onSuccess: () => {
-          toast.success("Flag resolved");
+          toast.success(t("flags.toastSuccess"));
         },
         onError: () => {
-          toast.error("Failed to resolve flag");
+          toast.error(t("flags.toastError"));
         },
       },
     );
@@ -134,7 +144,7 @@ export function StudentFlagsSection({
       <div className="flex items-center gap-2 mb-3">
         <Flag className="h-4 w-4 text-orange-600" />
         <h3 className="text-sm font-semibold text-orange-800">
-          Student Flags ({openFlags.length} open)
+          {t("flags.title")} {t("flags.openCount", { count: openFlags.length })}
         </h3>
       </div>
       <div className="space-y-2">

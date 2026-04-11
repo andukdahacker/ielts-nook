@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/features/auth/auth-context";
 import { useStudentAssignments } from "../hooks/use-student-assignments";
 import { AssignmentCard } from "./AssignmentCard";
@@ -37,37 +38,39 @@ function groupByUrgency(assignments: StudentAssignment[]): UrgencySection[] {
   }
 
   return [
-    { key: "overdue", label: "Overdue", className: "text-red-600", assignments: overdue },
-    { key: "due-today", label: "Due Today", className: "text-orange-600", assignments: dueToday },
-    { key: "due-this-week", label: "Due This Week", className: "", assignments: dueThisWeek },
-    { key: "upcoming", label: "Upcoming", className: "", assignments: upcoming },
-    { key: "no-deadline", label: "No Deadline", className: "text-muted-foreground", assignments: noDeadline },
+    { key: "overdue", label: "student.urgencySection.overdue", className: "text-red-600", assignments: overdue },
+    { key: "due-today", label: "student.urgencySection.dueToday", className: "text-orange-600", assignments: dueToday },
+    { key: "due-this-week", label: "student.urgencySection.dueThisWeek", className: "", assignments: dueThisWeek },
+    { key: "upcoming", label: "student.urgencySection.upcoming", className: "", assignments: upcoming },
+    { key: "no-deadline", label: "student.urgencySection.noDeadline", className: "text-muted-foreground", assignments: noDeadline },
   ];
 }
 
 function ErrorState() {
+  const { t } = useTranslation("dashboard");
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <div className="rounded-full bg-red-50 p-4 mb-4">
         <AlertCircle className="h-8 w-8 text-red-500" />
       </div>
-      <h2 className="text-lg font-semibold">Failed to load assignments</h2>
+      <h2 className="text-lg font-semibold">{t("student.errorState.title")}</h2>
       <p className="text-muted-foreground max-w-sm mt-2">
-        Something went wrong. Please try refreshing the page.
+        {t("student.errorState.message")}
       </p>
     </div>
   );
 }
 
 function EmptyState() {
+  const { t } = useTranslation("dashboard");
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <div className="rounded-full bg-muted p-4 mb-4">
         <ClipboardList className="h-8 w-8 text-muted-foreground" />
       </div>
-      <h2 className="text-lg font-semibold">No assignments</h2>
+      <h2 className="text-lg font-semibold">{t("student.emptyState.title")}</h2>
       <p className="text-muted-foreground max-w-sm mt-2">
-        You don&apos;t have any assignments right now. Check back later!
+        {t("student.emptyState.message")}
       </p>
     </div>
   );
@@ -94,6 +97,7 @@ function StudentDashboardSkeleton() {
 }
 
 export default function StudentDashboard() {
+  const { t } = useTranslation("dashboard");
   const { user } = useAuth();
   const centerId = user?.centerId;
 
@@ -118,24 +122,24 @@ export default function StudentDashboard() {
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Your Tasks</h1>
+        <h1 className="text-2xl font-bold">{t("student.heading")}</h1>
         <div className="flex gap-2">
           <Select value={skillFilter} onValueChange={setSkillFilter}>
-            <SelectTrigger className="w-[140px]"><SelectValue placeholder="All Skills" /></SelectTrigger>
+            <SelectTrigger className="w-[140px]"><SelectValue placeholder={t("student.skillFilter.placeholder")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Skills</SelectItem>
-              <SelectItem value="READING">Reading</SelectItem>
-              <SelectItem value="LISTENING">Listening</SelectItem>
-              <SelectItem value="WRITING">Writing</SelectItem>
-              <SelectItem value="SPEAKING">Speaking</SelectItem>
+              <SelectItem value="ALL">{t("student.skillFilter.allSkills")}</SelectItem>
+              <SelectItem value="READING">{t("skill.reading", { ns: "common" })}</SelectItem>
+              <SelectItem value="LISTENING">{t("skill.listening", { ns: "common" })}</SelectItem>
+              <SelectItem value="WRITING">{t("skill.writing", { ns: "common" })}</SelectItem>
+              <SelectItem value="SPEAKING">{t("skill.speaking", { ns: "common" })}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[120px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="w-[120px]"><SelectValue placeholder={t("student.statusFilter.placeholder")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All</SelectItem>
-              <SelectItem value="OPEN">Open</SelectItem>
-              <SelectItem value="CLOSED">Closed</SelectItem>
+              <SelectItem value="ALL">{t("student.statusFilter.all")}</SelectItem>
+              <SelectItem value="OPEN">{t("student.statusFilter.open")}</SelectItem>
+              <SelectItem value="CLOSED">{t("student.statusFilter.closed")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -148,7 +152,7 @@ export default function StudentDashboard() {
           section.assignments.length > 0 ? (
             <div key={section.key}>
               <h2 className={cn("text-lg font-semibold mb-2", section.className)}>
-                {section.label} ({section.assignments.length})
+                {t(section.label)} ({section.assignments.length})
               </h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {section.assignments.map((a) => (

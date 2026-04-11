@@ -4,6 +4,7 @@ import { Button } from "@workspace/ui/components/button";
 import { RBACWrapper } from "@/features/auth/components/RBACWrapper";
 import type { ConflictingSession, Suggestion } from "@workspace/types";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 interface ConflictWarningBannerProps {
   roomConflicts: ConflictingSession[];
@@ -22,6 +23,7 @@ export function ConflictWarningBanner({
   onForceSave,
   isForcing,
 }: ConflictWarningBannerProps) {
+  const { t } = useTranslation("logistics");
   const hasConflicts = roomConflicts.length > 0 || teacherConflicts.length > 0;
 
   if (!hasConflicts) {
@@ -34,23 +36,23 @@ export function ConflictWarningBanner({
   return (
     <Alert variant="destructive" className="mb-4 border-amber-500 bg-amber-50">
       <AlertTriangle className="size-4 text-amber-600" />
-      <AlertTitle className="text-amber-800">Scheduling Conflicts Detected</AlertTitle>
+      <AlertTitle className="text-amber-800">{t("conflictWarning.titleConflicts")}</AlertTitle>
       <AlertDescription className="space-y-3">
         {/* Room Conflicts */}
         {roomConflicts.length > 0 && (
           <div className="space-y-1">
             <p className="flex items-center gap-1 font-medium text-amber-800">
               <DoorOpen className="size-3" />
-              Room Double-Booking:
+              {t("conflictWarning.roomDoubleBooking")}
             </p>
             <ul className="ml-4 space-y-1 text-sm text-amber-700">
               {roomConflicts.map((conflict) => (
                 <li key={conflict.id}>
-                  <span className="font-medium">{conflict.roomName}</span> is booked for{" "}
+                  <span className="font-medium">{conflict.roomName}</span> {t("conflictWarning.roomBookedFor")}{" "}
                   <span className="font-medium">
                     {conflict.courseName} - {conflict.className}
                   </span>{" "}
-                  at {format(new Date(conflict.startTime), "h:mm a")} -{" "}
+                  {t("conflictWarning.atTime")} {format(new Date(conflict.startTime), "h:mm a")} -{" "}
                   {format(new Date(conflict.endTime), "h:mm a")}
                 </li>
               ))}
@@ -63,17 +65,17 @@ export function ConflictWarningBanner({
           <div className="space-y-1">
             <p className="flex items-center gap-1 font-medium text-amber-800">
               <Clock className="size-3" />
-              Teacher Double-Booking:
+              {t("conflictWarning.teacherDoubleBooking")}
             </p>
             <ul className="ml-4 space-y-1 text-sm text-amber-700">
               {teacherConflicts.map((conflict) => (
                 <li key={conflict.id}>
-                  <span className="font-medium">{conflict.teacherName ?? "Teacher"}</span>{" "}
-                  is scheduled for{" "}
+                  <span className="font-medium">{conflict.teacherName ?? t("conflictDrawer.teacherFallback")}</span>{" "}
+                  {t("conflictWarning.scheduledFor")}{" "}
                   <span className="font-medium">
                     {conflict.courseName} - {conflict.className}
                   </span>{" "}
-                  at {format(new Date(conflict.startTime), "h:mm a")} -{" "}
+                  {t("conflictWarning.atTime")} {format(new Date(conflict.startTime), "h:mm a")} -{" "}
                   {format(new Date(conflict.endTime), "h:mm a")}
                 </li>
               ))}
@@ -84,7 +86,7 @@ export function ConflictWarningBanner({
         {/* Suggestions */}
         {(timeSuggestions.length > 0 || roomSuggestions.length > 0) && (
           <div className="space-y-2 pt-2 border-t border-amber-300">
-            <p className="font-medium text-amber-800">Suggestions:</p>
+            <p className="font-medium text-amber-800">{t("conflictWarning.suggestions")}</p>
             <div className="flex flex-wrap gap-2">
               {timeSuggestions.map((suggestion, idx) => (
                 <Button
@@ -107,7 +109,7 @@ export function ConflictWarningBanner({
                   onClick={() => onApplySuggestion?.(suggestion)}
                 >
                   <DoorOpen className="mr-1 size-3" />
-                  Use {suggestion.value}
+                  {t("conflictWarning.useRoom", { room: suggestion.value })}
                 </Button>
               ))}
             </div>
@@ -123,7 +125,7 @@ export function ConflictWarningBanner({
               onClick={onForceSave}
               disabled={isForcing}
             >
-              {isForcing ? "Saving..." : "Force Save (Override Conflict)"}
+              {isForcing ? t("conflictWarning.forceSaving") : t("conflictWarning.forceSave")}
             </Button>
           </div>
         </RBACWrapper>

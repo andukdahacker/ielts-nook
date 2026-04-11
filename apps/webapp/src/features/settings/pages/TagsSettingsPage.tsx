@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { Plus, Pencil, Trash2, Check, X, Loader2, Merge } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-context";
 import { useTags } from "@/features/exercises/hooks/use-tags";
@@ -35,6 +36,7 @@ import {
 } from "@workspace/ui/components/select";
 
 export function TagsSettingsPage() {
+  const { t } = useTranslation("settings");
   const { user } = useAuth();
   const { tags, isLoading, createTag, isCreating, updateTag, deleteTag, mergeTags } =
     useTags(user?.centerId);
@@ -53,9 +55,9 @@ export function TagsSettingsPage() {
     try {
       await createTag({ name: trimmed });
       setNewTagName("");
-      toast.success("Tag created");
+      toast.success(t("tags.toastCreated"));
     } catch {
-      toast.error("Failed to create tag. It may already exist.");
+      toast.error(t("tags.toastCreateFailed"));
     }
   };
 
@@ -66,18 +68,18 @@ export function TagsSettingsPage() {
     try {
       await updateTag({ id, input: { name: trimmed } });
       setEditingId(null);
-      toast.success("Tag updated");
+      toast.success(t("tags.toastUpdated"));
     } catch {
-      toast.error("Failed to update tag. Name may already exist.");
+      toast.error(t("tags.toastUpdateFailed"));
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteTag(id);
-      toast.success("Tag deleted");
+      toast.success(t("tags.toastDeleted"));
     } catch {
-      toast.error("Failed to delete tag");
+      toast.error(t("tags.toastDeleteFailed"));
     }
   };
 
@@ -92,9 +94,9 @@ export function TagsSettingsPage() {
       setMergeDialogOpen(false);
       setMergeSourceId(null);
       setMergeTargetId("");
-      toast.success("Tags merged successfully");
+      toast.success(t("tags.toastMerged"));
     } catch {
-      toast.error("Failed to merge tags");
+      toast.error(t("tags.toastMergeFailed"));
     }
   };
 
@@ -120,17 +122,16 @@ export function TagsSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Topic Tags</h2>
+        <h2 className="text-lg font-semibold">{t("tags.heading")}</h2>
         <p className="text-muted-foreground">
-          Manage topic tags for organizing exercises. Tags are shared across
-          all exercises in your center.
+          {t("tags.description")}
         </p>
       </div>
 
       {/* Add Tag */}
       <div className="flex gap-2">
         <Input
-          placeholder="New tag name (e.g., Environment)"
+          placeholder={t("tags.newTagPlaceholder")}
           value={newTagName}
           onChange={(e) => setNewTagName(e.target.value)}
           onKeyDown={(e) => {
@@ -148,7 +149,7 @@ export function TagsSettingsPage() {
           ) : (
             <Plus className="mr-2 h-4 w-4" />
           )}
-          Add Tag
+          {t("tags.addButton")}
         </Button>
       </div>
 
@@ -159,7 +160,7 @@ export function TagsSettingsPage() {
         </div>
       ) : tags.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground border rounded-lg">
-          No tags defined yet. Add a tag above.
+          {t("tags.empty")}
         </div>
       ) : (
         <div className="border rounded-lg divide-y">

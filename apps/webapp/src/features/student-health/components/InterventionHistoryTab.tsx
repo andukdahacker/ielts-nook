@@ -1,13 +1,14 @@
 import { memo } from "react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Skeleton } from "@workspace/ui/components/skeleton";
+import { useTranslation } from "react-i18next";
 import { useInterventionHistory } from "../hooks/use-intervention";
 
-const STATUS_STYLES: Record<string, { className: string; label: string }> = {
-  PENDING: { className: "bg-amber-100 text-amber-800", label: "Pending" },
-  SENT: { className: "bg-emerald-100 text-emerald-800", label: "Sent" },
-  FAILED: { className: "bg-red-100 text-red-800", label: "Failed" },
-  SKIPPED: { className: "bg-gray-100 text-gray-800", label: "Skipped" },
+const STATUS_STYLES: Record<string, { className: string; labelKey: string }> = {
+  PENDING: { className: "bg-amber-100 text-amber-800", labelKey: "history.statusPending" },
+  SENT: { className: "bg-emerald-100 text-emerald-800", labelKey: "history.statusSent" },
+  FAILED: { className: "bg-red-100 text-red-800", labelKey: "history.statusFailed" },
+  SKIPPED: { className: "bg-gray-100 text-gray-800", labelKey: "history.statusSkipped" },
 };
 
 interface InterventionHistoryTabProps {
@@ -25,10 +26,10 @@ const InterventionRow = memo(function InterventionRow({
   status: string;
   sentAt: string;
 }) {
-  const style = STATUS_STYLES[status] ?? {
-    className: "bg-gray-100 text-gray-800",
-    label: status,
-  };
+  const { t } = useTranslation("student-health");
+  const style = STATUS_STYLES[status];
+  const className = style?.className ?? "bg-gray-100 text-gray-800";
+  const label = style ? t(style.labelKey) : status;
 
   return (
     <div className="flex items-start justify-between py-2 border-b last:border-0">
@@ -39,8 +40,8 @@ const InterventionRow = memo(function InterventionRow({
           {new Date(sentAt).toLocaleDateString()}
         </p>
       </div>
-      <Badge variant="secondary" className={`ml-2 ${style.className}`}>
-        {style.label}
+      <Badge variant="secondary" className={`ml-2 ${className}`}>
+        {label}
       </Badge>
     </div>
   );
@@ -49,6 +50,7 @@ const InterventionRow = memo(function InterventionRow({
 export function InterventionHistoryTab({
   studentId,
 }: InterventionHistoryTabProps) {
+  const { t } = useTranslation("student-health");
   const { history, isLoading } = useInterventionHistory(studentId);
 
   if (isLoading) {
@@ -64,7 +66,7 @@ export function InterventionHistoryTab({
   if (history.length === 0) {
     return (
       <p className="text-sm text-muted-foreground text-center py-4">
-        No interventions yet
+        {t("history.noInterventions")}
       </p>
     );
   }

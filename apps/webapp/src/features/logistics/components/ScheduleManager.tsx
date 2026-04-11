@@ -40,20 +40,11 @@ import { format, setHours, setMinutes } from "date-fns";
 import { Check, ChevronsUpDown, Clock, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useSchedules } from "../hooks/use-logistics";
 import { useRooms } from "../hooks/use-rooms";
-
-const DAYS_OF_WEEK = [
-  { value: "1", label: "Monday" },
-  { value: "2", label: "Tuesday" },
-  { value: "3", label: "Wednesday" },
-  { value: "4", label: "Thursday" },
-  { value: "5", label: "Friday" },
-  { value: "6", label: "Saturday" },
-  { value: "0", label: "Sunday" },
-];
 
 const scheduleSchema = z.object({
   dayOfWeek: z.string().min(1, "Please select a day"),
@@ -71,8 +62,19 @@ interface ScheduleManagerProps {
 }
 
 export function ScheduleManager({ classId, centerId, onScheduleCreated }: ScheduleManagerProps) {
+  const { t } = useTranslation("logistics");
   const [isAdding, setIsAdding] = useState(false);
   const [roomComboOpen, setRoomComboOpen] = useState(false);
+
+  const DAYS_OF_WEEK = [
+    { value: "1", label: t("weeklyCalendar.monday") },
+    { value: "2", label: t("weeklyCalendar.tuesday") },
+    { value: "3", label: t("weeklyCalendar.wednesday") },
+    { value: "4", label: t("weeklyCalendar.thursday") },
+    { value: "5", label: t("weeklyCalendar.friday") },
+    { value: "6", label: t("weeklyCalendar.saturday") },
+    { value: "0", label: t("weeklyCalendar.sunday") },
+  ];
   const {
     schedules,
     isLoading,
@@ -98,7 +100,7 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
       // Validate end time is after start time
       if (values.endTime <= values.startTime) {
         form.setError("endTime", {
-          message: "End time must be after start time",
+          message: t("scheduleManager.errorEndTime"),
         });
         return;
       }
@@ -116,21 +118,21 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
         await onScheduleCreated();
       }
 
-      toast.success("Schedule added and sessions generated");
+      toast.success(t("scheduleManager.toastAddSuccess"));
       form.reset();
       setIsAdding(false);
     } catch {
-      toast.error("Failed to add schedule");
+      toast.error(t("scheduleManager.toastAddError"));
     }
   }
 
   async function handleDelete(scheduleId: string) {
-    if (!confirm("Delete this recurring schedule?")) return;
+    if (!confirm(t("scheduleManager.deleteConfirm"))) return;
     try {
       await deleteSchedule(scheduleId);
-      toast.success("Schedule deleted");
+      toast.success(t("scheduleManager.toastDeleteSuccess"));
     } catch {
-      toast.error("Failed to delete schedule");
+      toast.error(t("scheduleManager.toastDeleteError"));
     }
   }
 
@@ -151,7 +153,7 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
   const getDayLabel = (dayOfWeek: number) => {
     return (
       DAYS_OF_WEEK.find((d) => d.value === String(dayOfWeek))?.label ??
-      "Unknown"
+      t("attendance.unknown")
     );
   };
 
@@ -162,7 +164,7 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
 
   if (isLoading) {
     return (
-      <div className="text-sm text-muted-foreground">Loading schedules...</div>
+      <div className="text-sm text-muted-foreground">{t("scheduleManager.loadingSchedules")}</div>
     );
   }
 
@@ -170,9 +172,9 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="text-sm font-medium">Recurring Schedule</h4>
+          <h4 className="text-sm font-medium">{t("scheduleManager.recurringSchedule")}</h4>
           <p className="text-xs text-muted-foreground">
-            Weekly patterns for automatic session generation
+            {t("scheduleManager.recurringSubtitle")}
           </p>
         </div>
         {!isAdding && (
@@ -183,7 +185,7 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
             onClick={() => setIsAdding(true)}
           >
             <Plus className="mr-1 size-3" />
-            Add
+            {t("button.add", { ns: "common" })}
           </Button>
         )}
       </div>
@@ -229,7 +231,7 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
       ) : (
         !isAdding && (
           <div className="text-sm text-muted-foreground py-4 text-center border rounded-lg border-dashed">
-            No recurring schedules. Add one to enable &quot;Generate Sessions&quot;.
+            {t("scheduleManager.emptyState")}
           </div>
         )
       )}
@@ -238,7 +240,7 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
       {isAdding && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">New Schedule</CardTitle>
+            <CardTitle className="text-sm">{t("scheduleManager.newSchedule")}</CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -251,14 +253,14 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
                   name="dayOfWeek"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Day of Week</FormLabel>
+                      <FormLabel>{t("scheduleManager.dayOfWeek")}</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select day" />
+                            <SelectValue placeholder={t("scheduleManager.dayPlaceholder")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -280,7 +282,7 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
                     name="startTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start</FormLabel>
+                        <FormLabel>{t("scheduleManager.start")}</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
@@ -308,7 +310,7 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
                     name="endTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End</FormLabel>
+                        <FormLabel>{t("scheduleManager.end")}</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
@@ -337,7 +339,7 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
                   name="roomName"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Room (Optional)</FormLabel>
+                      <FormLabel>{t("editSession.roomOptional")}</FormLabel>
                       <Popover open={roomComboOpen} onOpenChange={setRoomComboOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -349,7 +351,7 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
                                 !field.value && "text-muted-foreground"
                               )}
                             >
-                              {field.value || "Select or type room..."}
+                              {field.value || t("editSession.roomPlaceholder")}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </FormControl>
@@ -357,12 +359,12 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                           <Command>
                             <CommandInput
-                              placeholder="Search rooms..."
+                              placeholder={t("editSession.searchRooms")}
                               onValueChange={(val) => field.onChange(val)}
                             />
                             <CommandList>
                               <CommandEmpty>
-                                {field.value ? `Use "${field.value}"` : "No rooms found."}
+                                {field.value ? t("editSession.useRoomQuoted", { room: field.value }) : t("editSession.noRoomsFound")}
                               </CommandEmpty>
                               <CommandGroup>
                                 {rooms.map((room) => (
@@ -403,10 +405,10 @@ export function ScheduleManager({ classId, centerId, onScheduleCreated }: Schedu
                       form.reset();
                     }}
                   >
-                    Cancel
+                    {t("button.cancel", { ns: "common" })}
                   </Button>
                   <Button type="submit" size="sm" disabled={isCreating}>
-                    {isCreating ? "Adding..." : "Add Schedule"}
+                    {isCreating ? t("scheduleManager.adding") : t("scheduleManager.addSchedule")}
                   </Button>
                 </div>
               </form>

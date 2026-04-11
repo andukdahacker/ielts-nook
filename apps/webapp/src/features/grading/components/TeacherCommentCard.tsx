@@ -27,6 +27,7 @@ import {
   User,
 } from "lucide-react";
 import React, { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import type { CommentVisibility, TeacherComment } from "@workspace/types";
 import type { AnchorStatus } from "../hooks/use-anchor-validation";
@@ -53,6 +54,7 @@ function TeacherCommentCardInner({
   onVisibilityChange,
   anchorStatus = "no-anchor",
 }: TeacherCommentCardProps) {
+  const { t } = useTranslation("grading");
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -150,7 +152,7 @@ function TeacherCommentCardInner({
               <div className="relative shrink-0">
                 <Badge variant="secondary" className="gap-1">
                   <User className="h-3 w-3" />
-                  Teacher
+                  {t("teacherComment.teacher")}
                 </Badge>
                 <AnchorStatusIndicator anchorStatus={anchorStatus} variant="dot" />
               </div>
@@ -161,11 +163,11 @@ function TeacherCommentCardInner({
                 onClick={toggleVisibility}
                 title={
                   isPrivate
-                    ? "Private — only you can see this"
-                    : "Visible to student"
+                    ? t("teacherComment.privateTooltip")
+                    : t("teacherComment.visibleTooltip")
                 }
                 aria-label={
-                  isPrivate ? "Make visible to student" : "Make private"
+                  isPrivate ? t("teacherComment.privateAriaLabel") : t("teacherComment.visibleAriaLabel")
                 }
               >
                 {isPrivate ? (
@@ -194,14 +196,14 @@ function TeacherCommentCardInner({
                     }}
                   >
                     <Pencil className="mr-2 h-4 w-4" />
-                    Edit
+                    {t("teacherComment.edit")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-destructive"
                     onClick={() => setDeleteDialogOpen(true)}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
+                    {t("teacherComment.delete")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -209,7 +211,7 @@ function TeacherCommentCardInner({
           </div>
 
           {isPrivate && (
-            <span className="text-xs text-muted-foreground">Private</span>
+            <span className="text-xs text-muted-foreground">{t("teacherComment.private")}</span>
           )}
 
           {/* Quoted context snippet */}
@@ -233,7 +235,7 @@ function TeacherCommentCardInner({
               />
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleEditSave}>
-                  Save
+                  {t("teacherComment.save")}
                 </Button>
                 <Button
                   variant="ghost"
@@ -257,9 +259,9 @@ function TeacherCommentCardInner({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this comment?</AlertDialogTitle>
+            <AlertDialogTitle>{t("teacherComment.deleteConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This cannot be undone.
+              {t("teacherComment.deleteConfirmDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

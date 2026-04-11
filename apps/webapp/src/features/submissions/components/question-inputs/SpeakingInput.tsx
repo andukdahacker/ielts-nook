@@ -3,6 +3,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Mic, Square, RotateCcw } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface SpeakingInputProps {
   questionText: string;
@@ -25,6 +26,7 @@ export function SpeakingInput({
   onChange,
   readOnly,
 }: SpeakingInputProps) {
+  const { t } = useTranslation("submissions");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -88,7 +90,7 @@ export function SpeakingInput({
         });
       }, 1000);
     } catch {
-      toast.error("Microphone access denied. Please allow microphone permission to record.");
+      toast.error(t("speaking.microphoneError"));
     }
   };
 
@@ -156,7 +158,7 @@ export function SpeakingInput({
 
       {prepCountdown !== null && (
         <div className="text-center p-4 bg-muted rounded-lg">
-          <p className="text-sm text-muted-foreground">Preparation time</p>
+          <p className="text-sm text-muted-foreground">{t("speaking.preparationTime")}</p>
           <p className="text-3xl font-bold">{formatTime(prepCountdown)}</p>
         </div>
       )}
@@ -179,12 +181,12 @@ export function SpeakingInput({
               className="min-h-[44px] gap-2"
             >
               <Mic className="size-4" />
-              Start Recording
+              {t("speaking.startRecording")}
             </Button>
           )}
 
           {!isRecording && !audioUrl && readOnly && (
-            <p className="text-sm text-muted-foreground italic">No recording submitted.</p>
+            <p className="text-sm text-muted-foreground italic">{t("speaking.noRecording")}</p>
           )}
 
           {isRecording && !readOnly && (
@@ -194,7 +196,7 @@ export function SpeakingInput({
               className="min-h-[44px] gap-2"
             >
               <Square className="size-4" />
-              Stop Recording
+              {t("speaking.stopRecording")}
             </Button>
           )}
 
@@ -209,7 +211,7 @@ export function SpeakingInput({
                 {!readOnly && (
                   <Button variant="outline" size="sm" onClick={resetRecording} className="gap-1">
                     <RotateCcw className="size-3" />
-                    Re-record
+                    {t("speaking.reRecord")}
                   </Button>
                 )}
               </div>

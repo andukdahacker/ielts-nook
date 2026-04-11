@@ -1,5 +1,6 @@
 import { CloudOff } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
+import { useTranslation } from "react-i18next";
 
 interface OfflineBannerProps {
   isOnline: boolean;
@@ -7,6 +8,7 @@ interface OfflineBannerProps {
 }
 
 export function OfflineBanner({ isOnline, isSubmitted }: OfflineBannerProps) {
+  const { t } = useTranslation("submissions");
   if (isOnline || isSubmitted) return null;
 
   return (
@@ -15,10 +17,9 @@ export function OfflineBanner({ isOnline, isSubmitted }: OfflineBannerProps) {
       data-testid="offline-banner"
     >
       <CloudOff className="size-4 text-amber-500 dark:text-amber-400" />
-      <AlertTitle>Offline Mode Active</AlertTitle>
+      <AlertTitle>{t("offlineBanner.title")}</AlertTitle>
       <AlertDescription>
-        We&apos;re saving your work locally. Keep going! Do not close this tab.
-        Your submission will sync automatically when you reconnect.
+        {t("offlineBanner.description")}
       </AlertDescription>
     </Alert>
   );

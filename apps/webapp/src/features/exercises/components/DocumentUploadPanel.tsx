@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Badge } from "@workspace/ui/components/badge";
@@ -25,6 +26,7 @@ export function DocumentUploadPanel({
   currentSourceType,
   onPassageUpdated,
 }: DocumentUploadPanelProps) {
+  const { t } = useTranslation("exercises");
   const [activeTab, setActiveTab] = useState<"upload" | "paste">("upload");
   const [pasteText, setPasteText] = useState("");
   const [extractedText, setExtractedText] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export function DocumentUploadPanel({
     setExtractedText(null);
 
     if (file.size > MAX_FILE_SIZE) {
-      setError("File size exceeds 10MB limit");
+      setError(t("documentUpload.errorSize"));
       return;
     }
 
@@ -47,7 +49,7 @@ export function DocumentUploadPanel({
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ];
     if (!allowedTypes.includes(file.type)) {
-      setError("Only PDF and DOCX files are supported");
+      setError(t("documentUpload.errorType"));
       return;
     }
 
@@ -90,7 +92,7 @@ export function DocumentUploadPanel({
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base">Import Passage</CardTitle>
+          <CardTitle className="text-base">{t("documentUpload.title")}</CardTitle>
           {currentSourceType && (
             <Badge variant="outline">{currentSourceType}</Badge>
           )}
@@ -105,7 +107,7 @@ export function DocumentUploadPanel({
             onClick={() => setActiveTab("upload")}
           >
             <Upload className="mr-1 h-4 w-4" />
-            Upload Document
+            {t("documentUpload.tabUpload")}
           </Button>
           <Button
             variant={activeTab === "paste" ? "default" : "outline"}
@@ -113,7 +115,7 @@ export function DocumentUploadPanel({
             onClick={() => setActiveTab("paste")}
           >
             <FileText className="mr-1 h-4 w-4" />
-            Paste Text
+            {t("documentUpload.tabPaste")}
           </Button>
         </div>
 
@@ -138,17 +140,17 @@ export function DocumentUploadPanel({
                   <>
                     <Loader2 className="mb-2 h-8 w-8 animate-spin text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                      Uploading and extracting text...
+                      {t("documentUpload.uploading")}
                     </p>
                   </>
                 ) : (
                   <>
                     <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                      Drag & drop a PDF or DOCX file, or click to browse
+                      {t("documentUpload.dragDrop")}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Max 10MB
+                      {t("documentUpload.maxSize")}
                     </p>
                   </>
                 )}
@@ -170,7 +172,7 @@ export function DocumentUploadPanel({
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <p className="text-sm font-medium">
-                    Extracted Text ({extractedText.split(/\s+/).length} words)
+                    {t("documentUpload.extracted")} ({extractedText.split(/\s+/).length} {t("documentUpload.extractedWords")})
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -178,10 +180,10 @@ export function DocumentUploadPanel({
                       size="sm"
                       onClick={() => setExtractedText(null)}
                     >
-                      Cancel
+                      {t("button.cancel", { ns: "common" })}
                     </Button>
                     <Button size="sm" onClick={handleUseExtractedText}>
-                      Use This Text
+                      {t("documentUpload.useButton")}
                     </Button>
                   </div>
                 </div>
@@ -197,7 +199,7 @@ export function DocumentUploadPanel({
         {activeTab === "paste" && (
           <div>
             <Textarea
-              placeholder="Paste your reading passage text here..."
+              placeholder={t("documentUpload.pastePlaceholder")}
               value={pasteText}
               onChange={(e) => setPasteText(e.target.value)}
               rows={8}
@@ -205,7 +207,7 @@ export function DocumentUploadPanel({
             <div className="mt-2 flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
                 {pasteText.trim()
-                  ? `${pasteText.trim().split(/\s+/).length} words`
+                  ? `${pasteText.trim().split(/\s+/).length} ${t("documentUpload.extractedWords")}`
                   : ""}
               </p>
               <Button
@@ -213,7 +215,7 @@ export function DocumentUploadPanel({
                 disabled={!pasteText.trim()}
                 onClick={handlePasteSubmit}
               >
-                Use This Text
+                {t("documentUpload.useButton")}
               </Button>
             </div>
           </div>

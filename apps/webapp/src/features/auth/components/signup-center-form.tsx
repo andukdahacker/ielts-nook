@@ -22,6 +22,7 @@ import {
 } from "firebase/auth";
 import React from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { setSignupInProgress } from "../auth-context";
@@ -32,6 +33,7 @@ import {
 } from "../auth.hooks";
 
 export function SignupCenterForm() {
+  const { t } = useTranslation("auth");
   const navigate = useNavigate();
   const { mutateAsync: signup, isPending } = useSignupCenterMutation();
   const { mutateAsync: signupWithGoogle, isPending: isGooglePending } =
@@ -52,17 +54,17 @@ export function SignupCenterForm() {
   const onSubmit = async (data: CenterSignupRequest) => {
     try {
       await signup(data);
-      toast.success("Center registered successfully!");
+      toast.success(t("signupCenterForm.centerRegisteredSuccessfully"));
       navigate("/dashboard/owner");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Signup failed");
+      toast.error(error instanceof Error ? error.message : t("signupCenterForm.signupFailed"));
     }
   };
 
   const onGoogleSignup = async () => {
     const isCenterValid = await form.trigger(["centerName", "centerSlug"]);
     if (!isCenterValid) {
-      toast.error("Please provide valid center details first");
+      toast.error(t("signupCenterForm.pleaseProvideValidCenterDetails"));
       return;
     }
 
@@ -109,13 +111,13 @@ export function SignupCenterForm() {
       // Step 6: Clear the flag after everything is complete
       setSignupInProgress(false);
 
-      toast.success("Center registered successfully with Google!");
+      toast.success(t("signupCenterForm.centerRegisteredWithGoogle"));
       navigate("/dashboard");
     } catch (error) {
       setSignupInProgress(false);
       await signOut(firebaseAuth).catch(() => {});
       toast.error(
-        error instanceof Error ? error.message : "Google signup failed",
+        error instanceof Error ? error.message : t("signupCenterForm.googleSignupFailed"),
       );
     }
   };
@@ -141,9 +143,9 @@ export function SignupCenterForm() {
           name="centerName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Center Name</FormLabel>
+              <FormLabel>{t("signupCenterForm.centerName")}</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. British Council" {...field} />
+                <Input placeholder={t("signupCenterForm.centerNamePlaceholder")} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -154,9 +156,9 @@ export function SignupCenterForm() {
           name="centerSlug"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Center Slug</FormLabel>
+              <FormLabel>{t("signupCenterForm.centerSlug")}</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. british-council" {...field} />
+                <Input placeholder={t("signupCenterForm.centerSlugPlaceholder")} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -169,7 +171,7 @@ export function SignupCenterForm() {
           onClick={onGoogleSignup}
           disabled={isPending || isGooglePending}
         >
-          {isGooglePending ? "Connecting..." : "Continue with Google"}
+          {isGooglePending ? t("signupCenterForm.connecting") : t("signupCenterForm.continueWithGoogle")}
         </Button>
 
         <div className="relative py-4">
@@ -178,7 +180,7 @@ export function SignupCenterForm() {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">
-              Or sign up with email
+              {t("signupCenterForm.orSignUpWithEmail")}
             </span>
           </div>
         </div>
@@ -188,9 +190,9 @@ export function SignupCenterForm() {
           name="ownerName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Owner Name</FormLabel>
+              <FormLabel>{t("signupCenterForm.ownerName")}</FormLabel>
               <FormControl>
-                <Input placeholder="Your full name" {...field} />
+                <Input placeholder={t("signupCenterForm.ownerNamePlaceholder")} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -201,11 +203,11 @@ export function SignupCenterForm() {
           name="ownerEmail"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>{t("signupCenterForm.email")}</FormLabel>
               <FormControl>
                 <Input
                   type="email"
-                  placeholder="owner@example.com"
+                  placeholder={t("signupCenterForm.emailPlaceholder")}
                   {...field}
                 />
               </FormControl>
@@ -218,11 +220,11 @@ export function SignupCenterForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>{t("signupCenterForm.password")}</FormLabel>
               <FormControl>
                 <Input
                   type="password"
-                  placeholder="Min 8 characters"
+                  placeholder={t("signupCenterForm.passwordPlaceholder")}
                   {...field}
                 />
               </FormControl>
@@ -235,7 +237,7 @@ export function SignupCenterForm() {
           className="w-full"
           disabled={isPending || isGooglePending}
         >
-          {isPending ? "Creating Center..." : "Register with Email"}
+          {isPending ? t("signupCenterForm.creatingCenter") : t("signupCenterForm.registerWithEmail")}
         </Button>
       </form>
     </Form>

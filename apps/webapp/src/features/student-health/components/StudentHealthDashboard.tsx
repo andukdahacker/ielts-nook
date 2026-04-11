@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router";
+import { useTranslation } from "react-i18next";
 import type { HealthStatus } from "@workspace/types";
 import { Input } from "@workspace/ui/components/input";
 import {
@@ -18,6 +19,7 @@ import { StudentHealthCardComponent } from "./StudentHealthCard";
 import { StudentProfileOverlay } from "./StudentProfileOverlay";
 
 export function StudentHealthDashboard() {
+  const { t } = useTranslation("student-health");
   const [searchParams] = useSearchParams();
   const initialClassId = searchParams.get("classId") ?? undefined;
   const [classId, setClassId] = useState<string | undefined>(initialClassId);
@@ -81,16 +83,16 @@ export function StudentHealthDashboard() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Student Health</h1>
+          <h1 className="text-2xl font-bold">{t("page.errorTitle")}</h1>
           <p className="text-muted-foreground">
-            At-a-glance view of student engagement
+            {t("page.description")}
           </p>
         </div>
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-muted-foreground mb-4">
-            Failed to load student health data. Please try again.
+            {t("page.errorMessage")}
           </p>
-          <Button onClick={() => refetch()}>Retry</Button>
+          <Button onClick={() => refetch()}>{t("button.retry", { ns: "common" })}</Button>
         </div>
       </div>
     );
@@ -100,9 +102,9 @@ export function StudentHealthDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Student Health</h1>
+        <h1 className="text-2xl font-bold">{t("page.title")}</h1>
         <p className="text-muted-foreground">
-          At-a-glance view of student engagement
+          {t("page.description")}
         </p>
       </div>
 
@@ -120,7 +122,7 @@ export function StudentHealthDashboard() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search by name..."
+            placeholder={t("page.searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9"
@@ -131,10 +133,10 @@ export function StudentHealthDashboard() {
           onValueChange={(v) => setClassId(v === "all" ? undefined : v)}
         >
           <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="All Classes" />
+            <SelectValue placeholder={t("page.classFilter")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Classes</SelectItem>
+            <SelectItem value="all">{t("page.classFilter")}</SelectItem>
             {availableClasses.map((cls) => (
               <SelectItem key={cls.id} value={cls.id}>
                 {cls.name}
@@ -155,8 +157,8 @@ export function StudentHealthDashboard() {
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-muted-foreground">
             {students.length === 0 && !debouncedSearch && !classId
-              ? "No students enrolled yet. Invite students to your center to see their health status."
-              : "No students match your filters."}
+              ? t("page.noStudents")
+              : t("page.noMatches")}
           </p>
         </div>
       ) : (

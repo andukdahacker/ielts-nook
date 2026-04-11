@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import {
   Dialog,
@@ -53,6 +54,7 @@ export function GoldenSampleForm({
   isSubmitting,
   isEdit = false,
 }: GoldenSampleFormProps) {
+  const { t } = useTranslation("settings");
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -76,7 +78,7 @@ export function GoldenSampleForm({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? "Edit Golden Sample" : "Add Golden Sample"}
+            {isEdit ? t("ai.goldenSample.editTitle") : t("ai.goldenSample.createTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -88,9 +90,9 @@ export function GoldenSampleForm({
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Title</FormLabel>
+                    <FormLabel>{t("ai.goldenSample.titleLabel")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Band 7 Writing Sample" {...field} />
+                      <Input placeholder={t("ai.goldenSample.titlePlaceholder")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -102,7 +104,7 @@ export function GoldenSampleForm({
                 name="skillType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Skill Type</FormLabel>
+                    <FormLabel>{t("ai.goldenSample.skillType")}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -129,10 +131,10 @@ export function GoldenSampleForm({
               name="studentWork"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Student Work</FormLabel>
+                  <FormLabel>{t("ai.goldenSample.studentWorkLabel")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Paste the student's original text here (min 50 characters)..."
+                      placeholder={t("ai.goldenSample.studentWorkPlaceholder")}
                       className="min-h-[120px]"
                       {...field}
                     />
@@ -147,10 +149,10 @@ export function GoldenSampleForm({
               name="teacherFeedback"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Teacher Feedback</FormLabel>
+                  <FormLabel>{t("ai.goldenSample.teacherFeedbackLabel")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Paste the teacher's feedback here (min 50 characters)..."
+                      placeholder={t("ai.goldenSample.teacherFeedbackPlaceholder")}
                       className="min-h-[120px]"
                       {...field}
                     />
@@ -163,16 +165,16 @@ export function GoldenSampleForm({
             {/* Side-by-side preview */}
             {(studentWork.length > 0 || teacherFeedback.length > 0) && (
               <div className="border rounded-lg p-4 space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">Preview</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("ai.goldenSample.previewLabel")}</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs font-medium mb-1">Student Work</p>
+                    <p className="text-xs font-medium mb-1">{t("ai.studentWork")}</p>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">
                       {studentWork || "—"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium mb-1">Teacher Feedback</p>
+                    <p className="text-xs font-medium mb-1">{t("ai.teacherFeedback")}</p>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">
                       {teacherFeedback || "—"}
                     </p>

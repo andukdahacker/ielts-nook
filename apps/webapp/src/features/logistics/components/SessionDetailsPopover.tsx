@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { ClassSession } from "@workspace/types";
 import { format } from "date-fns";
 import {
@@ -53,6 +54,7 @@ export function SessionDetailsPopover({
   onMarkAttendance,
   onEdit,
 }: SessionDetailsPopoverProps) {
+  const { t } = useTranslation("logistics");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const startTime = new Date(session.startTime);
@@ -75,6 +77,12 @@ export function SessionDetailsPopover({
     SCHEDULED: "bg-blue-100 text-blue-800",
     COMPLETED: "bg-green-100 text-green-800",
     CANCELLED: "bg-red-100 text-red-800",
+  };
+
+  const statusLabels: Record<string, string> = {
+    SCHEDULED: t("sessionDetails.statusScheduled"),
+    COMPLETED: t("sessionDetails.statusCompleted"),
+    CANCELLED: t("sessionDetails.statusCancelled"),
   };
 
   const handleDeleteClick = () => {
@@ -117,11 +125,11 @@ export function SessionDetailsPopover({
                 variant="secondary"
                 className={statusColors[session.status] ?? ""}
               >
-                {session.status}
+                {statusLabels[session.status] ?? session.status}
               </Badge>
               {isRecurring && (
                 <Badge variant="outline" className="text-xs">
-                  Recurring
+                  {t("sessionDetails.recurring")}
                 </Badge>
               )}
             </div>
@@ -157,7 +165,7 @@ export function SessionDetailsPopover({
 
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Users className="size-4" />
-                <span>{studentCount} {studentCount === 1 ? "Student" : "Students"}</span>
+                <span>{studentCount} {studentCount === 1 ? t("sessionBlock.student") : t("sessionBlock.students")}</span>
               </div>
             </div>
 
@@ -176,7 +184,7 @@ export function SessionDetailsPopover({
                     }}
                   >
                     <ClipboardList className="size-4 mr-1" />
-                    Mark Attendance
+                    {t("sessionDetails.markAttendance")}
                   </Button>
                 </RBACWrapper>
               )}
@@ -194,7 +202,7 @@ export function SessionDetailsPopover({
                     }}
                   >
                     <Pencil className="size-4 mr-1" />
-                    Edit
+                    {t("button.edit", { ns: "common" })}
                   </Button>
                 </RBACWrapper>
               )}
@@ -209,7 +217,7 @@ export function SessionDetailsPopover({
                   disabled={isDeleting}
                 >
                   <Trash2 className="size-4 mr-1" />
-                  {isDeleting ? "Deleting..." : "Delete"}
+                  {isDeleting ? t("sessionDetails.deleting") : t("button.delete", { ns: "common" })}
                 </Button>
               </RBACWrapper>
             </div>
@@ -222,28 +230,28 @@ export function SessionDetailsPopover({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {isRecurring ? "Delete Recurring Session" : "Delete Session"}
+              {isRecurring ? t("sessionDetails.deleteRecurringTitle") : t("sessionDetails.deleteTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {isRecurring
-                ? "This session is part of a recurring series. How would you like to delete it?"
-                : "Are you sure you want to delete this session? This action cannot be undone."}
+                ? t("sessionDetails.deleteRecurringDescription")
+                : t("sessionDetails.deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("button.cancel", { ns: "common" })}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isRecurring ? "Delete This Session Only" : "Delete"}
+              {isRecurring ? t("sessionDetails.deleteThisOnly") : t("button.delete", { ns: "common" })}
             </AlertDialogAction>
             {isRecurring && onDeleteFuture && (
               <AlertDialogAction
                 onClick={handleDeleteAllFuture}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Delete All Future Sessions
+                {t("sessionDetails.deleteAllFuture")}
               </AlertDialogAction>
             )}
           </AlertDialogFooter>

@@ -1,3 +1,6 @@
+import { useTranslation } from "react-i18next";
+import { getIntlLocale } from "@/lib/locale-utils";
+
 interface UsageDataPoint {
   month: string;
   count: number;
@@ -8,21 +11,21 @@ interface UsageChartProps {
   currentCount: number;
 }
 
-const MONTH_LABELS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
-
 export function UsageChart({ snapshots, currentCount }: UsageChartProps) {
+  const { t } = useTranslation("settings");
+  // Locale-aware short month names instead of hardcoded English.
+  const monthFormatter = new Intl.DateTimeFormat(getIntlLocale(), {
+    month: "short",
+  });
   if (snapshots.length === 0) {
     return (
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground">
-          Student Usage (Last 6 Months)
+          {t("billing.usageTitle")}
         </h3>
         <div className="border rounded-lg p-6 text-center text-muted-foreground">
-          <p>Current enrolled students: <span className="font-semibold text-foreground">{currentCount}</span></p>
-          <p className="text-sm mt-1">Student count tracking starts next month.</p>
+          <p>{t("billing.usageCurrent", { currentCount })}</p>
+          <p className="text-sm mt-1">{t("billing.usageTrackingStarts")}</p>
         </div>
       </div>
     );
@@ -33,12 +36,14 @@ export function UsageChart({ snapshots, currentCount }: UsageChartProps) {
   return (
     <div className="space-y-3">
       <h3 className="text-sm font-semibold text-muted-foreground">
-        Student Usage (Last 6 Months)
+        {t("billing.usageTitle")}
       </h3>
       <div className="space-y-2">
         {snapshots.map((snapshot) => {
           const date = new Date(snapshot.month);
-          const label = MONTH_LABELS[date.getMonth()];
+          const label = !isNaN(date.getTime())
+            ? monthFormatter.format(date)
+            : snapshot.month;
           const widthPercent = (snapshot.count / maxCount) * 100;
 
           return (

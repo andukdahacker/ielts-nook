@@ -14,6 +14,7 @@ import {
 } from "@workspace/ui/components/form";
 import { Input } from "@workspace/ui/components/input";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router";
 
@@ -26,6 +27,7 @@ const signupSchema = z.object({
 type SignupFormValues = z.infer<typeof signupSchema>;
 
 export function SignupForm() {
+  const { t } = useTranslation("auth");
   const [isLoading, setIsLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const invitedEmail = searchParams.get("email") || "";
@@ -53,10 +55,10 @@ export function SignupForm() {
       });
 
       // The onAuthStateChanged listener in AuthProvider will handle the backend sync
-      toast.success("Account created successfully!");
+      toast.success(t("signupForm.accountCreatedSuccessfully"));
     } catch (error) {
       console.error("Signup failed:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to create account");
+      toast.error(error instanceof Error ? error.message : t("signupForm.failedToCreateAccount"));
     } finally {
       setIsLoading(false);
     }
@@ -70,9 +72,9 @@ export function SignupForm() {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <FormLabel>{t("signupForm.fullName")}</FormLabel>
               <FormControl>
-                <Input placeholder="John Doe" {...field} />
+                <Input placeholder={t("signupForm.fullNamePlaceholder")} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -83,11 +85,11 @@ export function SignupForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>{t("signupForm.email")}</FormLabel>
               <FormControl>
                 <Input
                   type="email"
-                  placeholder="name@example.com"
+                  placeholder={t("signupForm.emailPlaceholder")}
                   {...field}
                   readOnly={!!invitedEmail}
                 />
@@ -101,9 +103,9 @@ export function SignupForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>{t("signupForm.password")}</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <Input type="password" placeholder={t("signupForm.passwordPlaceholder")} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -113,7 +115,7 @@ export function SignupForm() {
           {isLoading && (
             <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
           )}
-          Create Account
+          {t("signupForm.createAccount")}
         </Button>
       </form>
     </Form>

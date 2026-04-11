@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, BookOpen } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface PassagePanelProps {
   passageContent: string;
 }
 
 export function PassagePanel({ passageContent }: PassagePanelProps) {
+  const { t } = useTranslation("submissions");
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -18,7 +20,7 @@ export function PassagePanel({ passageContent }: PassagePanelProps) {
       >
         <span className="flex items-center gap-2">
           <BookOpen className="size-4" />
-          Reading Passage
+          {t("passage.title")}
         </span>
         {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
       </button>

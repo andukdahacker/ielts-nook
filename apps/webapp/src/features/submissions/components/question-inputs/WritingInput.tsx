@@ -1,6 +1,7 @@
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Badge } from "@workspace/ui/components/badge";
 import { cn } from "@workspace/ui/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface WritingInputProps {
   questionText: string;
@@ -30,6 +31,7 @@ export function WritingInput({
   onChange,
   readOnly,
 }: WritingInputProps) {
+  const { t } = useTranslation("submissions");
   const text = (value as { text?: string })?.text ?? "";
   const wordCount = countWords(text);
 
@@ -44,7 +46,7 @@ export function WritingInput({
       <Textarea
         value={text}
         onChange={(e) => onChange({ text: e.target.value })}
-        placeholder="Write your response here..."
+        placeholder={t("writing.placeholder")}
         className="min-h-[200px] text-sm"
         rows={10}
         disabled={readOnly}
@@ -54,15 +56,15 @@ export function WritingInput({
           variant={isUnderMin || isOverMax ? "destructive" : "outline"}
           className="text-xs"
         >
-          {wordCount} word{wordCount !== 1 ? "s" : ""}
+          {t("writing.wordCount", { wordCount, count: wordCount })}
         </Badge>
         {(wordCountMin != null || wordCountMax != null) && (
           <span className={cn("text-xs", isUnderMin || isOverMax ? "text-destructive" : "text-muted-foreground")}>
             {wordCountMin != null && wordCountMax != null
-              ? `(${wordCountMin}–${wordCountMax} words)`
+              ? t("writing.wordRange", { min: wordCountMin, max: wordCountMax })
               : wordCountMin != null
-                ? `(min ${wordCountMin} words)`
-                : `(max ${wordCountMax} words)`}
+                ? t("writing.minWords", { min: wordCountMin })
+                : t("writing.maxWords", { max: wordCountMax })}
           </span>
         )}
       </div>

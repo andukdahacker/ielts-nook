@@ -5,6 +5,7 @@ import {
 } from "@workspace/ui/components/collapsible";
 import { ChevronDown, History } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
 
 interface HistoryItem {
@@ -23,6 +24,7 @@ export function SubmissionHistoryPanel({
   history,
   currentSubmissionId,
 }: SubmissionHistoryPanelProps) {
+  const { t } = useTranslation("grading");
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const { centerId } = useParams();
@@ -35,7 +37,7 @@ export function SubmissionHistoryPanel({
       <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border bg-muted/30 px-4 py-3 text-left text-sm font-medium hover:bg-muted/50 transition-colors">
         <div className="flex items-center gap-2">
           <History className="h-4 w-4" />
-          <span>Submission History ({history.length})</span>
+          <span>{t("submissionHistory.title", { count: history.length })}</span>
         </div>
         <ChevronDown
           className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -73,7 +75,7 @@ export function SubmissionHistoryPanel({
                           hour: "2-digit",
                           minute: "2-digit",
                         })
-                      : "Unknown date"}
+                      : t("submissionHistory.unknownDate")}
                   </span>
                 </div>
                 <span className="font-semibold tabular-nums">

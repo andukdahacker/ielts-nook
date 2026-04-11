@@ -20,6 +20,7 @@ import {
   Star,
 } from "lucide-react";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import type { GradingQueueFilters } from "../hooks/use-grading-queue";
 import { formatRelativeTime } from "../utils/format-time";
@@ -48,25 +49,25 @@ interface GradingQueueListViewProps {
 
 const STATUS_BADGE: Record<
   GradingStatus,
-  { label: string; className: string; icon: React.ReactNode }
+  { labelKey: string; className: string; icon: React.ReactNode }
 > = {
   pending_ai: {
-    label: "Pending AI",
+    labelKey: "queueList.statusPendingAi",
     className: "bg-yellow-50 text-yellow-700 border-yellow-300",
     icon: <Loader2 className="mr-1 h-3 w-3 animate-spin" />,
   },
   ready: {
-    label: "Ready",
+    labelKey: "queueList.statusReady",
     className: "bg-green-50 text-green-700 border-green-300",
     icon: <CheckCircle2 className="mr-1 h-3 w-3" />,
   },
   in_progress: {
-    label: "In Progress",
+    labelKey: "queueList.statusInProgress",
     className: "bg-blue-50 text-blue-700 border-blue-300",
     icon: <Clock className="mr-1 h-3 w-3" />,
   },
   graded: {
-    label: "Graded",
+    labelKey: "queueList.statusGraded",
     className: "",
     icon: <CircleCheck className="mr-1 h-3 w-3" />,
   },
@@ -97,6 +98,7 @@ export function GradingQueueListView({
   onTogglePriority,
   onStartGrading,
 }: GradingQueueListViewProps) {
+  const { t } = useTranslation("grading");
   const { centerId } = useParams<{ centerId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -145,8 +147,8 @@ export function GradingQueueListView({
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <p className="text-muted-foreground text-lg">
           {hasActiveFilters
-            ? "No submissions match your filters"
-            : "All caught up! No submissions to grade."}
+            ? t("queueList.noMatching")
+            : t("queueList.allCaughtUp")}
         </p>
         {hasActiveFilters && (
           <Button
@@ -162,7 +164,7 @@ export function GradingQueueListView({
               })
             }
           >
-            Clear Filters
+            {t("queueList.clearFilters")}
           </Button>
         )}
       </div>
@@ -173,14 +175,14 @@ export function GradingQueueListView({
     <div>
       <div className="flex items-center justify-between px-4 py-3">
         <p className="text-muted-foreground text-sm">
-          {items.length} submission{items.length !== 1 ? "s" : ""}
+          {t("queueList.submissionCount", { count: items.length })}
         </p>
         <Button
           size="sm"
           disabled={!hasReadyOrInProgress}
           onClick={onStartGrading}
         >
-          {hasInProgress ? "Continue Grading" : "Start Grading"}
+          {hasInProgress ? t("queueList.continueGrading") : t("queueList.startGrading")}
           <ArrowRight className="ml-1 h-4 w-4" />
         </Button>
       </div>
@@ -192,19 +194,19 @@ export function GradingQueueListView({
               className="cursor-pointer select-none"
               onClick={() => handleSort("studentName")}
             >
-              Student
+              {t("queueList.student")}
               <SortIcon
                 column="studentName"
                 currentSort={currentSort}
                 currentOrder={currentOrder}
               />
             </TableHead>
-            <TableHead>Assignment</TableHead>
+            <TableHead>{t("queueList.assignment")}</TableHead>
             <TableHead
               className="cursor-pointer select-none"
               onClick={() => handleSort("submittedAt")}
             >
-              Submitted
+              {t("queueList.submitted")}
               <SortIcon
                 column="submittedAt"
                 currentSort={currentSort}
@@ -215,7 +217,7 @@ export function GradingQueueListView({
               className="hidden cursor-pointer select-none md:table-cell"
               onClick={() => handleSort("dueDate")}
             >
-              Due
+              {t("queueList.due")}
               <SortIcon
                 column="dueDate"
                 currentSort={currentSort}
@@ -252,7 +254,7 @@ export function GradingQueueListView({
                   </Button>
                 </TableCell>
                 <TableCell className="font-medium">
-                  {item.studentName ?? "Unknown"}
+                  {item.studentName ?? t("queueList.unknown")}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
@@ -270,13 +272,13 @@ export function GradingQueueListView({
                 >
                   {item.dueDate
                     ? formatRelativeTime(item.dueDate)
-                    : "No due date"}
+                    : t("queueList.noDueDate")}
                 </TableCell>
                 <TableCell>
                   {item.gradingStatus === "graded" ? (
                     <Badge variant="secondary">
                       {badge.icon}
-                      {badge.label}
+                      {t(badge.labelKey)}
                     </Badge>
                   ) : (
                     <Badge
@@ -284,7 +286,7 @@ export function GradingQueueListView({
                       className={badge.className}
                     >
                       {badge.icon}
-                      {badge.label}
+                      {t(badge.labelKey)}
                     </Badge>
                   )}
                 </TableCell>

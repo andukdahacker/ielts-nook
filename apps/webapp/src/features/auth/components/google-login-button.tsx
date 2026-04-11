@@ -2,9 +2,11 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { firebaseAuth } from "@/core/firebase";
 import { Button } from "@workspace/ui/components/button";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 export function GoogleLoginButton() {
+  const { t } = useTranslation("auth");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -18,7 +20,7 @@ export function GoogleLoginButton() {
       if (!idTokenResult.claims.center_id) {
         // First-time Google user without a center - sign them out and show error
         await firebaseAuth.signOut();
-        toast.error("Account not found. Please register your center first or contact your center administrator.");
+        toast.error(t("googleLogin.accountNotFound"));
         return;
       }
     } catch (error: unknown) {
@@ -60,7 +62,7 @@ export function GoogleLoginButton() {
           ></path>
         </svg>
       )}
-      Sign in with Google
+      {t("googleLogin.signInWithGoogle")}
     </Button>
   );
 }

@@ -2,6 +2,7 @@ import type { IeltsQuestionType } from "@workspace/types";
 import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group";
 import { Checkbox } from "@workspace/ui/components/checkbox";
 import { cn } from "@workspace/ui/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface MCQInputProps {
   sectionType: IeltsQuestionType;
@@ -22,6 +23,7 @@ export function MCQInput({
   onChange,
   readOnly,
 }: MCQInputProps) {
+  const { t } = useTranslation("submissions");
   const items = options?.items ?? [];
   const maxSelections = options?.maxSelections;
 
@@ -34,8 +36,16 @@ export function MCQInput({
 
   if (isTFNG || isYNNG) {
     const labels = isTFNG
-      ? [{ label: "TRUE", text: "True" }, { label: "FALSE", text: "False" }, { label: "NOT_GIVEN", text: "Not Given" }]
-      : [{ label: "YES", text: "Yes" }, { label: "NO", text: "No" }, { label: "NOT_GIVEN", text: "Not Given" }];
+      ? [
+          { label: "TRUE", text: t("mcq.tfng.true") },
+          { label: "FALSE", text: t("mcq.tfng.false") },
+          { label: "NOT_GIVEN", text: t("mcq.tfng.notGiven") },
+        ]
+      : [
+          { label: "YES", text: t("mcq.ynng.yes") },
+          { label: "NO", text: t("mcq.ynng.no") },
+          { label: "NOT_GIVEN", text: t("mcq.ynng.notGiven") },
+        ];
 
     const selected = (value as { answer?: string })?.answer ?? "";
 
@@ -77,7 +87,7 @@ export function MCQInput({
         </p>
         {maxSelections && (
           <p className="text-xs text-muted-foreground">
-            Choose {maxSelections} answer{maxSelections > 1 ? "s" : ""}
+            {t("mcq.selectMultiple", { maxSelections, count: maxSelections })}
           </p>
         )}
         <div className="space-y-2">

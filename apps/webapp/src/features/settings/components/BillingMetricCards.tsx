@@ -1,12 +1,7 @@
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { CreditCard, Users, DollarSign, Calendar } from "lucide-react";
-
-const TIER_DISPLAY: Record<string, string> = {
-  pilot: "Free Pilot",
-  starter: "Starter",
-  growth: "Growth",
-  enterprise: "Enterprise",
-};
+import { useTranslation } from "react-i18next";
+import { formatCurrency, formatDate } from "@/lib/locale-utils";
 
 interface BillingMetricCardsProps {
   tier: string;
@@ -23,32 +18,37 @@ export function BillingMetricCards({
   currency,
   currentPeriodEnd,
 }: BillingMetricCardsProps) {
-  const formattedEstimate = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-  }).format(monthlyEstimateCents / 100);
+  const { t } = useTranslation("settings");
+  const formattedEstimate = formatCurrency(monthlyEstimateCents / 100, currency);
   const nextBilling = currentPeriodEnd
-    ? new Date(currentPeriodEnd).toLocaleDateString()
-    : "N/A";
+    ? formatDate(currentPeriodEnd)
+    : t("billing.notAvailable");
+
+  const TIER_DISPLAY: Record<string, string> = {
+    pilot: t("billing.tierPilot"),
+    starter: t("billing.tierStarter"),
+    growth: t("billing.tierGrowth"),
+    enterprise: t("billing.tierEnterprise"),
+  };
 
   const metrics = [
     {
-      label: "Plan",
+      label: t("billing.metricPlan"),
       value: TIER_DISPLAY[tier] ?? tier,
       icon: CreditCard,
     },
     {
-      label: "Enrolled Students",
+      label: t("billing.metricEnrolledStudents"),
       value: enrolledStudents.toString(),
       icon: Users,
     },
     {
-      label: "Monthly Estimate",
+      label: t("billing.metricMonthlyEstimate"),
       value: formattedEstimate,
       icon: DollarSign,
     },
     {
-      label: "Next Billing",
+      label: t("billing.metricNextBilling"),
       value: nextBilling,
       icon: Calendar,
     },

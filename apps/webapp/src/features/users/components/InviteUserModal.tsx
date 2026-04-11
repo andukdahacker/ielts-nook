@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -42,6 +43,7 @@ interface InviteUserModalProps {
 }
 
 export function InviteUserModal({ onSuccess }: InviteUserModalProps = {}) {
+  const { t } = useTranslation("users");
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const { data: billingData } = useBillingOverview({ staleTime: 5 * 60 * 1000 });
@@ -58,7 +60,7 @@ export function InviteUserModal({ onSuccess }: InviteUserModalProps = {}) {
   const mutation = useMutation({
     mutationFn: createInvitation,
     onSuccess: () => {
-      toast.success("Invitation sent successfully");
+      toast.success(t("invite.success"));
       setOpen(false);
       form.reset();
       // Invalidate users and invitations lists
@@ -68,7 +70,7 @@ export function InviteUserModal({ onSuccess }: InviteUserModalProps = {}) {
     },
     onError: (error: Error) => {
       // Handle duplicate email error inline
-      const errorMessage = error.message || "Failed to send invitation";
+      const errorMessage = error.message || t("invite.errorGeneric");
       if (
         errorMessage.toLowerCase().includes("already") ||
         errorMessage.toLowerCase().includes("duplicate") ||
@@ -76,7 +78,7 @@ export function InviteUserModal({ onSuccess }: InviteUserModalProps = {}) {
       ) {
         form.setError("email", {
           type: "manual",
-          message: "This email has already been invited or is already a member",
+          message: t("invite.errorDuplicate"),
         });
       } else {
         toast.error(errorMessage);
@@ -93,14 +95,14 @@ export function InviteUserModal({ onSuccess }: InviteUserModalProps = {}) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          Invite User
+          {t("invite.button")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Invite User</DialogTitle>
+          <DialogTitle>{t("invite.title")}</DialogTitle>
           <DialogDescription>
-            Invite a new teacher or student to your center.
+            {t("invite.description")}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

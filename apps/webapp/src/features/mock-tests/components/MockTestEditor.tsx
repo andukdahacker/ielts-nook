@@ -33,6 +33,7 @@ import {
   type DropResult,
 } from "@hello-pangea/dnd";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import {
@@ -48,30 +49,31 @@ const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline"> = {
   ARCHIVED: "outline",
 };
 
-const TEST_TYPE_LABELS: Record<string, string> = {
-  ACADEMIC: "Academic",
-  GENERAL_TRAINING: "General Training",
-};
-
-const SKILL_LABELS: Record<string, string> = {
-  LISTENING: "Listening",
-  READING: "Reading",
-  WRITING: "Writing",
-  SPEAKING: "Speaking",
-};
-
-const IELTS_STANDARDS: Record<string, string> = {
-  LISTENING: "4 sections, ~40 questions, 30 minutes",
-  READING: "3 passages, ~40 questions, 60 minutes",
-  WRITING: "Task 1 + Task 2, 60 minutes",
-  SPEAKING: "Parts 1-3, 11-14 minutes",
-};
-
 export function MockTestEditor() {
+  const { t } = useTranslation("mock-tests");
   const { user } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const centerId = user?.centerId || undefined;
+
+  const TEST_TYPE_LABELS: Record<string, string> = {
+    ACADEMIC: t("page.testTypeAcademic"),
+    GENERAL_TRAINING: t("page.testTypeGeneralTraining"),
+  };
+
+  const SKILL_LABELS: Record<string, string> = {
+    LISTENING: t("editor.skillListening"),
+    READING: t("editor.skillReading"),
+    WRITING: t("editor.skillWriting"),
+    SPEAKING: t("editor.skillSpeaking"),
+  };
+
+  const IELTS_STANDARDS: Record<string, string> = {
+    LISTENING: t("editor.ieltsListening"),
+    READING: t("editor.ieltsReading"),
+    WRITING: t("editor.ieltsWriting"),
+    SPEAKING: t("editor.ieltsSpeaking"),
+  };
 
   const { mockTest, isLoading, refetch } = useMockTest(centerId, id);
   const { publishMockTest } = useMockTests(centerId);
@@ -117,10 +119,10 @@ export function MockTestEditor() {
       try {
         await updateSection({ sectionId, input: { timeLimit: seconds } });
       } catch {
-        toast.error("Failed to update time limit");
+        toast.error(t("editor.toastTimeLimitError"));
       }
     },
-    [timeLimits, updateSection],
+    [timeLimits, updateSection, t],
   );
 
   const handleDragEnd = useCallback(
@@ -140,12 +142,12 @@ export function MockTestEditor() {
           exerciseIds: items.map((se) => se.exerciseId),
         });
       } catch {
-        toast.error("Failed to reorder exercises");
+        toast.error(t("editor.toastReorderError"));
       } finally {
         setIsReordering(false);
       }
     },
-    [reorderExercises],
+    [reorderExercises, t],
   );
 
   const handleAddExercise = useCallback(
@@ -153,13 +155,14 @@ export function MockTestEditor() {
       try {
         await addExercise({ sectionId: selectedSectionId, exerciseId });
         refetch();
-        toast.success("Exercise added");
+        toast.success(t("editor.toastExerciseAdded"));
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Failed to add exercise";
+        const msg =
+          err instanceof Error ? err.message : t("editor.toastAddError");
         toast.error(msg);
       }
     },
-    [addExercise, selectedSectionId, refetch],
+    [addExercise, selectedSectionId, refetch, t],
   );
 
   const handleRemoveExercise = useCallback(
@@ -167,12 +170,12 @@ export function MockTestEditor() {
       try {
         await removeExercise({ sectionId, exerciseId });
         refetch();
-        toast.success("Exercise removed");
+        toast.success(t("editor.toastExerciseRemoved"));
       } catch {
-        toast.error("Failed to remove exercise");
+        toast.error(t("editor.toastRemoveError"));
       }
     },
-    [removeExercise, refetch],
+    [removeExercise, refetch, t],
   );
 
   const handlePublish = async () => {
@@ -181,9 +184,10 @@ export function MockTestEditor() {
       await publishMockTest(id);
       refetch();
       setShowPublishConfirm(false);
-      toast.success("Mock test published");
+      toast.success(t("editor.toastPublished"));
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to publish";
+      const msg =
+        err instanceof Error ? err.message : t("editor.toastPublishError");
       toast.error(msg);
       setShowPublishConfirm(false);
     }
@@ -206,7 +210,7 @@ export function MockTestEditor() {
   if (!mockTest) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        Mock test not found.
+        {t("editor.notFound")}
       </div>
     );
   }
@@ -247,7 +251,9 @@ export function MockTestEditor() {
           </div>
         </div>
         {mockTest.status === "DRAFT" && (
-          <Button onClick={() => setShowPublishConfirm(true)}>Publish</Button>
+          <Button onClick={() => setShowPublishConfirm(true)}>
+            {t("editor.publishButton")}
+          </Button>
         )}
       </div>
 
@@ -261,7 +267,7 @@ export function MockTestEditor() {
               </TabsTrigger>
             ),
           )}
-          <TabsTrigger value="REVIEW">Review</TabsTrigger>
+          <TabsTrigger value="REVIEW">{t("editor.skillReview")}</TabsTrigger>
         </TabsList>
 
         {mockTest.sections?.map((section) => (
@@ -269,7 +275,11 @@ export function MockTestEditor() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>{SKILL_LABELS[section.skill]} Section</span>
+                  <span>
+                    {t("editor.sectionTitle", {
+                      skill: SKILL_LABELS[section.skill],
+                    })}
+                  </span>
                   {mockTest.status === "DRAFT" && (
                     <Button
                       size="sm"
@@ -278,7 +288,7 @@ export function MockTestEditor() {
                       }
                     >
                       <Plus className="mr-1 h-3 w-3" />
-                      Add Exercise
+                      {t("editor.addExercise")}
                     </Button>
                   )}
                 </CardTitle>
@@ -286,16 +296,20 @@ export function MockTestEditor() {
               <CardContent className="space-y-4">
                 {/* IELTS Standard Reference */}
                 <div className="text-sm text-muted-foreground bg-muted/50 rounded-md p-3">
-                  IELTS Standard: {IELTS_STANDARDS[section.skill]}
+                  {t("editor.standard", {
+                    standard: IELTS_STANDARDS[section.skill],
+                  })}
                 </div>
 
                 {/* Time Limit */}
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium">Time Limit:</span>
+                  <span className="text-sm font-medium">
+                    {t("editor.timeLimit")}
+                  </span>
                   <Input
                     type="number"
                     className="w-24"
-                    placeholder="min"
+                    placeholder={t("editor.timeLimitPlaceholder")}
                     value={timeLimits[section.id] ?? ""}
                     onChange={(e) =>
                       handleTimeLimitChange(section.id, e.target.value)
@@ -303,13 +317,15 @@ export function MockTestEditor() {
                     onBlur={() => handleTimeLimitSave(section.id)}
                     disabled={mockTest.status !== "DRAFT"}
                   />
-                  <span className="text-sm text-muted-foreground">minutes</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t("editor.timeLimitUnit")}
+                  </span>
                 </div>
 
                 {/* Exercise List */}
                 {(!section.exercises || section.exercises.length === 0) ? (
                   <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-md">
-                    No exercises added yet. Click &quot;Add Exercise&quot; to start.
+                    {t("editor.noExercises")}
                   </div>
                 ) : mockTest.status === "DRAFT" ? (
                   <DragDropContext onDragEnd={handleDragEnd}>
@@ -339,18 +355,22 @@ export function MockTestEditor() {
                                   </span>
                                   <div className="flex-1 min-w-0">
                                     <div className="font-medium truncate">
-                                      {se.exercise?.title ?? "Unknown"}
+                                      {se.exercise?.title ??
+                                        t("editor.unknownExercise")}
                                     </div>
                                     <div className="flex gap-2 mt-1">
                                       <Badge variant="outline" className="text-xs">
-                                        {se.exercise
-                                          ? getQuestionCount(se.exercise)
-                                          : 0}{" "}
-                                        questions
+                                        {t("editor.questionCount", {
+                                          count: se.exercise
+                                            ? getQuestionCount(se.exercise)
+                                            : 0,
+                                        })}
                                       </Badge>
                                       {se.exercise?.bandLevel && (
                                         <Badge variant="secondary" className="text-xs">
-                                          Band {se.exercise.bandLevel}
+                                          {t("editor.bandLevel", {
+                                            level: se.exercise.bandLevel,
+                                          })}
                                         </Badge>
                                       )}
                                     </div>
@@ -388,18 +408,21 @@ export function MockTestEditor() {
                         </span>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium truncate">
-                            {se.exercise?.title ?? "Unknown"}
+                            {se.exercise?.title ?? t("editor.unknownExercise")}
                           </div>
                           <div className="flex gap-2 mt-1">
                             <Badge variant="outline" className="text-xs">
-                              {se.exercise
-                                ? getQuestionCount(se.exercise)
-                                : 0}{" "}
-                              questions
+                              {t("editor.questionCount", {
+                                count: se.exercise
+                                  ? getQuestionCount(se.exercise)
+                                  : 0,
+                              })}
                             </Badge>
                             {se.exercise?.bandLevel && (
                               <Badge variant="secondary" className="text-xs">
-                                Band {se.exercise.bandLevel}
+                                {t("editor.bandLevel", {
+                                  level: se.exercise.bandLevel,
+                                })}
                               </Badge>
                             )}
                           </div>
@@ -415,8 +438,9 @@ export function MockTestEditor() {
                   (section.skill === "LISTENING" ||
                     section.skill === "READING") && (
                     <div className="text-sm text-amber-600 dark:text-amber-400">
-                      Total questions: {getTotalQuestions(section.skill)}.
-                      Standard IELTS has 40 for this skill.
+                      {t("editor.validation", {
+                        count: getTotalQuestions(section.skill),
+                      })}
                     </div>
                   )}
               </CardContent>
@@ -428,17 +452,19 @@ export function MockTestEditor() {
         <TabsContent value="REVIEW">
           <Card>
             <CardHeader>
-              <CardTitle>Test Summary</CardTitle>
+              <CardTitle>{t("editor.reviewTitle")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-sm text-muted-foreground">Title</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t("editor.reviewTitleLabel")}
+                  </span>
                   <div className="font-medium">{mockTest.title}</div>
                 </div>
                 <div>
                   <span className="text-sm text-muted-foreground">
-                    Test Type
+                    {t("editor.reviewTestTypeLabel")}
                   </span>
                   <div className="font-medium">
                     {TEST_TYPE_LABELS[mockTest.testType] ?? mockTest.testType}
@@ -447,7 +473,9 @@ export function MockTestEditor() {
               </div>
 
               <div className="space-y-3">
-                <h3 className="font-medium">Sections</h3>
+                <h3 className="font-medium">
+                  {t("editor.reviewSectionsLabel")}
+                </h3>
                 {mockTest.sections?.map((section) => (
                   <div
                     key={section.id}
@@ -458,35 +486,39 @@ export function MockTestEditor() {
                         {SKILL_LABELS[section.skill]}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {section.exercises?.length ?? 0} exercises,{" "}
-                        {getTotalQuestions(section.skill)} questions
+                        {t("editor.reviewExercisesAndQuestions", {
+                          exercises: section.exercises?.length ?? 0,
+                          questions: getTotalQuestions(section.skill),
+                        })}
                       </div>
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {section.timeLimit
-                        ? `${Math.round(section.timeLimit / 60)} min`
-                        : "No time limit"}
+                        ? t("editor.reviewTimeLimitMin", {
+                            minutes: Math.round(section.timeLimit / 60),
+                          })
+                        : t("editor.reviewNoTimeLimit")}
                     </div>
                   </div>
                 ))}
               </div>
 
               <div className="text-sm text-muted-foreground">
-                Total time:{" "}
-                {mockTest.sections
-                  ? Math.round(
-                      mockTest.sections.reduce(
-                        (sum, s) => sum + (s.timeLimit ?? 0),
-                        0,
-                      ) / 60,
-                    )
-                  : 0}{" "}
-                minutes
+                {t("editor.reviewTotalTime", {
+                  minutes: mockTest.sections
+                    ? Math.round(
+                        mockTest.sections.reduce(
+                          (sum, s) => sum + (s.timeLimit ?? 0),
+                          0,
+                        ) / 60,
+                      )
+                    : 0,
+                })}
               </div>
 
               {mockTest.status === "DRAFT" && (
                 <Button onClick={() => setShowPublishConfirm(true)}>
-                  Publish Mock Test
+                  {t("editor.reviewPublishButton")}
                 </Button>
               )}
             </CardContent>
@@ -514,16 +546,15 @@ export function MockTestEditor() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Publish mock test?</AlertDialogTitle>
+            <AlertDialogTitle>{t("editor.publishTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              All 4 sections must have at least 1 exercise and all referenced
-              exercises must be published.
+              {t("editor.publishDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("editor.cancelButton")}</AlertDialogCancel>
             <AlertDialogAction onClick={handlePublish}>
-              Publish
+              {t("editor.publishConfirmButton")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

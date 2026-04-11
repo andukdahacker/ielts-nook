@@ -2,6 +2,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Eye, EyeOff, MessageSquare } from "lucide-react";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { CommentVisibility } from "@workspace/types";
 
 interface AddCommentInputProps {
@@ -10,6 +11,7 @@ interface AddCommentInputProps {
 }
 
 export function AddCommentInput({ onSubmit, isSubmitting }: AddCommentInputProps) {
+  const { t } = useTranslation("grading");
   const [isExpanded, setIsExpanded] = useState(false);
   const [content, setContent] = useState("");
   const [visibility, setVisibility] = useState<CommentVisibility>("student_facing");
@@ -48,7 +50,7 @@ export function AddCommentInput({ onSubmit, isSubmitting }: AddCommentInputProps
         onClick={() => setIsExpanded(true)}
       >
         <MessageSquare className="h-4 w-4" />
-        Add a comment...
+        {t("addComment.addComment")}
       </button>
     );
   }
@@ -59,7 +61,7 @@ export function AddCommentInput({ onSubmit, isSubmitting }: AddCommentInputProps
         value={content}
         onChange={(e) => setContent(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Type your comment..."
+        placeholder={t("addComment.placeholder")}
         maxLength={5000}
         rows={3}
         // eslint-disable-next-line jsx-a11y/no-autofocus
@@ -75,10 +77,10 @@ export function AddCommentInput({ onSubmit, isSubmitting }: AddCommentInputProps
           }
           title={
             isPrivate
-              ? "Private — only you can see this"
-              : "Visible to student"
+              ? t("addComment.privateTitle")
+              : t("addComment.visibleTitle")
           }
-          aria-label={isPrivate ? "Make visible to student" : "Make private"}
+          aria-label={isPrivate ? t("addComment.privateAriaLabel") : t("addComment.visibleAriaLabel")}
         >
           {isPrivate ? (
             <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />

@@ -20,6 +20,7 @@ import { Input } from "@workspace/ui/components/input";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { z } from "zod";
 
@@ -30,6 +31,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export function ForgotPasswordPage() {
+  const { t } = useTranslation("auth");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -59,26 +61,25 @@ export function ForgotPasswordPage() {
     <div className="flex h-screen w-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Reset password</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t("forgotPasswordPage.resetPassword")}</CardTitle>
           <CardDescription>
             {isSubmitted
-              ? "Check your email for a reset link"
-              : "Enter your email to receive a password reset link"}
+              ? t("forgotPasswordPage.checkEmailForResetLink")
+              : t("forgotPasswordPage.enterEmailForResetLink")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {isSubmitted ? (
             <div className="space-y-4">
               <div className="rounded-lg border border-primary/50 bg-primary/10 p-4 text-sm text-primary">
-                If an account exists for this email, you&apos;ll receive a password
-                reset link shortly.
+                {t("forgotPasswordPage.ifAccountExistsYouWillReceiveLink")}
               </div>
               <div className="text-center">
                 <Link
                   to="/sign-in"
                   className="text-sm text-muted-foreground hover:underline"
                 >
-                  Back to sign in
+                  {t("forgotPasswordPage.backToSignIn")}
                 </Link>
               </div>
             </div>
@@ -94,11 +95,11 @@ export function ForgotPasswordPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t("forgotPasswordPage.email")}</FormLabel>
                       <FormControl>
                         <Input
                           type="email"
-                          placeholder="name@example.com"
+                          placeholder={t("forgotPasswordPage.emailPlaceholder")}
                           autoComplete="email"
                           {...field}
                         />
@@ -111,14 +112,14 @@ export function ForgotPasswordPage() {
                   {isLoading && (
                     <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   )}
-                  Send reset link
+                  {t("forgotPasswordPage.sendResetLink")}
                 </Button>
                 <div className="text-center">
                   <Link
                     to="/sign-in"
                     className="text-sm text-muted-foreground hover:underline"
                   >
-                    Back to sign in
+                    {t("forgotPasswordPage.backToSignIn")}
                   </Link>
                 </div>
               </form>

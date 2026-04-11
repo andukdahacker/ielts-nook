@@ -4,6 +4,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import { useTranslation } from "react-i18next";
 
 interface CriteriaScores {
   taskAchievement?: number;
@@ -14,18 +15,18 @@ interface CriteriaScores {
   pronunciation?: number;
 }
 
-const WRITING_CRITERIA: { key: keyof CriteriaScores; label: string }[] = [
-  { key: "taskAchievement", label: "Task Achievement" },
-  { key: "coherence", label: "Coherence & Cohesion" },
-  { key: "lexicalResource", label: "Lexical Resource" },
-  { key: "grammaticalRange", label: "Grammatical Range & Accuracy" },
+const WRITING_CRITERIA: { key: keyof CriteriaScores; labelKey: string }[] = [
+  { key: "taskAchievement", labelKey: "bandScore.taskAchievement" },
+  { key: "coherence", labelKey: "bandScore.coherence" },
+  { key: "lexicalResource", labelKey: "bandScore.lexicalResource" },
+  { key: "grammaticalRange", labelKey: "bandScore.grammaticalRange" },
 ];
 
-const SPEAKING_CRITERIA: { key: keyof CriteriaScores; label: string }[] = [
-  { key: "fluency", label: "Fluency & Coherence" },
-  { key: "lexicalResource", label: "Lexical Resource" },
-  { key: "grammaticalRange", label: "Grammatical Range & Accuracy" },
-  { key: "pronunciation", label: "Pronunciation" },
+const SPEAKING_CRITERIA: { key: keyof CriteriaScores; labelKey: string }[] = [
+  { key: "fluency", labelKey: "bandScore.fluency" },
+  { key: "lexicalResource", labelKey: "bandScore.lexicalResource" },
+  { key: "grammaticalRange", labelKey: "bandScore.grammaticalRange" },
+  { key: "pronunciation", labelKey: "bandScore.pronunciation" },
 ];
 
 function getBandColor(score: number): string {
@@ -51,13 +52,14 @@ export function StudentScoreDisplay({
   criteriaScores,
   skill,
 }: StudentScoreDisplayProps) {
+  const { t } = useTranslation("grading");
   const criteria = skill === "WRITING" ? WRITING_CRITERIA : SPEAKING_CRITERIA;
 
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between">
-          <span className="text-sm font-medium">Band Score</span>
+          <span className="text-sm font-medium">{t("studentScore.bandScore")}</span>
           <span
             className={`text-3xl font-bold ${overallScore != null ? getBandColor(overallScore) : ""}`}
           >
@@ -86,7 +88,7 @@ export function StudentScoreDisplay({
         {/* Criteria breakdown */}
         {criteriaScores && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {criteria.map(({ key, label }) => {
+            {criteria.map(({ key, labelKey }) => {
               const score = criteriaScores[key];
               return (
                 <div
@@ -94,7 +96,7 @@ export function StudentScoreDisplay({
                   className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2"
                 >
                   <span className="text-xs text-muted-foreground">
-                    {label}
+                    {t(labelKey)}
                   </span>
                   <span
                     className={`text-sm font-semibold ${score != null ? getBandColor(score) : ""}`}

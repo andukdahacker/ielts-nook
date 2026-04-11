@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Book, Headphones, Mic, Pen, Clock, CalendarDays, Play, RotateCw, Eye } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
@@ -5,6 +6,7 @@ import { cn } from "@workspace/ui/lib/utils";
 import { useNavigate } from "react-router";
 import type { StudentAssignment } from "@workspace/types";
 import { useAuth } from "@/features/auth/auth-context";
+import { formatDate } from "@/lib/locale-utils";
 
 const SKILL_ICONS: Record<string, React.ReactNode> = {
   READING: <Book className="size-4" />,
@@ -20,20 +22,59 @@ const SKILL_COLORS: Record<string, string> = {
   SPEAKING: "bg-orange-100 text-orange-700",
 };
 
-export function formatRelativeDue(dueDate: string | null): { text: string; className: string } {
-  if (!dueDate) return { text: "No deadline", className: "" };
+export type RelativeDueResult = {
+  i18nKey: string;
+  i18nOptions?: Record<string, unknown>;
+  /** Plain ISO date for the >7-day fallback (caller renders via formatDate). */
+  fallbackDate?: string;
+  className: string;
+};
+
+export function formatRelativeDue(dueDate: string | null): RelativeDueResult {
+  if (!dueDate) {
+    return { i18nKey: "assignmentCard.due.noDeadline", className: "" };
+  }
   const due = new Date(dueDate);
   const now = new Date();
+  if (isNaN(due.getTime())) {
+    return { i18nKey: "assignmentCard.due.noDeadline", className: "" };
+  }
   const isToday = due.toDateString() === now.toDateString();
   const isPast = due < now;
-  if (isPast) return { text: "Overdue", className: "text-red-600 font-medium" };
-  if (isToday) return { text: "Due today", className: "text-orange-600 font-medium" };
-  const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const diffDays = Math.round((dueDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (diffDays === 1) return { text: "Due tomorrow", className: "text-orange-500" };
-  if (diffDays <= 7) return { text: `Due in ${diffDays} days`, className: "" };
-  return { text: due.toLocaleDateString(), className: "" };
+  if (isPast) {
+    return {
+      i18nKey: "assignmentCard.due.overdue",
+      className: "text-red-600 font-medium",
+    };
+  }
+  if (isToday) {
+    return {
+      i18nKey: "assignmentCard.due.dueToday",
+      className: "text-orange-600 font-medium",
+    };
+  }
+  // Use UTC math so DST transitions don't shift the day count.
+  const dueDayUTC = Date.UTC(due.getFullYear(), due.getMonth(), due.getDate());
+  const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffDays = Math.round((dueDayUTC - todayUTC) / (1000 * 60 * 60 * 24));
+  if (diffDays === 1) {
+    return {
+      i18nKey: "assignmentCard.due.dueTomorrow",
+      className: "text-orange-500",
+    };
+  }
+  if (diffDays <= 7) {
+    return {
+      i18nKey: "assignmentCard.due.dueInDays",
+      i18nOptions: { count: diffDays },
+      className: "",
+    };
+  }
+  return {
+    i18nKey: "assignmentCard.due.absoluteDate",
+    fallbackDate: dueDate,
+    className: "",
+  };
 }
 
 export function formatTimeLimit(seconds: number | null): string {
@@ -50,6 +91,7 @@ interface AssignmentCardProps {
 }
 
 export function AssignmentCard({ assignment }: AssignmentCardProps) {
+  const { t } = useTranslation("dashboard");
   const skill = assignment.exercise.skill;
   const formattedDue = formatRelativeDue(assignment.dueDate);
   const formattedTime = formatTimeLimit(assignment.timeLimit);
@@ -88,12 +130,12 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
   })();
 
   const buttonLabel = !subStatus
-    ? "Start"
+    ? t("assignmentCard.button.start")
     : subStatus === "IN_PROGRESS"
-      ? "Continue"
+      ? t("assignmentCard.button.continue")
       : subStatus === "GRADED"
-        ? "View Results"
-        : "View Submission";
+        ? t("assignmentCard.button.viewResults")
+        : t("assignmentCard.button.viewSubmission");
   const ButtonIcon = !subStatus
     ? Play
     : subStatus === "IN_PROGRESS"
@@ -101,13 +143,13 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
       : Eye;
 
   const statusBadge = subStatus === "SUBMITTED"
-    ? { text: "Submitted", variant: "default" as const }
+    ? { text: t("assignmentCard.badge.submitted"), variant: "default" as const }
     : subStatus === "AI_PROCESSING"
-      ? { text: "Grading...", variant: "secondary" as const }
+      ? { text: t("assignmentCard.badge.grading"), variant: "secondary" as const }
       : subStatus === "GRADED"
-        ? { text: "Graded", variant: "default" as const }
+        ? { text: t("assignmentCard.badge.graded"), variant: "default" as const }
         : subStatus === "IN_PROGRESS"
-          ? { text: "In Progress", variant: "secondary" as const }
+          ? { text: t("assignmentCard.badge.inProgress"), variant: "secondary" as const }
           : null;
 
   return (
@@ -121,7 +163,7 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {isRecentlyGraded && (
-            <Badge className="bg-green-600 text-xs text-white">New</Badge>
+            <Badge className="bg-green-600 text-xs text-white">{t("assignmentCard.badge.new")}</Badge>
           )}
           {statusBadge && (
             <Badge variant={statusBadge.variant} className="text-xs">
@@ -129,7 +171,7 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
             </Badge>
           )}
           <Badge variant="outline" className="text-xs">
-            {assignment.status === "OPEN" ? "Open" : "Closed"}
+            {assignment.status === "OPEN" ? t("assignmentCard.badge.open") : t("assignmentCard.badge.closed")}
           </Badge>
         </div>
       </div>
@@ -138,7 +180,9 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
         {assignment.dueDate && (
           <span className={cn("inline-flex items-center gap-1", formattedDue.className)}>
             <CalendarDays className="size-3.5" />
-            {formattedDue.text}
+            {formattedDue.fallbackDate
+              ? formatDate(formattedDue.fallbackDate)
+              : t(formattedDue.i18nKey, formattedDue.i18nOptions)}
           </span>
         )}
         {assignment.timeLimit && (

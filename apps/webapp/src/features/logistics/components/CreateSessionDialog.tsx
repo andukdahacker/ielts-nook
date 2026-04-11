@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -88,6 +89,7 @@ export function CreateSessionDialog({
   onOpenChange: controlledOnOpenChange,
   hideTrigger,
 }: CreateSessionDialogProps) {
+  const { t } = useTranslation("logistics");
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = controlledOnOpenChange ?? setInternalOpen;
@@ -230,18 +232,18 @@ export function CreateSessionDialog({
 
       // Validate end time is after start time
       if (endTime <= startTime) {
-        form.setError("endTime", { message: "End time must be after start time" });
+        form.setError("endTime", { message: t("editSession.errorEndTime") });
         return;
       }
 
       // Block submission with conflicts unless force-saving (admins only)
       if (hasConflicts && !forceSubmit) {
         if (!canForceSave) {
-          toast.error("Please resolve scheduling conflicts before creating the session");
+          toast.error(t("createSession.toastResolveConflicts"));
           return;
         }
         // For admins, show a warning but allow them to use Force Save button
-        toast.warning("Scheduling conflicts detected. Use 'Force Save' to override.");
+        toast.warning(t("editSession.toastConflictWarning"));
         return;
       }
 
@@ -253,15 +255,19 @@ export function CreateSessionDialog({
         recurrence: values.recurrence === "none" ? undefined : values.recurrence,
       });
 
-      const recurrenceLabel = values.recurrence === "weekly" ? " (12 weekly sessions)" :
-        values.recurrence === "biweekly" ? " (6 bi-weekly sessions)" : "";
-      toast.success(`Session created successfully${recurrenceLabel}`);
+      const successMessage =
+        values.recurrence === "weekly"
+          ? t("createSession.toastSuccessWeekly")
+          : values.recurrence === "biweekly"
+            ? t("createSession.toastSuccessBiweekly")
+            : t("createSession.toastSuccess");
+      toast.success(successMessage);
       setOpen(false);
       form.reset();
       clearConflicts();
       setForceSubmit(false);
     } catch {
-      toast.error("Failed to create session");
+      toast.error(t("createSession.toastError"));
       setForceSubmit(false);
     }
   }
@@ -285,15 +291,15 @@ export function CreateSessionDialog({
         <DialogTrigger asChild>
           <Button variant="outline">
             <Plus className="mr-2 h-4 w-4" />
-            Add Session
+            {t("createSession.addSession")}
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create Session</DialogTitle>
+          <DialogTitle>{t("createSession.title")}</DialogTitle>
           <DialogDescription>
-            Schedule a new class session manually.
+            {t("createSession.description")}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -303,11 +309,11 @@ export function CreateSessionDialog({
               name="classId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Class</FormLabel>
+                  <FormLabel>{t("createSession.classLabel")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a class" />
+                        <SelectValue placeholder={t("createSession.classPlaceholder")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -331,7 +337,7 @@ export function CreateSessionDialog({
             {/* Teacher (read-only, derived from class) */}
             {teacherName && (
               <div className="text-sm text-muted-foreground">
-                Teacher: <span className="font-medium text-foreground">{teacherName}</span>
+                {t("conflictDrawer.teacher")} <span className="font-medium text-foreground">{teacherName}</span>
               </div>
             )}
 
@@ -340,7 +346,7 @@ export function CreateSessionDialog({
               name="date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Date</FormLabel>
+                  <FormLabel>{t("editSession.date")}</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -354,7 +360,7 @@ export function CreateSessionDialog({
                           {field.value ? (
                             format(field.value, "PPP")
                           ) : (
-                            <span>Pick a date</span>
+                            <span>{t("editSession.datePlaceholder")}</span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -380,11 +386,11 @@ export function CreateSessionDialog({
                 name="startTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Time</FormLabel>
+                    <FormLabel>{t("editSession.startTime")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Start time" />
+                          <SelectValue placeholder={t("editSession.startTimePlaceholder")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -405,11 +411,11 @@ export function CreateSessionDialog({
                 name="endTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>End Time</FormLabel>
+                    <FormLabel>{t("editSession.endTime")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="End time" />
+                          <SelectValue placeholder={t("editSession.endTimePlaceholder")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -432,7 +438,7 @@ export function CreateSessionDialog({
               name="roomName"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Room (Optional)</FormLabel>
+                  <FormLabel>{t("editSession.roomOptional")}</FormLabel>
                   <Popover open={roomComboOpen} onOpenChange={setRoomComboOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -444,7 +450,7 @@ export function CreateSessionDialog({
                             !field.value && "text-muted-foreground"
                           )}
                         >
-                          {field.value || "Select or type room..."}
+                          {field.value || t("editSession.roomPlaceholder")}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -452,12 +458,12 @@ export function CreateSessionDialog({
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                       <Command>
                         <CommandInput
-                          placeholder="Search rooms..."
+                          placeholder={t("editSession.searchRooms")}
                           onValueChange={(val) => field.onChange(val)}
                         />
                         <CommandList>
                           <CommandEmpty>
-                            {field.value ? `Use "${field.value}"` : "No rooms found."}
+                            {field.value ? t("editSession.useRoomQuoted", { room: field.value }) : t("editSession.noRoomsFound")}
                           </CommandEmpty>
                           <CommandGroup>
                             {rooms.map((room) => (
@@ -494,17 +500,17 @@ export function CreateSessionDialog({
               name="recurrence"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Recurrence</FormLabel>
+                  <FormLabel>{t("createSession.recurrence")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value ?? "none"}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="No recurrence" />
+                        <SelectValue placeholder={t("createSession.recurrencePlaceholder")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                      <SelectItem value="none">{t("createSession.recurrenceNone")}</SelectItem>
+                      <SelectItem value="weekly">{t("createSession.recurrenceWeekly")}</SelectItem>
+                      <SelectItem value="biweekly">{t("createSession.recurrenceBiweekly")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -517,8 +523,9 @@ export function CreateSessionDialog({
               <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted/50 rounded-md p-3">
                 <Info className="h-4 w-4 mt-0.5 shrink-0" />
                 <span>
-                  This will create {recurrence === "weekly" ? "12 weekly" : "6 bi-weekly"} sessions
-                  starting from the selected date.
+                  {recurrence === "weekly"
+                    ? t("createSession.recurrenceWeeklyInfo")
+                    : t("createSession.recurrenceBiweeklyInfo")}
                 </span>
               </div>
             )}
@@ -526,7 +533,7 @@ export function CreateSessionDialog({
             {/* Conflict check error */}
             {checkError && (
               <p className="text-sm text-destructive">
-                Unable to check for conflicts. You may still save.
+                {t("editSession.errorConflictCheck")}
               </p>
             )}
 
@@ -544,7 +551,7 @@ export function CreateSessionDialog({
 
             <div className="flex justify-end pt-4">
               <Button type="submit" disabled={isCreating || isChecking}>
-                {isCreating ? "Creating..." : isChecking ? "Checking..." : "Create Session"}
+                {isCreating ? t("createSession.creating") : isChecking ? t("editSession.checking") : t("createSession.title")}
               </Button>
             </div>
           </form>

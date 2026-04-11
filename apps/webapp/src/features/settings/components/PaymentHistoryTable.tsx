@@ -6,6 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table";
+import { useTranslation } from "react-i18next";
 
 interface PaymentItem {
   id: string;
@@ -31,24 +32,25 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export function PaymentHistoryTable({ items, total }: PaymentHistoryTableProps) {
+  const { t } = useTranslation("settings");
   return (
     <div className="space-y-3">
       <h3 className="text-sm font-semibold text-muted-foreground">
-        Payment History
+        {t("billing.paymentHistoryTitle")}
       </h3>
       {total === 0 ? (
         <div className="border rounded-lg p-6 text-center text-muted-foreground">
-          No payments yet. Billing will start after pilot.
+          {t("billing.paymentHistoryEmpty")}
         </div>
       ) : (
         <div className="overflow-x-auto border rounded-lg">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Receipt</TableHead>
+                <TableHead>{t("billing.paymentDate")}</TableHead>
+                <TableHead>{t("billing.paymentAmount")}</TableHead>
+                <TableHead>{t("billing.paymentStatus")}</TableHead>
+                <TableHead>{t("billing.paymentReceipt")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -73,7 +75,7 @@ export function PaymentHistoryTable({ items, total }: PaymentHistoryTableProps) 
                         rel="noopener noreferrer"
                         className="text-primary underline text-sm"
                       >
-                        Download
+                        {t("billing.paymentDownload")}
                       </a>
                     ) : (
                       <span className="text-muted-foreground">&mdash;</span>

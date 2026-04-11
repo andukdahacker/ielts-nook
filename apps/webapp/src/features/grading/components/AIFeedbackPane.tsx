@@ -5,6 +5,7 @@ import { Separator } from "@workspace/ui/components/separator";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { AlertTriangle, ArrowRight, CheckCheck, RefreshCw } from "lucide-react";
 import { useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type {
   CommentVisibility,
   CreateTeacherComment,
@@ -101,12 +102,12 @@ const TYPE_ORDER: FeedbackType[] = [
   "general",
 ];
 
-const TYPE_LABELS: Record<FeedbackType, string> = {
-  grammar: "Grammar Issues",
-  vocabulary: "Vocabulary",
-  coherence: "Coherence",
-  score_suggestion: "Score Suggestions",
-  general: "General",
+const TYPE_LABEL_KEYS: Record<FeedbackType, string> = {
+  grammar: "aiFeedback.grammarIssues",
+  vocabulary: "aiFeedback.vocabulary",
+  coherence: "aiFeedback.coherence",
+  score_suggestion: "aiFeedback.scoreSuggestions",
+  general: "aiFeedback.general",
 };
 
 function groupByType(items: FeedbackItem[]) {
@@ -118,12 +119,13 @@ function groupByType(items: FeedbackItem[]) {
   }
   return TYPE_ORDER.filter((t) => groups.has(t)).map((type) => ({
     type,
-    label: TYPE_LABELS[type],
+    labelKey: TYPE_LABEL_KEYS[type],
     items: groups.get(type)!,
   }));
 }
 
 function LoadingSkeleton() {
+  const { t } = useTranslation("grading");
   return (
     <div className="space-y-4 p-4">
       <Skeleton className="h-32 w-full rounded-lg" />
@@ -131,7 +133,7 @@ function LoadingSkeleton() {
       <Skeleton className="h-20 w-full rounded-lg" />
       <Skeleton className="h-20 w-full rounded-lg" />
       <p className="text-center text-sm text-muted-foreground animate-pulse">
-        AI is analyzing this submission...
+        {t("aiFeedback.loading")}
       </p>
     </div>
   );
@@ -146,11 +148,12 @@ function FailedState({
   onRetrigger: () => void;
   isRetriggering: boolean;
 }) {
+  const { t } = useTranslation("grading");
   return (
     <div className="flex flex-col items-center justify-center gap-4 p-6 text-center">
       <AlertTriangle className="h-8 w-8 text-destructive" />
       <div className="space-y-1">
-        <p className="font-medium">AI Analysis Failed</p>
+        <p className="font-medium">{t("aiFeedback.failedTitle")}</p>
         {failureReason && (
           <p className="text-sm text-muted-foreground">{failureReason}</p>
         )}
@@ -164,10 +167,10 @@ function FailedState({
         <RefreshCw
           className={`mr-2 h-4 w-4 ${isRetriggering ? "animate-spin" : ""}`}
         />
-        Re-analyze
+        {t("aiFeedback.retrigger")}
       </Button>
       <p className="text-xs text-muted-foreground">
-        You can still grade manually without AI assistance.
+        {t("aiFeedback.helpText")}
       </p>
     </div>
   );
@@ -215,6 +218,8 @@ function TeacherCommentsSection({
     [onUpdateComment],
   );
 
+  const { t } = useTranslation("grading");
+
   const handleGeneralComment = useCallback(
     (content: string, visibility: CommentVisibility) => {
       onCreateComment?.({
@@ -234,7 +239,7 @@ function TeacherCommentsSection({
           <div className="flex items-center gap-2 my-3">
             <Separator className="flex-1" />
             <span className="text-xs text-muted-foreground">
-              Teacher Comments
+              {t("aiFeedback.teacherComments")}
             </span>
             <Separator className="flex-1" />
           </div>
@@ -296,10 +301,12 @@ function ApprovalToolbar({
     });
   }, [onFinalize, teacherFinalScore, teacherCriteriaScores]);
 
+  const { t } = useTranslation("grading");
+
   if (isFinalized) {
     return (
       <div className="border-t bg-background p-3 flex items-center justify-center shrink-0">
-        <Badge variant="secondary">Graded</Badge>
+        <Badge variant="secondary">{t("aiFeedback.graded")}</Badge>
       </div>
     );
   }
@@ -307,7 +314,7 @@ function ApprovalToolbar({
   return (
     <div className="border-t bg-background p-3 flex items-center gap-2 shrink-0">
       <span className="text-xs text-muted-foreground">
-        {approvedCount}/{totalItems} reviewed
+        {approvedCount}/{totalItems} {t("aiFeedback.reviewed")}
       </span>
       {onBulkApprove && hasPending && (
         <Button
@@ -316,7 +323,7 @@ function ApprovalToolbar({
           onClick={() => onBulkApprove("approve_remaining")}
         >
           <CheckCheck className="mr-1 h-3.5 w-3.5" />
-          Approve All
+          {t("aiFeedback.approveAll")}
         </Button>
       )}
       {onFinalize && (
@@ -326,7 +333,7 @@ function ApprovalToolbar({
           onClick={handleFinalize}
           disabled={isFinalizing}
         >
-          Approve & Next
+          {t("aiFeedback.approveAndNext")}
           <ArrowRight className="ml-1 h-3.5 w-3.5" />
         </Button>
       )}
@@ -360,6 +367,8 @@ export function AIFeedbackPane({
   teacherCriteriaScores,
   onScoreChange,
 }: AIFeedbackPaneProps) {
+  const { t } = useTranslation("grading");
+
   const teacherSection = (
     <TeacherCommentsSection
       comments={teacherComments}
@@ -404,7 +413,7 @@ export function AIFeedbackPane({
         <ScrollArea className="flex-1">
           <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
             <p className="text-sm text-muted-foreground">
-              AI analysis completed with no feedback items.
+              {t("aiFeedback.noFeedback")}
             </p>
           </div>
           <div className="px-4 pb-4">{teacherSection}</div>
@@ -441,7 +450,7 @@ export function AIFeedbackPane({
 
           {feedback.generalFeedback && (
             <div className="rounded-lg border p-3">
-              <h3 className="mb-1.5 text-sm font-medium">General Feedback</h3>
+              <h3 className="mb-1.5 text-sm font-medium">{t("aiFeedback.generalFeedback")}</h3>
               <p className="text-sm leading-relaxed text-muted-foreground">
                 {feedback.generalFeedback}
               </p>
@@ -451,7 +460,7 @@ export function AIFeedbackPane({
           {groups.map((group) => (
             <div key={group.type}>
               <h3 className="mb-2 text-sm font-medium">
-                {group.label} ({group.items.length})
+                {t(group.labelKey)} ({group.items.length})
               </h3>
               <div className="space-y-2">
                 {group.items.map((item) => (

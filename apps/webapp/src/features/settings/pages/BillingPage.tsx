@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Button } from "@workspace/ui/components/button";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { AlertCircle } from "lucide-react";
@@ -21,17 +22,21 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  active: { label: "Active", className: "bg-green-100 text-green-800" },
-  past_due: { label: "Payment Failed", className: "bg-red-100 text-red-800" },
-  canceled: { label: "Canceled", className: "bg-gray-100 text-gray-600" },
-  pilot: { label: "Free Pilot", className: "bg-blue-100 text-blue-800" },
-  inactive: { label: "Inactive", className: "bg-gray-100 text-gray-600" },
-  grace_period: { label: "Grace Period", className: "bg-amber-100 text-amber-800" },
-};
+function getStatusConfig(t: (key: string) => string): Record<string, { label: string; className: string }> {
+  return {
+    active: { label: t("billing.statusActive"), className: "bg-green-100 text-green-800" },
+    past_due: { label: t("billing.statusPastDue"), className: "bg-red-100 text-red-800" },
+    canceled: { label: t("billing.statusCanceled"), className: "bg-gray-100 text-gray-600" },
+    pilot: { label: t("billing.statusPilot"), className: "bg-blue-100 text-blue-800" },
+    inactive: { label: t("billing.statusInactive"), className: "bg-gray-100 text-gray-600" },
+    grace_period: { label: t("billing.statusGracePeriod"), className: "bg-amber-100 text-amber-800" },
+  };
+}
 
 function StatusBadge({ status }: { status: string }) {
-  const { label, className } = STATUS_CONFIG[status] ?? {
+  const { t } = useTranslation("settings");
+  const statusConfig = getStatusConfig(t);
+  const { label, className } = statusConfig[status] ?? {
     label: status,
     className: "bg-gray-100 text-gray-600",
   };
@@ -51,6 +56,7 @@ function SubscriptionAction({
   status: string;
   portalUrl: string | null;
 }) {
+  const { t } = useTranslation("settings");
   return (
     <div className="flex items-center gap-3">
       <StatusBadge status={status} />
@@ -61,7 +67,7 @@ function SubscriptionAction({
           onClick={() => portalUrl && window.open(portalUrl, "_blank")}
           disabled={!portalUrl}
         >
-          Update Payment Method
+          {t("billing.updatePayment")}
         </Button>
       )}
       {status !== "pilot" && status !== "past_due" && status !== "grace_period" && status !== "inactive" && (
@@ -70,7 +76,7 @@ function SubscriptionAction({
           onClick={() => portalUrl && window.open(portalUrl, "_blank")}
           disabled={!portalUrl}
         >
-          Change Plan
+          {t("billing.changePlan")}
         </Button>
       )}
     </div>
@@ -78,6 +84,7 @@ function SubscriptionAction({
 }
 
 export function BillingPage() {
+  const { t } = useTranslation("settings");
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { data: overview, isLoading: overviewLoading, isError: overviewError } = useBillingOverview();
@@ -98,7 +105,7 @@ export function BillingPage() {
   useEffect(() => {
     if (searchParams.get("checkout") === "success") {
       queryClient.invalidateQueries({ queryKey: billingKeys.all });
-      toast.success("Subscription activated! Welcome aboard.");
+      toast.success(t("billing.toastSuccess"));
       const next = new URLSearchParams(searchParams);
       next.delete("checkout");
       setSearchParams(next, { replace: true });
@@ -106,19 +113,19 @@ export function BillingPage() {
     // Dormant: fires when Polar portal return URL includes ?plan_changed=true
     if (searchParams.get("plan_changed") === "true") {
       queryClient.invalidateQueries({ queryKey: billingKeys.all });
-      toast.success("Plan updated successfully.");
+      toast.success(t("billing.toastPlanUpdated"));
       const next = new URLSearchParams(searchParams);
       next.delete("plan_changed");
       setSearchParams(next, { replace: true });
     }
-  }, [searchParams, queryClient, setSearchParams]);
+  }, [searchParams, queryClient, setSearchParams, t]);
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Billing</h2>
+        <h2 className="text-lg font-semibold">{t("billing.heading")}</h2>
         <p className="text-muted-foreground">
-          View your billing status, student usage, and payment history.
+          {t("billing.description")}
         </p>
       </div>
 
@@ -129,7 +136,7 @@ export function BillingPage() {
           ))}
         </div>
       ) : overviewError ? (
-        <ErrorBanner message="Unable to load billing information. Only center owners can access billing." />
+        <ErrorBanner message={t("billing.errorOverview")} />
       ) : overview ? (
         <>
           <BillingMetricCards
@@ -202,7 +209,7 @@ export function BillingPage() {
       {usageLoading ? (
         <Skeleton className="h-48 rounded-lg" />
       ) : usageError ? (
-        <ErrorBanner message="Unable to load usage data." />
+        <ErrorBanner message={t("billing.errorUsage")} />
       ) : usage ? (
         <UsageChart snapshots={usage.snapshots} currentCount={usage.currentCount} />
       ) : null}
@@ -210,7 +217,7 @@ export function BillingPage() {
       {paymentsLoading ? (
         <Skeleton className="h-32 rounded-lg" />
       ) : paymentsError ? (
-        <ErrorBanner message="Unable to load payment history." />
+        <ErrorBanner message={t("billing.errorPayments")} />
       ) : payments ? (
         <PaymentHistoryTable items={payments.items} total={payments.total} />
       ) : null}

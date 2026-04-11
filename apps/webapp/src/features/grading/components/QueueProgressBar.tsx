@@ -1,4 +1,5 @@
 import { Progress } from "@workspace/ui/components/progress";
+import { useTranslation } from "react-i18next";
 
 interface QueueProgressBarProps {
   progress: { graded: number; total: number } | null;
@@ -9,6 +10,8 @@ export function QueueProgressBar({
   progress,
   assignmentTitle,
 }: QueueProgressBarProps) {
+  const { t } = useTranslation("grading");
+
   if (!progress) return null;
 
   const percentage =
@@ -20,7 +23,7 @@ export function QueueProgressBar({
   return (
     <div className="bg-muted/20 flex items-center gap-3 border-b px-4 py-2">
       <span className="text-sm whitespace-nowrap">
-        {progress.graded} of {progress.total} graded
+        {progress.graded} {t("queueProgress.graded", { total: progress.total })}
         {assignmentTitle && (
           <span className="text-muted-foreground"> — {assignmentTitle}</span>
         )}
@@ -32,7 +35,7 @@ export function QueueProgressBar({
       <span
         className={`text-sm ${isComplete ? "font-medium text-green-600" : "text-muted-foreground"}`}
       >
-        {isComplete ? "Complete!" : `${percentage}%`}
+        {isComplete ? t("queueProgress.complete") : `${percentage}%`}
       </span>
     </div>
   );

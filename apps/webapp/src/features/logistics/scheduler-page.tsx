@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { startOfWeek } from "date-fns";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -14,6 +15,7 @@ import { RBACWrapper } from "@/features/auth/components/RBACWrapper";
 import type { ClassSessionWithConflicts } from "@workspace/types";
 
 export function SchedulerPage() {
+  const { t } = useTranslation("logistics");
   const { user } = useAuth();
   const [currentWeekStart, setCurrentWeekStart] = useState(
     startOfWeek(new Date(), { weekStartsOn: 1 })
@@ -67,9 +69,9 @@ export function SchedulerPage() {
           endTime: newEndTime.toISOString(),
         },
       });
-      toast.success("Session rescheduled successfully");
+      toast.success(t("scheduler.toastRescheduleSuccess"));
     } catch {
-      toast.error("Failed to reschedule session");
+      toast.error(t("scheduler.toastRescheduleError"));
     }
   };
 
@@ -79,9 +81,9 @@ export function SchedulerPage() {
         startDate: weekStart,
         endDate: weekEnd,
       });
-      toast.success(`Generated ${result?.generatedCount ?? 0} sessions`);
+      toast.success(t("scheduler.toastGenerateSuccess", { count: result?.generatedCount ?? 0 }));
     } catch {
-      toast.error("Failed to generate sessions");
+      toast.error(t("scheduler.toastGenerateError"));
     }
   };
 
@@ -94,27 +96,27 @@ export function SchedulerPage() {
         id: sessionId,
         input: updates,
       });
-      toast.success("Session updated successfully");
+      toast.success(t("scheduler.toastUpdateSuccess"));
     } catch {
-      toast.error("Failed to update session");
+      toast.error(t("scheduler.toastUpdateError"));
     }
   };
 
   const handleSessionDelete = async (sessionId: string) => {
     try {
       await deleteSession(sessionId);
-      toast.success("Session deleted");
+      toast.success(t("scheduler.toastDeleteSuccess"));
     } catch {
-      toast.error("Failed to delete session");
+      toast.error(t("scheduler.toastDeleteError"));
     }
   };
 
   const handleDeleteFuture = async (sessionId: string) => {
     try {
       const result = await deleteFutureSessions(sessionId);
-      toast.success(`Deleted ${result?.deletedCount ?? 0} future session(s)`);
+      toast.success(t("scheduler.toastDeleteFutureSuccess", { count: result?.deletedCount ?? 0 }));
     } catch {
-      toast.error("Failed to delete future sessions");
+      toast.error(t("scheduler.toastDeleteFutureError"));
     }
   };
 
@@ -150,9 +152,9 @@ export function SchedulerPage() {
     <div className="flex flex-col h-[calc(100vh-8rem)]">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Schedule</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("scheduler.pageTitle")}</h1>
           <p className="text-muted-foreground">
-            View and manage your class sessions
+            {t("scheduler.pageSubtitle")}
           </p>
         </div>
         <RBACWrapper requiredRoles={["OWNER", "ADMIN"]}>
@@ -170,10 +172,10 @@ export function SchedulerPage() {
               {isGenerating ? (
                 <>
                   <Loader2 className="mr-2 size-4 animate-spin" />
-                  Generating...
+                  {t("scheduler.generating")}
                 </>
               ) : (
-                "Generate Sessions"
+                t("scheduler.generateSessions")
               )}
             </Button>
           </div>

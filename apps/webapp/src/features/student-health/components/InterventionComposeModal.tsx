@@ -12,6 +12,7 @@ import { Label } from "@workspace/ui/components/label";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   useInterventionPreview,
   useSendIntervention,
@@ -28,6 +29,7 @@ export function InterventionComposeModal({
   open,
   onOpenChange,
 }: InterventionComposeModalProps) {
+  const { t } = useTranslation("student-health");
   const { preview, isLoading: previewLoading } = useInterventionPreview(
     open ? studentId : null,
   );
@@ -69,10 +71,10 @@ export function InterventionComposeModal({
         body,
         templateUsed,
       });
-      toast.success("Intervention email queued");
+      toast.success(t("intervention.toastSuccess"));
       onOpenChange(false);
     } catch {
-      toast.error("Failed to send intervention email");
+      toast.error(t("intervention.toastError"));
     }
   };
 
@@ -82,7 +84,7 @@ export function InterventionComposeModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Contact Parent</DialogTitle>
+          <DialogTitle>{t("intervention.title")}</DialogTitle>
         </DialogHeader>
 
         {previewLoading ? (
@@ -92,17 +94,17 @@ export function InterventionComposeModal({
         ) : (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="to">To</Label>
+              <Label htmlFor="to">{t("intervention.toLabel")}</Label>
               <Input
                 id="to"
                 type="email"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                placeholder="parent@example.com"
+                placeholder={t("intervention.toPlaceholder")}
               />
             </div>
             <div>
-              <Label htmlFor="subject">Subject</Label>
+              <Label htmlFor="subject">{t("intervention.subjectLabel")}</Label>
               <Input
                 id="subject"
                 value={subject}
@@ -110,7 +112,7 @@ export function InterventionComposeModal({
               />
             </div>
             <div>
-              <Label htmlFor="body">Body</Label>
+              <Label htmlFor="body">{t("intervention.bodyLabel")}</Label>
               <Textarea
                 id="body"
                 value={body}
@@ -123,7 +125,7 @@ export function InterventionComposeModal({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("button.cancel", { ns: "common" })}
           </Button>
           <Button
             onClick={handleSend}
@@ -132,7 +134,7 @@ export function InterventionComposeModal({
             {sendMutation.isPending && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
-            Send
+            {t("intervention.send")}
           </Button>
         </DialogFooter>
       </DialogContent>

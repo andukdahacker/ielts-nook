@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
+import { useTranslation } from "react-i18next";
 import { MoreHorizontal, User, UserCog, UserMinus, UserCheck } from "lucide-react";
 import {
   DropdownMenu,
@@ -31,6 +32,7 @@ interface UserActionsDropdownProps {
 }
 
 export function UserActionsDropdown({ user }: UserActionsDropdownProps) {
+  const { t } = useTranslation("users");
   const navigate = useNavigate();
   const { centerId } = useParams<{ centerId: string }>();
   const { user: currentUser } = useAuth();
@@ -51,19 +53,19 @@ export function UserActionsDropdown({ user }: UserActionsDropdownProps) {
   const handleDeactivate = async () => {
     try {
       await deactivateMutation.mutateAsync(user.id);
-      toast.success("User deactivated successfully");
+      toast.success(t("userActions.deactivateSuccess"));
       setShowDeactivateDialog(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to deactivate user");
+      toast.error(error instanceof Error ? error.message : t("userActions.deactivateError"));
     }
   };
 
   const handleReactivate = async () => {
     try {
       await reactivateMutation.mutateAsync(user.id);
-      toast.success("User reactivated successfully");
+      toast.success(t("userActions.reactivateSuccess"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to reactivate user");
+      toast.error(error instanceof Error ? error.message : t("userActions.reactivateError"));
     }
   };
 
@@ -73,13 +75,13 @@ export function UserActionsDropdown({ user }: UserActionsDropdownProps) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">Open menu</span>
+            <span className="sr-only">{t("userActions.menuTrigger")}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handleViewProfile}>
             <User className="mr-2 h-4 w-4" />
-            View Profile
+            {t("userActions.viewProfile")}
           </DropdownMenuItem>
 
           <RBACWrapper requiredRoles={["OWNER"]}>
@@ -88,7 +90,7 @@ export function UserActionsDropdown({ user }: UserActionsDropdownProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setShowRoleChangeModal(true)}>
                   <UserCog className="mr-2 h-4 w-4" />
-                  Change Role
+                  {t("userActions.changeRole")}
                 </DropdownMenuItem>
               </>
             )}
@@ -103,7 +105,7 @@ export function UserActionsDropdown({ user }: UserActionsDropdownProps) {
                   disabled={reactivateMutation.isPending}
                 >
                   <UserCheck className="mr-2 h-4 w-4" />
-                  Reactivate
+                  {t("userActions.reactivate")}
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem
@@ -111,7 +113,7 @@ export function UserActionsDropdown({ user }: UserActionsDropdownProps) {
                   className="text-destructive focus:text-destructive"
                 >
                   <UserMinus className="mr-2 h-4 w-4" />
-                  Deactivate
+                  {t("userActions.deactivate")}
                 </DropdownMenuItem>
               )}
             </>
@@ -123,11 +125,9 @@ export function UserActionsDropdown({ user }: UserActionsDropdownProps) {
       <AlertDialog open={showDeactivateDialog} onOpenChange={setShowDeactivateDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Deactivate User</AlertDialogTitle>
+            <AlertDialogTitle>{t("userActions.deactivateTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to deactivate {user.name || user.email}? They will
-              immediately lose access to the platform and their sessions will be
-              invalidated.
+              {t("userActions.deactivateDescription", { user: user.name || user.email })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -136,7 +136,7 @@ export function UserActionsDropdown({ user }: UserActionsDropdownProps) {
               onClick={handleDeactivate}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deactivateMutation.isPending ? "Deactivating..." : "Deactivate"}
+              {deactivateMutation.isPending ? t("userActions.deactivateConfirming") : t("userActions.deactivateConfirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

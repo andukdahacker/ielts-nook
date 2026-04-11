@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Button } from "@workspace/ui/components/button";
+import { useTranslation } from "react-i18next";
 
 interface ErrorFallbackProps {
   error: Error | null;
@@ -20,17 +21,17 @@ function ErrorFallback({
   resetErrorBoundary,
 }: ErrorFallbackProps) {
   const [showDetails, setShowDetails] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <div className="flex min-h-[400px] items-center justify-center p-8">
       <Card className="w-full max-w-lg">
         <CardHeader>
-          <CardTitle>Something went wrong</CardTitle>
+          <CardTitle>{t("errors.somethingWentWrong")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            An unexpected error occurred. You can try again or go back to the
-            dashboard.
+            {t("errors.unexpectedOccurred")}
           </p>
           {(error || errorInfo) && (
             <div className="mt-4">
@@ -40,7 +41,7 @@ function ErrorFallback({
                 onClick={() => setShowDetails(!showDetails)}
                 aria-expanded={showDetails}
               >
-                {showDetails ? "Hide" : "Show"} error details
+                {showDetails ? t("errors.hideDetails") : t("errors.showDetails")}
               </Button>
               {showDetails && (
                 <pre className="mt-2 max-h-48 overflow-auto rounded bg-muted p-3 text-xs">
@@ -53,9 +54,9 @@ function ErrorFallback({
           )}
         </CardContent>
         <CardFooter className="gap-2">
-          <Button onClick={resetErrorBoundary}>Try Again</Button>
+          <Button onClick={resetErrorBoundary}>{t("errors.tryAgain")}</Button>
           <Button variant="outline" asChild>
-            <a href="/">Go to Dashboard</a>
+            <a href="/">{t("errors.goToDashboard")}</a>
           </Button>
         </CardFooter>
       </Card>

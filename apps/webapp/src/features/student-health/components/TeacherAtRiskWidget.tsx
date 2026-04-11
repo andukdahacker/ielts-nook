@@ -9,6 +9,7 @@ import {
   AvatarImage,
 } from "@workspace/ui/components/avatar";
 import { CircleCheck, AlertTriangle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useTeacherAtRiskWidget } from "../hooks/use-teacher-at-risk-widget";
 import { TrafficLightBadge } from "./TrafficLightBadge";
 import type { StudentHealthCard } from "@workspace/types";
@@ -28,12 +29,13 @@ const MiniStudentCard = memo(function MiniStudentCard({
 }: {
   student: StudentHealthCard;
 }) {
+  const { t } = useTranslation("student-health");
   return (
     <div className="flex items-center gap-3 rounded-lg border p-3">
       <Avatar className="h-8 w-8">
         <AvatarImage
           src={student.avatarUrl ?? undefined}
-          alt={student.name ?? "Student"}
+          alt={student.name ?? t("student.defaultAlt")}
         />
         <AvatarFallback className="text-xs">
           {getInitials(student.name)}
@@ -41,10 +43,10 @@ const MiniStudentCard = memo(function MiniStudentCard({
       </Avatar>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">
-          {student.name ?? "Unknown"}
+          {student.name ?? t("student.unknown")}
         </p>
         <p className="text-xs text-muted-foreground">
-          {student.metrics.attendanceRate}% attendance
+          {t("widget.attendance", { rate: student.metrics.attendanceRate })}
         </p>
       </div>
       <TrafficLightBadge status={student.healthStatus} />
@@ -69,6 +71,7 @@ function LoadingSkeleton() {
 }
 
 export default function TeacherAtRiskWidget() {
+  const { t } = useTranslation("student-health");
   const { widget, isLoading } = useTeacherAtRiskWidget();
   const { centerId } = useParams<{ centerId: string }>();
 
@@ -81,7 +84,7 @@ export default function TeacherAtRiskWidget() {
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-amber-500" />
-          My Students at Risk
+          {t("widget.title")}
           {totalConcern > 0 && (
             <Badge variant="destructive" className="ml-1">
               {totalConcern}
@@ -92,7 +95,7 @@ export default function TeacherAtRiskWidget() {
           to={`/${centerId}/dashboard/students`}
           className="text-sm text-primary hover:underline"
         >
-          View All
+          {t("widget.viewAll")}
         </Link>
       </CardHeader>
       <CardContent>
@@ -101,7 +104,7 @@ export default function TeacherAtRiskWidget() {
         ) : !widget || widget.students.length === 0 ? (
           <div className="flex items-center gap-2 py-4 text-muted-foreground">
             <CircleCheck className="h-5 w-5 text-emerald-500" />
-            <span>All students on track</span>
+            <span>{t("widget.allOnTrack")}</span>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

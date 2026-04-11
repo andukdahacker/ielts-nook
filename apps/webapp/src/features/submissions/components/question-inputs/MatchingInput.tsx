@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
+import { useTranslation } from "react-i18next";
 
 interface MatchingInputProps {
   sectionType: IeltsQuestionType;
@@ -23,6 +24,7 @@ export function MatchingInput({
   onChange,
   readOnly,
 }: MatchingInputProps) {
+  const { t } = useTranslation("submissions");
   const sourceItems = options?.sourceItems ?? [];
   const targetItems = options?.targetItems ?? [];
   const matches = (value as { matches?: Record<string, string> })?.matches ?? {};
@@ -34,7 +36,7 @@ export function MatchingInput({
   if (sourceItems.length === 0) {
     return (
       <div className="text-sm text-muted-foreground italic">
-        {questionIndex + 1}. No matching items configured.
+        {questionIndex + 1}. {t("matching.noItems")}
       </div>
     );
   }
@@ -53,7 +55,7 @@ export function MatchingInput({
               disabled={readOnly}
             >
               <SelectTrigger className="min-h-[44px] text-sm w-[200px]">
-                <SelectValue placeholder="Select..." />
+                <SelectValue placeholder={t("matching.selectPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {targetItems.map((target, ti) => (

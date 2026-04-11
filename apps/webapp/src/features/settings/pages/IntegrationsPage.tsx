@@ -1,12 +1,14 @@
 import { Plug } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function IntegrationsPage() {
+  const { t } = useTranslation("settings");
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Integrations</h2>
+        <h2 className="text-lg font-semibold">{t("integrations.heading")}</h2>
         <p className="text-muted-foreground">
-          Connect external services to your center.
+          {t("integrations.description")}
         </p>
       </div>
 
@@ -14,10 +16,9 @@ export function IntegrationsPage() {
         <div className="rounded-full bg-muted p-4 mb-4">
           <Plug className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="text-base font-semibold">Coming Soon</h3>
+        <h3 className="text-base font-semibold">{t("integrations.comingSoonTitle")}</h3>
         <p className="text-muted-foreground max-w-sm mt-2">
-          Google Calendar, email notifications, and billing integrations will be
-          available in future updates.
+          {t("integrations.comingSoonDescription")}
         </p>
       </div>
     </div>

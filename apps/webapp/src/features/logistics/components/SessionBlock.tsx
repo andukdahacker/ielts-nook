@@ -1,5 +1,6 @@
 import type { ClassSession } from "@workspace/types";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 import { cn } from "@workspace/ui/lib/utils";
 import { AlertTriangle } from "lucide-react";
 
@@ -20,13 +21,14 @@ export function SessionBlock({
   hasConflicts,
   onConflictClick,
 }: SessionBlockProps) {
+  const { t } = useTranslation("logistics");
   const startTime = new Date(session.startTime);
   const endTime = new Date(session.endTime);
 
   // Get course color from nested class->course relation
   const courseColor = session.class?.course?.color ?? "#2563EB";
-  const courseName = session.class?.course?.name ?? "Course";
-  const className_ = session.class?.name ?? "Class";
+  const courseName = session.class?.course?.name ?? t("sessionBlock.courseFallback");
+  const className_ = session.class?.name ?? t("sessionBlock.classFallback");
 
   return (
     <div
@@ -63,7 +65,7 @@ export function SessionBlock({
             onConflictClick?.();
           }}
           className="absolute -top-1 -right-1 p-0.5 bg-amber-100 rounded-full hover:bg-amber-200 transition-colors"
-          aria-label="View scheduling conflicts"
+          aria-label={t("sessionBlock.viewConflictsAria")}
         >
           <AlertTriangle className="size-3 text-amber-600" />
         </button>

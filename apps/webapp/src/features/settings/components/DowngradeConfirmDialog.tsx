@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@workspace/ui/components/alert-dialog";
+import { useTranslation } from "react-i18next";
 
 interface DowngradeConfirmDialogProps {
   open: boolean;
@@ -26,28 +27,20 @@ export function DowngradeConfirmDialog({
   maxStudents,
   enrolledStudents,
 }: DowngradeConfirmDialogProps) {
+  const { t } = useTranslation("settings");
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Downgrade to {tierName}?</AlertDialogTitle>
+          <AlertDialogTitle>{t("billing.downgradeTitle", { tierName })}</AlertDialogTitle>
           <AlertDialogDescription>
-            You have{" "}
-            <span className="font-medium text-foreground">
-              {enrolledStudents} students
-            </span>{" "}
-            enrolled. The {tierName} plan supports up to{" "}
-            <span className="font-medium text-foreground">
-              {maxStudents} students
-            </span>
-            . Excess students may be affected when the downgrade takes effect at
-            the next billing cycle.
+            {t("billing.downgradeDescription", { enrolledStudents, tierName, maxStudents })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("button.cancel", { ns: "common" })}</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm}>
-            Continue to Portal
+            {t("billing.continueToPortal")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

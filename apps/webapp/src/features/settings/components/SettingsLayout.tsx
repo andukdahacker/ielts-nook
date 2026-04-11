@@ -1,11 +1,13 @@
 import { Badge } from "@workspace/ui/components/badge";
 import { useNavigate, useLocation, Outlet } from "react-router";
+import { useTranslation } from "react-i18next";
 import { settingsTabs } from "../config/settings-nav";
 import { useAuth } from "@/features/auth/auth-context";
 
 export function SettingsLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation("settings");
   const { user } = useAuth();
 
   const visibleTabs = settingsTabs.filter(
@@ -29,16 +31,16 @@ export function SettingsLayout() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("layout.heading")}</h1>
         <p className="text-muted-foreground">
-          Manage your center settings and preferences.
+          {t("layout.description")}
         </p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* Desktop: Vertical tabs */}
         <aside className="hidden md:block w-48 shrink-0">
-          <nav className="flex flex-col gap-1" aria-label="Settings navigation">
+          <nav className="flex flex-col gap-1" aria-label={t("layout.navAria")}>
             {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
@@ -68,7 +70,7 @@ export function SettingsLayout() {
         <div className="md:hidden overflow-x-auto">
           <nav
             className="flex gap-1 pb-2 min-w-max"
-            aria-label="Settings navigation"
+            aria-label={t("layout.navAria")}
           >
             {visibleTabs.map((tab) => (
               <button

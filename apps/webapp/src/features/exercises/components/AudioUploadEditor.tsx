@@ -4,6 +4,7 @@ import { Label } from "@workspace/ui/components/label";
 import { Upload, Trash2, FileAudio } from "lucide-react";
 import { toast } from "sonner";
 import { useAudioUpload, useAudioDelete } from "../hooks/use-audio-upload";
+import { useTranslation } from "react-i18next";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 const ACCEPTED_TYPES = ".mp3,.wav,.m4a";
@@ -35,6 +36,7 @@ export function AudioUploadEditor({
   onAudioChange,
   onDurationExtracted,
 }: AudioUploadEditorProps) {
+  const { t } = useTranslation("exercises");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useAudioUpload();
   const deleteMutation = useAudioDelete();
@@ -42,12 +44,12 @@ export function AudioUploadEditor({
   const handleFileSelect = useCallback(
     async (file: File) => {
       if (file.size > MAX_FILE_SIZE) {
-        toast.error("File too large. Maximum size is 100MB.");
+        toast.error(t("audioUpload.errorSize"));
         return;
       }
 
       if (!ACCEPTED_MIMETYPES.includes(file.type)) {
-        toast.error("Invalid file type. Only MP3, WAV, and M4A are allowed.");
+        toast.error(t("audioUpload.errorType"));
         return;
       }
 
@@ -63,14 +65,14 @@ export function AudioUploadEditor({
         });
 
         onAudioChange();
-        toast.success("Audio uploaded successfully");
+        toast.success(t("audioUpload.success"));
       } catch (error) {
         toast.error(
-          error instanceof Error ? error.message : "Failed to upload audio",
+          error instanceof Error ? error.message : t("audioUpload.errorGeneral"),
         );
       }
     },
-    [exerciseId, uploadMutation, onAudioChange, onDurationExtracted],
+    [exerciseId, uploadMutation, onAudioChange, onDurationExtracted, t],
   );
 
   const handleInputChange = useCallback(
@@ -104,20 +106,20 @@ export function AudioUploadEditor({
     try {
       await deleteMutation.mutateAsync({ exerciseId });
       onAudioChange();
-      toast.success("Audio removed");
+      toast.success(t("audioUpload.removeSuccess"));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to remove audio",
+        error instanceof Error ? error.message : t("audioUpload.removeError"),
       );
     }
-  }, [exerciseId, deleteMutation, onAudioChange]);
+  }, [exerciseId, deleteMutation, onAudioChange, t]);
 
   const isUploading = uploadMutation.isPending;
   const isDeleting = deleteMutation.isPending;
 
   return (
     <div className="space-y-2">
-      <Label>Audio File</Label>
+      <Label>{t("audioUpload.label")}</Label>
 
       {audioUrl ? (
         <div className="space-y-3">
@@ -135,7 +137,7 @@ export function AudioUploadEditor({
 
           {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
           <audio controls src={audioUrl} className="w-full" preload="metadata">
-            Your browser does not support the audio element.
+            {t("audioUpload.browserNoSupport")}
           </audio>
 
           <Button
@@ -147,7 +149,7 @@ export function AudioUploadEditor({
             className="text-destructive"
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            {isDeleting ? "Removing..." : "Remove Audio"}
+            {isDeleting ? t("audioUpload.removing") : t("audioUpload.remove")}
           </Button>
         </div>
       ) : (
@@ -167,16 +169,16 @@ export function AudioUploadEditor({
           {isUploading ? (
             <>
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground/25 border-t-primary" />
-              <p className="text-sm text-muted-foreground">Uploading...</p>
+              <p className="text-sm text-muted-foreground">{t("audioUpload.uploading")}</p>
             </>
           ) : (
             <>
               <Upload className="h-8 w-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
-                Drag audio file here or click to upload
+                {t("audioUpload.dragDrop")}
               </p>
               <p className="text-xs text-muted-foreground">
-                MP3, WAV, M4A — Max 100MB
+                {t("audioUpload.formats")}
               </p>
             </>
           )}

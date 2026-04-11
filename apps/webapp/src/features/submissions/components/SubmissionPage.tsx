@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import { onlineManager } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -42,6 +43,7 @@ interface FlatQuestion {
 }
 
 export function SubmissionPage() {
+  const { t } = useTranslation("submissions");
   const { centerId, assignmentId } = useParams();
   const navigate = useNavigate();
 
@@ -204,7 +206,7 @@ export function SubmissionPage() {
         }
       },
       onError: (err) => {
-        toast.error(err.message || "Failed to start submission");
+        toast.error(err.message || t("toast.error"));
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -299,10 +301,10 @@ export function SubmissionPage() {
       setIsSubmitPending(false);
       setShowConfirm(false);
       if (isRecoverySubmitRef.current) {
-        toast.success("You're back online! Submission received.");
+        toast.success(t("toast.reconnected"));
         isRecoverySubmitRef.current = false;
       } else {
-        toast.success("Submission received.");
+        toast.success(t("toast.success"));
       }
     } catch (err) {
       // Distinguish network errors from server errors
@@ -311,21 +313,19 @@ export function SubmissionPage() {
         setIsSubmitPending(true);
         if (centerId && assignmentId) {
           persistSubmitPending(centerId, assignmentId).catch(() => {
-            toast.warning("Unable to save offline state — avoid closing this tab.");
+            toast.warning(t("toast.offlineError"));
           });
         }
-        toast.warning(
-          "You're offline. Your answers are saved locally and will submit automatically when you reconnect.",
-        );
+        toast.warning(t("toast.offline"));
       } else {
         // Actual server error (not network)
         setIsSubmitPending(false);
-        toast.error((err as Error).message || "Submission failed. Please try again.");
+        toast.error((err as Error).message || t("toast.submitFailed"));
       }
     } finally {
       setIsSubmitting(false);
     }
-  }, [submissionId, answers, saveAnswers, uploadPhoto, submitSubmission, assignmentId, centerId]);
+  }, [submissionId, answers, saveAnswers, uploadPhoto, submitSubmission, assignmentId, centerId, t]);
 
   // Auto-retry submit on reconnect while isSubmitPending is set
   useEffect(() => {
@@ -367,13 +367,13 @@ export function SubmissionPage() {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="text-center">
-          <h2 className="text-xl font-semibold">Something went wrong</h2>
-          <p className="text-muted-foreground mt-1">Could not load the assignment.</p>
+          <h2 className="text-xl font-semibold">{t("errorPage.heading")}</h2>
+          <p className="text-muted-foreground mt-1">{t("errorPage.message")}</p>
           <button
             onClick={() => navigate(`/${centerId}/dashboard`)}
             className="mt-4 text-primary underline text-sm"
           >
-            Back to Dashboard
+            {t("errorPage.button")}
           </button>
         </div>
       </div>
@@ -386,7 +386,7 @@ export function SubmissionPage() {
 
   const assignment = assignmentData.data as Record<string, unknown>;
   const exercise = assignment?.exercise as Record<string, unknown> | undefined;
-  const exerciseTitle = (exercise?.title as string) ?? "Assignment";
+  const exerciseTitle = (exercise?.title as string) ?? t("page.title");
   const timeLimit = (exercise?.timeLimit as number) ?? null;
   const autoSubmitOnExpiry = (exercise?.autoSubmitOnExpiry as boolean) ?? true;
   const passageContent = (exercise?.passageContent as string) ?? null;
@@ -399,7 +399,7 @@ export function SubmissionPage() {
   if (!currentQuestion) {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
-        <p className="text-muted-foreground">No questions found in this assignment.</p>
+        <p className="text-muted-foreground">{t("noQuestions")}</p>
       </div>
     );
   }

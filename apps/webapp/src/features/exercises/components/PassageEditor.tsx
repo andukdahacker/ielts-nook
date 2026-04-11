@@ -1,5 +1,6 @@
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Label } from "@workspace/ui/components/label";
+import { useTranslation } from "react-i18next";
 
 interface PassageEditorProps {
   value: string;
@@ -8,7 +9,8 @@ interface PassageEditorProps {
   placeholder?: string;
 }
 
-export function PassageEditor({ value, onChange, label = "Reading Passage", placeholder }: PassageEditorProps) {
+export function PassageEditor({ value, onChange, label, placeholder }: PassageEditorProps) {
+  const { t } = useTranslation("exercises");
   // Split into paragraphs for lettering display
   const paragraphs = value
     .split(/\n\n+/)
@@ -17,24 +19,22 @@ export function PassageEditor({ value, onChange, label = "Reading Passage", plac
   return (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="passage-editor">{label}</Label>
+        <Label htmlFor="passage-editor">{label ?? t("passageEditor.label")}</Label>
         <p className="text-sm text-muted-foreground">
-          Separate paragraphs with blank lines. Paragraph labels (A, B, C...)
-          will be shown automatically.
+          {t("passageEditor.description")}
         </p>
       </div>
       <Textarea
         id="passage-editor"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder ?? "Enter the reading passage here. Use blank lines to separate paragraphs..."}
+        placeholder={placeholder ?? t("passageEditor.placeholder")}
         className="min-h-[300px] font-serif"
       />
       {paragraphs.length > 0 && (
         <div className="rounded-md border p-4 space-y-3">
           <p className="text-sm font-medium text-muted-foreground">
-            Preview ({paragraphs.length} paragraph
-            {paragraphs.length !== 1 ? "s" : ""})
+            {t("passageEditor.preview")} ({paragraphs.length} {paragraphs.length !== 1 ? t("passageEditor.paragraphPlural") : t("passageEditor.paragraphSingular")})
           </p>
           {paragraphs.map((para, idx) => (
             <div key={idx} className="flex gap-3">

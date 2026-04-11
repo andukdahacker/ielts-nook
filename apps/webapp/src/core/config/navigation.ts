@@ -27,7 +27,7 @@ export const getNavigationConfig = (centerId: string): NavItemConfig[] => {
 
   return [
     {
-      title: "Dashboard",
+      title: "nav.dashboard",
       url: dashboardPath,
       icon: LayoutDashboard,
       allowedRoles: ["OWNER", "ADMIN", "TEACHER", "STUDENT"],
@@ -35,7 +35,7 @@ export const getNavigationConfig = (centerId: string): NavItemConfig[] => {
       mobileVisible: true,
     },
     {
-      title: "Schedule",
+      title: "nav.schedule",
       url: `${dashboardPath}/schedule`,
       icon: Calendar,
       allowedRoles: ["OWNER", "ADMIN", "TEACHER", "STUDENT"],
@@ -43,7 +43,7 @@ export const getNavigationConfig = (centerId: string): NavItemConfig[] => {
       mobileVisible: true,
     },
     {
-      title: "Classes",
+      title: "nav.classes",
       url: `${dashboardPath}/classes`,
       icon: School,
       allowedRoles: ["OWNER", "ADMIN", "TEACHER"],
@@ -51,7 +51,7 @@ export const getNavigationConfig = (centerId: string): NavItemConfig[] => {
       mobileVisible: true,
     },
     {
-      title: "Exercises",
+      title: "nav.exercises",
       url: `${dashboardPath}/exercises`,
       icon: Library,
       allowedRoles: ["OWNER", "ADMIN", "TEACHER"],
@@ -59,7 +59,7 @@ export const getNavigationConfig = (centerId: string): NavItemConfig[] => {
       mobileVisible: true,
     },
     {
-      title: "Assignments",
+      title: "nav.assignments",
       url: `${dashboardPath}/assignments`,
       icon: FileCheck,
       allowedRoles: ["OWNER", "ADMIN", "TEACHER"],
@@ -67,7 +67,7 @@ export const getNavigationConfig = (centerId: string): NavItemConfig[] => {
       mobileVisible: true,
     },
     {
-      title: "Mock Tests",
+      title: "nav.mockTests",
       url: `${dashboardPath}/mock-tests`,
       icon: ClipboardList,
       allowedRoles: ["OWNER", "ADMIN", "TEACHER"],
@@ -75,7 +75,7 @@ export const getNavigationConfig = (centerId: string): NavItemConfig[] => {
       mobileVisible: false,
     },
     {
-      title: "Grading",
+      title: "nav.grading",
       url: `${dashboardPath}/grading`,
       icon: GraduationCap,
       allowedRoles: ["OWNER", "ADMIN", "TEACHER"],
@@ -83,7 +83,7 @@ export const getNavigationConfig = (centerId: string): NavItemConfig[] => {
       mobileVisible: false,
     },
     {
-      title: "Students",
+      title: "nav.students",
       url: `${dashboardPath}/students`,
       icon: Users,
       allowedRoles: ["OWNER", "ADMIN", "TEACHER"],
@@ -91,7 +91,7 @@ export const getNavigationConfig = (centerId: string): NavItemConfig[] => {
       mobileVisible: false,
     },
     {
-      title: "Settings",
+      title: "nav.settings",
       url: `${dashboardPath}/settings`,
       icon: Settings,
       allowedRoles: ["OWNER", "ADMIN"],
@@ -99,7 +99,7 @@ export const getNavigationConfig = (centerId: string): NavItemConfig[] => {
       mobileVisible: false,
     },
     {
-      title: "My Profile",
+      title: "nav.profile",
       url: `${dashboardPath}/profile`,
       icon: UserCircle,
       allowedRoles: ["OWNER", "ADMIN", "TEACHER", "STUDENT"],

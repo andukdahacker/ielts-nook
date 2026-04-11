@@ -13,6 +13,7 @@ import { Label } from "@workspace/ui/components/label";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useAssignments } from "../hooks/use-assignments";
 
@@ -27,6 +28,7 @@ export function EditAssignmentDialog({
   onOpenChange,
   assignment,
 }: EditAssignmentDialogProps) {
+  const { t } = useTranslation("assignments");
   const { user } = useAuth();
   const centerId = user?.centerId;
   const { updateAssignment, isUpdating } = useAssignments(centerId ?? undefined);
@@ -49,7 +51,7 @@ export function EditAssignmentDialog({
 
   const handleSubmit = async () => {
     if (timeLimit && (isNaN(Number(timeLimit)) || Number(timeLimit) <= 0)) {
-      toast.error("Time limit must be a positive number");
+      toast.error(t("edit.toastPositiveTime"));
       return;
     }
 
@@ -62,10 +64,10 @@ export function EditAssignmentDialog({
           instructions: instructions || null,
         },
       });
-      toast.success("Assignment updated");
+      toast.success(t("edit.toastSuccess"));
       onOpenChange(false);
     } catch {
-      toast.error("Failed to update assignment");
+      toast.error(t("edit.toastError"));
     }
   };
 
@@ -73,19 +75,19 @@ export function EditAssignmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>Edit Assignment</DialogTitle>
+          <DialogTitle>{t("edit.title")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-1">
             <p className="text-sm font-medium">{assignment?.exercise?.title}</p>
             <p className="text-xs text-muted-foreground">
-              {assignment?.class?.name ?? "Individual assignment"}
+              {assignment?.class?.name ?? t("edit.individual")}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label>Due Date</Label>
+            <Label>{t("edit.dueDateLabel")}</Label>
             <Input
               type="datetime-local"
               value={dueDate}
@@ -94,20 +96,20 @@ export function EditAssignmentDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Time Limit (minutes)</Label>
+            <Label>{t("edit.timeLimitLabel")}</Label>
             <Input
               type="number"
               min="1"
-              placeholder="e.g., 60"
+              placeholder={t("edit.timeLimitPlaceholder")}
               value={timeLimit}
               onChange={(e) => setTimeLimit(e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Instructions</Label>
+            <Label>{t("edit.instructionsLabel")}</Label>
             <Textarea
-              placeholder="Additional instructions..."
+              placeholder={t("edit.instructionsPlaceholder")}
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               maxLength={2000}
@@ -118,11 +120,11 @@ export function EditAssignmentDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("button.cancel", { ns: "common" })}
           </Button>
           <Button onClick={handleSubmit} disabled={isUpdating}>
             {isUpdating && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Save
+            {t("button.save", { ns: "common" })}
           </Button>
         </DialogFooter>
       </DialogContent>

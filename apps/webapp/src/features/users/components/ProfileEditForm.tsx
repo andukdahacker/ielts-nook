@@ -1,6 +1,8 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Form,
   FormControl,
@@ -28,16 +30,16 @@ import {
 } from "@workspace/ui/components/tooltip";
 import type { AuthUser } from "@workspace/types";
 
-const profileFormSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100, "Name must be at most 100 characters"),
-  phoneNumber: z.string().max(20, "Phone number must be at most 20 characters").optional().or(z.literal("")),
-  preferredLanguage: z.enum(["en", "vi"]),
-  emailScheduleNotifications: z.boolean(),
-  emailEngagementNotifications: z.boolean(),
-  emailNotificationsPaused: z.boolean(),
-});
-
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
+// Form value shape. Validation rules + i18n error messages are built per-render
+// inside the component (so messages are translated via t()).
+type ProfileFormValues = {
+  name: string;
+  phoneNumber?: string;
+  preferredLanguage: "en" | "vi";
+  emailScheduleNotifications: boolean;
+  emailEngagementNotifications: boolean;
+  emailNotificationsPaused: boolean;
+};
 
 interface ProfileEditFormProps {
   user: AuthUser;
@@ -52,8 +54,30 @@ export function ProfileEditForm({
   onCancel,
   isSubmitting,
 }: ProfileEditFormProps) {
+  const { t } = useTranslation("users");
+  // Build a localized schema each render so error messages come back already
+  // translated. This avoids the need to wrap the FormMessage component.
+  const localizedSchema = useMemo(
+    () =>
+      z.object({
+        name: z
+          .string()
+          .min(1, t("profileEdit.errorNameRequired"))
+          .max(100, t("profileEdit.errorNameMax")),
+        phoneNumber: z
+          .string()
+          .max(20, t("profileEdit.errorPhoneMax"))
+          .optional()
+          .or(z.literal("")),
+        preferredLanguage: z.enum(["en", "vi"]),
+        emailScheduleNotifications: z.boolean(),
+        emailEngagementNotifications: z.boolean(),
+        emailNotificationsPaused: z.boolean(),
+      }),
+    [t],
+  );
   const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
+    resolver: zodResolver(localizedSchema),
     defaultValues: {
       name: user.name || "",
       phoneNumber: user.phoneNumber || "",
@@ -77,26 +101,27 @@ export function ProfileEditForm({
         <FormField
           control={form.control}
           name="name"
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <FormItem>
-              <FormLabel>Display Name</FormLabel>
+              <FormLabel>{t("profileEdit.nameLabel")}</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your name" {...field} />
+                <Input placeholder={t("profileEdit.namePlaceholder")} {...field} />
               </FormControl>
               <FormMessage />
+              {void fieldState}
             </FormItem>
           )}
         />
 
         <div>
           <div className="flex items-center gap-2">
-            <FormLabel className="text-sm font-medium">Email</FormLabel>
+            <FormLabel className="text-sm font-medium">{t("profileEdit.emailLabel")}</FormLabel>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Info className="h-4 w-4 text-muted-foreground cursor-help" />
               </TooltipTrigger>
               <TooltipContent>
-                <p>Email cannot be changed. Contact an admin if needed.</p>
+                <p>{t("profileEdit.emailTooltip")}</p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -109,13 +134,13 @@ export function ProfileEditForm({
 
         <div>
           <div className="flex items-center gap-2">
-            <FormLabel className="text-sm font-medium">Role</FormLabel>
+            <FormLabel className="text-sm font-medium">{t("profileEdit.roleLabel")}</FormLabel>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Info className="h-4 w-4 text-muted-foreground cursor-help" />
               </TooltipTrigger>
               <TooltipContent>
-                <p>Role can only be changed by the center owner.</p>
+                <p>{t("profileEdit.roleTooltip")}</p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -129,20 +154,21 @@ export function ProfileEditForm({
         <FormField
           control={form.control}
           name="phoneNumber"
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <FormItem>
-              <FormLabel>Phone Number</FormLabel>
+              <FormLabel>{t("profileEdit.phoneLabel")}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="+84 123 456 789"
+                  placeholder={t("profileEdit.phonePlaceholder")}
                   {...field}
                   value={field.value || ""}
                 />
               </FormControl>
               <FormDescription>
-                Optional. Vietnamese format (+84 or 0xxx) recommended.
+                {t("profileEdit.phoneDescription")}
               </FormDescription>
               <FormMessage />
+              {void fieldState}
             </FormItem>
           )}
         />
@@ -152,16 +178,18 @@ export function ProfileEditForm({
           name="preferredLanguage"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Preferred Language</FormLabel>
+              <FormLabel>{t("profileEdit.languageLabel")}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a language" />
+                    <SelectValue placeholder={t("profileEdit.languagePlaceholder")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
+                  {/* Native names — intentionally not translated so users can
+                      always recognize their own language. */}
                   <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="vi">Vietnamese</SelectItem>
+                  <SelectItem value="vi">Tiếng Việt</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -172,7 +200,7 @@ export function ProfileEditForm({
         {/* Notification Preferences Section */}
         <div className="space-y-3">
           <h3 className="text-sm font-medium leading-none">
-            Notification Preferences
+            {t("profileEdit.notificationsTitle")}
           </h3>
 
           <FormField
@@ -188,11 +216,10 @@ export function ProfileEditForm({
               >
                 <div className="space-y-0.5">
                   <FormLabel className="text-base">
-                    Pause all email notifications
+                    {t("profileEdit.notificationsPauseLabel")}
                   </FormLabel>
                   <FormDescription>
-                    Temporarily stop all email notifications. Your category
-                    preferences are preserved.
+                    {t("profileEdit.notificationsPauseDescription")}
                   </FormDescription>
                 </div>
                 <FormControl>
@@ -217,11 +244,10 @@ export function ProfileEditForm({
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">
-                      Schedule changes
+                      {t("profileEdit.notificationsScheduleLabel")}
                     </FormLabel>
                     <FormDescription>
-                      Email me when class schedules change or sessions are
-                      cancelled
+                      {t("profileEdit.notificationsScheduleDescription")}
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -235,6 +261,7 @@ export function ProfileEditForm({
               )}
             />
 
+            {/* TODO: Re-enable when achievement & streak features are activated
             <FormField
               control={form.control}
               name="emailEngagementNotifications"
@@ -242,11 +269,10 @@ export function ProfileEditForm({
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 mt-3">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">
-                      Achievements & streaks
+                      {t("profileEdit.notificationsEngagementLabel")}
                     </FormLabel>
                     <FormDescription>
-                      Email me when I hit a 7-day streak or achieve a personal
-                      best
+                      {t("profileEdit.notificationsEngagementDescription")}
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -259,16 +285,17 @@ export function ProfileEditForm({
                 </FormItem>
               )}
             />
+            */}
           </div>
         </div>
 
         <div className="flex gap-3 pt-4">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
+            {t("profileEdit.saveChanges")}
           </Button>
           <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+            {t("profileEdit.cancel")}
           </Button>
         </div>
       </form>

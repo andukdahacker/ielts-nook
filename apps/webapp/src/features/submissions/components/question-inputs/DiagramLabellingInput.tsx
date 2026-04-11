@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
+import { useTranslation } from "react-i18next";
 
 interface DiagramLabellingInputProps {
   questionIndex: number;
@@ -23,10 +24,11 @@ export function DiagramLabellingInput({
   onChange,
   readOnly,
 }: DiagramLabellingInputProps) {
+  const { t } = useTranslation("submissions");
   if (!options) {
     return (
       <div className="text-sm text-muted-foreground italic">
-        {questionIndex + 1}. No diagram configured.
+        {questionIndex + 1}. {t("diagramLabelling.noConfig")}
       </div>
     );
   }
@@ -47,12 +49,12 @@ export function DiagramLabellingInput({
         <div className="max-w-full">
           <img
             src={diagramUrl}
-            alt="Diagram"
+            alt={t("diagramLabelling.alt")}
             className="max-w-full h-auto rounded border"
           />
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground italic">No diagram uploaded.</p>
+        <p className="text-sm text-muted-foreground italic">{t("diagramLabelling.noDiagram")}</p>
       )}
 
       <div className="space-y-2">
@@ -67,7 +69,7 @@ export function DiagramLabellingInput({
                 disabled={readOnly}
               >
                 <SelectTrigger className="min-h-[44px] text-sm w-[180px]">
-                  <SelectValue placeholder="Select label..." />
+                  <SelectValue placeholder={t("diagramLabelling.selectLabel")} />
                 </SelectTrigger>
                 <SelectContent>
                   {wordBank!.map((word, wi) => (

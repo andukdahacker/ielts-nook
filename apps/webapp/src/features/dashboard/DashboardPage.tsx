@@ -1,4 +1,5 @@
 import { Suspense, lazy } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/features/auth/auth-context";
 import { DashboardShell } from "@/core/components/layout/DashboardShell";
 import { Skeleton } from "@workspace/ui/components/skeleton";
@@ -10,6 +11,7 @@ const TeacherDashboard = lazy(() => import("./components/TeacherDashboard"));
 const StudentDashboard = lazy(() => import("./components/StudentDashboard"));
 
 export default function DashboardPage() {
+  const { t } = useTranslation("dashboard");
   const { user, loading } = useAuth();
   const outlet = useOutlet();
 
@@ -48,9 +50,9 @@ export default function DashboardPage() {
         {user && !["OWNER", "ADMIN", "TEACHER", "STUDENT"].includes(user.role) && (
           <div className="flex h-[50vh] items-center justify-center p-4">
             <div className="text-center">
-              <h2 className="text-xl font-semibold">Unknown Role</h2>
+              <h2 className="text-xl font-semibold">{t("page.unknownRoleTitle")}</h2>
               <p className="text-muted-foreground">
-                Please contact support if you believe this is an error.
+                {t("page.unknownRoleMessage")}
               </p>
             </div>
           </div>

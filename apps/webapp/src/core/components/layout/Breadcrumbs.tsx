@@ -8,6 +8,7 @@ import {
 } from "@workspace/ui/components/breadcrumb";
 import { useLocation, Link } from "react-router";
 import { Fragment } from "react";
+import { useTranslation } from "react-i18next";
 import { breadcrumbConfig } from "@/core/config/breadcrumb-config";
 import { useBreadcrumbValues } from "@/core/context/breadcrumb-context";
 
@@ -25,6 +26,7 @@ interface BreadcrumbsProps {
  * Returns null if there are no breadcrumbs to show (i.e., on the dashboard root).
  */
 export function Breadcrumbs({ customLabels = {} }: BreadcrumbsProps) {
+  const { t } = useTranslation();
   const location = useLocation();
   const { labels: contextLabels, nonClickableSegments } = useBreadcrumbValues();
   const pathSegments = location.pathname.split("/").filter(Boolean);
@@ -33,11 +35,12 @@ export function Breadcrumbs({ customLabels = {} }: BreadcrumbsProps) {
   const breadcrumbItems = pathSegments.map((segment, index) => {
     const path = "/" + pathSegments.slice(0, index + 1).join("/");
     const isLast = index === pathSegments.length - 1;
-    // Context labels take precedence, then custom labels, then config, then format
+    // Context labels take precedence, then custom labels, then config (translated), then format
+    const configKey = breadcrumbConfig[segment];
     const label =
       contextLabels[segment] ??
       customLabels[segment] ??
-      breadcrumbConfig[segment] ??
+      (configKey ? t(configKey) : undefined) ??
       formatSegment(segment);
     const isNonClickable = nonClickableSegments.has(segment);
 

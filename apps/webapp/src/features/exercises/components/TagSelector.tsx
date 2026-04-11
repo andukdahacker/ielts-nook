@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { IeltsQuestionType } from "@workspace/types";
 import { Badge } from "@workspace/ui/components/badge";
 import { Label } from "@workspace/ui/components/label";
@@ -74,6 +75,7 @@ export function TagSelector({
   onTagsChange,
   disabled,
 }: TagSelectorProps) {
+  const { t } = useTranslation("exercises");
   const { tags, createTag, isCreating } = useTags(centerId);
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
   const [tagSearch, setTagSearch] = useState("");
@@ -113,20 +115,20 @@ export function TagSelector({
 
   return (
     <div className="space-y-4">
-      <Label className="text-base font-semibold">Tags & Organization</Label>
+      <Label className="text-base font-semibold">{t("tagSelector.title")}</Label>
 
       {/* Band Level */}
       <div className="space-y-1.5">
-        <Label className="text-sm">Target Band Level</Label>
+        <Label className="text-sm">{t("tagSelector.bandLabel")}</Label>
         <Select
           value={bandLevel ?? "NONE"}
           onValueChange={(v) => onBandLevelChange(v === "NONE" ? null : v)}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select band level" />
+            <SelectValue placeholder={t("tagSelector.bandPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="NONE">None</SelectItem>
+            <SelectItem value="NONE">{t("tagSelector.bandNone")}</SelectItem>
             <SelectItem value="4-5">4-5</SelectItem>
             <SelectItem value="5-6">5-6</SelectItem>
             <SelectItem value="6-7">6-7</SelectItem>
@@ -138,7 +140,7 @@ export function TagSelector({
 
       {/* Topic Tags */}
       <div className="space-y-1.5">
-        <Label className="text-sm">Topic Tags</Label>
+        <Label className="text-sm">{t("tagSelector.topicLabel")}</Label>
         <Popover open={disabled ? false : tagPopoverOpen} onOpenChange={disabled ? undefined : setTagPopoverOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -148,15 +150,15 @@ export function TagSelector({
               className="w-[280px] justify-between"
             >
               {selectedTagIds.length > 0
-                ? `${selectedTagIds.length} tag${selectedTagIds.length > 1 ? "s" : ""} selected`
-                : "Select tags..."}
+                ? `${selectedTagIds.length} ${selectedTagIds.length > 1 ? t("tagSelector.topicsCountPlural") : t("tagSelector.topicsCountSingular")}`
+                : t("tagSelector.topicPlaceholder")}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[280px] p-0">
             <Command>
               <CommandInput
-                placeholder="Search or create tags..."
+                placeholder={t("tagSelector.topicSearch")}
                 value={tagSearch}
                 onValueChange={setTagSearch}
               />
@@ -172,10 +174,10 @@ export function TagSelector({
                       {isCreating ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : null}
-                      Create &ldquo;{tagSearch.trim()}&rdquo;
+                      {t("tagSelector.createNew")} &ldquo;{tagSearch.trim()}&rdquo;
                     </button>
                   )}
-                  {!noExactMatch && "No tags found."}
+                  {!noExactMatch && t("tagSelector.noTags")}
                 </CommandEmpty>
                 {tags.map((tag) => (
                   <CommandItem
@@ -203,7 +205,7 @@ export function TagSelector({
                     {isCreating ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : null}
-                    Create &ldquo;{tagSearch.trim()}&rdquo;
+                    {t("tagSelector.createNew")} &ldquo;{tagSearch.trim()}&rdquo;
                   </CommandItem>
                 )}
               </CommandList>
@@ -234,7 +236,7 @@ export function TagSelector({
       {uniqueQuestionTypes.length > 0 && (
         <div className="space-y-1.5">
           <Label className="text-sm text-muted-foreground">
-            Question Types
+            {t("tagSelector.questionTypes")}
           </Label>
           <div className="flex flex-wrap gap-1">
             {uniqueQuestionTypes.map((qt) => (

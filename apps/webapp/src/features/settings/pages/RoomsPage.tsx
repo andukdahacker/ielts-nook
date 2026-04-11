@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { Plus, Pencil, Trash2, Check, X, Loader2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-context";
 import { useRooms } from "@/features/logistics/hooks/use-rooms";
@@ -18,6 +19,7 @@ import {
 } from "@workspace/ui/components/alert-dialog";
 
 export function RoomsPage() {
+  const { t } = useTranslation("settings");
   const { user } = useAuth();
   const { rooms, isLoading, createRoom, isCreating, updateRoom, deleteRoom } =
     useRooms(user?.centerId);
@@ -33,9 +35,9 @@ export function RoomsPage() {
     try {
       await createRoom({ name: trimmed });
       setNewRoomName("");
-      toast.success("Room created");
+      toast.success(t("rooms.toastCreated"));
     } catch {
-      toast.error("Failed to create room. It may already exist.");
+      toast.error(t("rooms.toastCreateFailed"));
     }
   };
 
@@ -46,18 +48,18 @@ export function RoomsPage() {
     try {
       await updateRoom({ id, input: { name: trimmed } });
       setEditingId(null);
-      toast.success("Room updated");
+      toast.success(t("rooms.toastUpdated"));
     } catch {
-      toast.error("Failed to update room. Name may already exist.");
+      toast.error(t("rooms.toastUpdateFailed"));
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteRoom(id);
-      toast.success("Room deleted");
+      toast.success(t("rooms.toastDeleted"));
     } catch {
-      toast.error("Failed to delete room");
+      toast.error(t("rooms.toastDeleteFailed"));
     }
   };
 
@@ -74,17 +76,16 @@ export function RoomsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Rooms</h2>
+        <h2 className="text-lg font-semibold">{t("rooms.heading")}</h2>
         <p className="text-muted-foreground">
-          Manage room names for scheduling. These appear in the room dropdown
-          when creating or editing sessions.
+          {t("rooms.description")}
         </p>
       </div>
 
       {/* Add Room */}
       <div className="flex gap-2">
         <Input
-          placeholder="New room name (e.g., Room 101)"
+          placeholder={t("rooms.newRoomPlaceholder")}
           value={newRoomName}
           onChange={(e) => setNewRoomName(e.target.value)}
           onKeyDown={(e) => {
@@ -102,7 +103,7 @@ export function RoomsPage() {
           ) : (
             <Plus className="mr-2 h-4 w-4" />
           )}
-          Add Room
+          {t("rooms.addButton")}
         </Button>
       </div>
 
@@ -113,7 +114,7 @@ export function RoomsPage() {
         </div>
       ) : rooms.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground border rounded-lg">
-          No rooms defined yet. Add a room above.
+          {t("rooms.empty")}
         </div>
       ) : (
         <div className="border rounded-lg divide-y">
@@ -170,11 +171,9 @@ export function RoomsPage() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Room</AlertDialogTitle>
+                          <AlertDialogTitle>{t("rooms.deleteTitle")}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to delete &quot;{room.name}&quot;?
-                            Existing sessions using this room will keep their
-                            room name but it won&apos;t appear in the dropdown.
+                            {t("rooms.deleteDescription", { roomName: room.name })}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

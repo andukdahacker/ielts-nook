@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
 import {
   useGradingQueue,
@@ -14,6 +15,7 @@ interface QueueListModeProps {
 }
 
 export function QueueListMode({ centerId }: QueueListModeProps) {
+  const { t } = useTranslation("grading");
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const togglePriority = useTogglePriority();
@@ -107,7 +109,7 @@ export function QueueListMode({ centerId }: QueueListModeProps) {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b px-4 py-3">
-        <h1 className="text-lg font-semibold">Grading Queue</h1>
+        <h1 className="text-lg font-semibold">{t("queueListMode.title")}</h1>
       </div>
       <QueueFilters
         filters={filters}

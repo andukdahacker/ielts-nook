@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Badge } from "@workspace/ui/components/badge";
@@ -40,6 +41,7 @@ import {
 import { Sparkles, X, Plus, Loader2, Check, AlertTriangle, RefreshCw } from "lucide-react";
 import type { QuestionSection, DifficultyLevel } from "@workspace/types";
 import { useAIGeneration } from "../hooks/use-ai-generation";
+import { formatCurrency } from "@/lib/locale-utils";
 
 const READING_QUESTION_TYPES: Record<string, string> = {
   R1_MCQ_SINGLE: "MCQ Single",
@@ -76,6 +78,7 @@ export function AIGenerationPanel({
   existingSections,
   onGenerationComplete,
 }: AIGenerationPanelProps) {
+  const { t } = useTranslation("exercises");
   const [selectedTypes, setSelectedTypes] = useState<SelectedType[]>([]);
   const [difficulty, setDifficulty] = useState<DifficultyLevel>("medium");
   const [showTypeSelector, setShowTypeSelector] = useState(false);
@@ -155,13 +158,13 @@ export function AIGenerationPanel({
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4" />
-          <CardTitle className="text-base">AI Question Generation</CardTitle>
+          <CardTitle className="text-base">{t("aiGeneration.title")}</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
         {!hasPassage && (
           <p className="text-sm text-muted-foreground">
-            Add a passage first before generating questions.
+            {t("aiGeneration.noPassage")}
           </p>
         )}
 
@@ -186,7 +189,7 @@ export function AIGenerationPanel({
                   />
                   {st.type === "R14_DIAGRAM_LABELLING" && (
                     <span className="text-xs text-amber-600">
-                      Requires existing diagram
+                      {t("aiGeneration.requiresDiagram")}
                     </span>
                   )}
                   <Button
@@ -208,13 +211,13 @@ export function AIGenerationPanel({
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm">
                       <Plus className="mr-1 h-4 w-4" />
-                      Add Question Type
+                      {t("aiGeneration.addType")}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[250px] p-0" align="start">
                     <Command>
-                      <CommandInput placeholder="Search type..." />
-                      <CommandEmpty>No types found.</CommandEmpty>
+                      <CommandInput placeholder={t("aiGeneration.searchPlaceholder")} />
+                      <CommandEmpty>{t("aiGeneration.noTypes")}</CommandEmpty>
                       <CommandList>
                         {availableTypes.map((type) => (
                           <CommandItem
@@ -234,7 +237,7 @@ export function AIGenerationPanel({
             {/* Difficulty selector */}
             {selectedTypes.length > 0 && (
               <div className="mt-4 flex items-center gap-3">
-                <span className="text-sm">Difficulty:</span>
+                <span className="text-sm">{t("aiGeneration.difficulty")}</span>
                 <Select
                   value={difficulty}
                   onValueChange={(v) =>
@@ -245,9 +248,9 @@ export function AIGenerationPanel({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
+                    <SelectItem value="easy">{t("aiGeneration.easy")}</SelectItem>
+                    <SelectItem value="medium">{t("aiGeneration.medium")}</SelectItem>
+                    <SelectItem value="hard">{t("aiGeneration.hard")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -257,9 +260,13 @@ export function AIGenerationPanel({
             {selectedTypes.length > 0 && (
               <div className="mt-4 flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
-                  Estimated cost: ~${estimatedCost.toFixed(3)} (
-                  {selectedTypes.length} type
-                  {selectedTypes.length > 1 ? "s" : ""})
+                  {t("aiGeneration.costLabel", {
+                    cost: formatCurrency(estimatedCost, "USD"),
+                  })}{" "}
+                  ({selectedTypes.length}{" "}
+                  {selectedTypes.length > 1
+                    ? t("aiGeneration.typePlural")
+                    : t("aiGeneration.typeSingular")})
                 </p>
                 <Button
                   onClick={handleGenerate}

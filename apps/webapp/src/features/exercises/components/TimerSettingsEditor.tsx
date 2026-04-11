@@ -8,6 +8,7 @@ import {
 } from "@workspace/ui/components/radio-group";
 import type { TimerPosition } from "@workspace/types";
 import { Plus, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface TimerSettingsEditorProps {
   timeLimit: number | null;
@@ -40,6 +41,7 @@ export function TimerSettingsEditor({
   onGracePeriodSecondsChange,
   onEnablePauseChange,
 }: TimerSettingsEditorProps) {
+  const { t } = useTranslation("exercises");
   const hasTimeLimit = timeLimit !== null && timeLimit > 0;
   const timeLimitMinutes = hasTimeLimit ? Math.round(timeLimit / 60) : "";
   const gracePeriodMinutes =
@@ -124,7 +126,7 @@ export function TimerSettingsEditor({
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Timer & Test Conditions</h3>
+      <h3 className="text-lg font-semibold">{t("timerSettings.title")}</h3>
 
       {/* Time Limit Toggle */}
       <div className="flex items-start gap-3">
@@ -138,11 +140,10 @@ export function TimerSettingsEditor({
             htmlFor="enable-time-limit"
             className="text-sm font-medium cursor-pointer"
           >
-            Enable Time Limit
+            {t("timerSettings.enable")}
           </Label>
           <p className="text-xs text-muted-foreground">
-            Set a countdown timer for this exercise. Students will see the
-            remaining time.
+            {t("timerSettings.enableHelp")}
           </p>
         </div>
       </div>
@@ -152,7 +153,7 @@ export function TimerSettingsEditor({
           {/* Time Limit Input */}
           <div className="space-y-2 ml-7">
             <Label htmlFor="time-limit-minutes">
-              Time Limit (minutes)
+              {t("timerSettings.minutes")}
             </Label>
             <Input
               id="time-limit-minutes"
@@ -168,7 +169,7 @@ export function TimerSettingsEditor({
 
           {/* Timer Position */}
           <div className="space-y-2 ml-7">
-            <Label>Timer Display Position</Label>
+            <Label>{t("timerSettings.position")}</Label>
             <RadioGroup
               value={timerPosition ?? "top-bar"}
               onValueChange={(v) => onTimerPositionChange(v as TimerPosition)}
@@ -176,13 +177,13 @@ export function TimerSettingsEditor({
               <div className="flex items-center gap-2">
                 <RadioGroupItem value="top-bar" id="timer-pos-top" />
                 <Label htmlFor="timer-pos-top" className="cursor-pointer">
-                  Top Bar (fixed at top)
+                  {t("timerSettings.positionTop")}
                 </Label>
               </div>
               <div className="flex items-center gap-2">
                 <RadioGroupItem value="floating" id="timer-pos-floating" />
                 <Label htmlFor="timer-pos-floating" className="cursor-pointer">
-                  Floating Widget (draggable corner)
+                  {t("timerSettings.positionFloating")}
                 </Label>
               </div>
             </RadioGroup>
@@ -190,9 +191,9 @@ export function TimerSettingsEditor({
 
           {/* Warning Alerts */}
           <div className="space-y-2 ml-7">
-            <Label>Warning Alerts</Label>
+            <Label>{t("timerSettings.warnings")}</Label>
             <p className="text-xs text-muted-foreground">
-              Alert students at these time remaining thresholds.
+              {t("timerSettings.warningsHelp")}
             </p>
             <div className="space-y-2">
               {(warningAlerts ?? []).map((seconds) => (
@@ -205,7 +206,7 @@ export function TimerSettingsEditor({
                     onChange={(e) => handleWarningChange(seconds, e.target.value)}
                     className="w-20"
                   />
-                  <span className="text-sm text-muted-foreground">minutes</span>
+                  <span className="text-sm text-muted-foreground">{t("timerSettings.minutesUnit")}</span>
                   <Button
                     type="button"
                     variant="ghost"
@@ -224,7 +225,7 @@ export function TimerSettingsEditor({
                 onClick={handleAddWarning}
               >
                 <Plus className="size-4 mr-1" />
-                Add Warning
+                {t("timerSettings.addWarning")}
               </Button>
             </div>
           </div>
@@ -244,11 +245,10 @@ export function TimerSettingsEditor({
                   htmlFor="auto-submit"
                   className="text-sm font-medium cursor-pointer"
                 >
-                  Auto-submit when time expires
+                  {t("timerSettings.autoSubmit")}
                 </Label>
                 <p className="text-xs text-muted-foreground">
-                  Automatically submit the student&apos;s answers when the timer
-                  runs out.
+                  {t("timerSettings.autoSubmitHelp")}
                 </p>
               </div>
             </div>
@@ -256,7 +256,7 @@ export function TimerSettingsEditor({
             {autoSubmitOnExpiry && (
               <div className="space-y-2 ml-7">
                 <Label htmlFor="grace-period">
-                  Grace Period (minutes, optional)
+                  {t("timerSettings.gracePeriod")}
                 </Label>
                 <div className="flex items-center gap-2">
                   <Input
@@ -269,7 +269,7 @@ export function TimerSettingsEditor({
                     className="w-20"
                   />
                   <span className="text-sm text-muted-foreground">
-                    minute(s) to review before submitting
+                    {t("timerSettings.gracePeriodHelp")}
                   </span>
                 </div>
               </div>
@@ -290,11 +290,10 @@ export function TimerSettingsEditor({
                 htmlFor="enable-pause"
                 className="text-sm font-medium cursor-pointer"
               >
-                Allow students to pause timer
+                {t("timerSettings.pause")}
               </Label>
               <p className="text-xs text-muted-foreground">
-                When enabled, students can pause and resume. Paused time is
-                tracked.
+                {t("timerSettings.pauseHelp")}
               </p>
             </div>
           </div>

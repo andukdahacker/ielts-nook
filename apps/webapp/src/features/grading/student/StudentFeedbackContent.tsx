@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Popover,
   PopoverContent,
@@ -56,6 +57,7 @@ export function StudentFeedbackContent({
   teacherComments,
   skill,
 }: StudentFeedbackContentProps) {
+  const { t } = useTranslation("grading");
   const answerTexts = useMemo(() => {
     return answers.map((a) => {
       const ans = a.answer as { text?: string; transcript?: string } | null;
@@ -124,7 +126,7 @@ export function StudentFeedbackContent({
         <div key={answers[idx]?.id ?? idx}>
           {answerTexts.length > 1 && (
             <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-              Answer {idx + 1}
+              {t("studentFeedback.answer", { number: idx + 1 })}
             </h3>
           )}
           <div className="rounded-lg border p-4">
@@ -135,7 +137,7 @@ export function StudentFeedbackContent({
               />
             ) : (
               <p className="text-sm italic text-muted-foreground">
-                No answer submitted
+                {t("studentFeedback.noAnswer")}
               </p>
             )}
           </div>
@@ -152,6 +154,7 @@ function AnnotatedText({
   text: string;
   annotations: Annotation[];
 }) {
+  const { t } = useTranslation("grading");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Sort annotations by start offset
@@ -228,7 +231,7 @@ function AnnotatedText({
               </PopoverTrigger>
               <PopoverContent className="w-64 p-3" side="top">
                 <p className="text-xs text-muted-foreground mb-1">
-                  Grammar correction
+                  {t("studentFeedback.grammarCorrection")}
                 </p>
                 <p className="text-sm">{ann.content}</p>
               </PopoverContent>

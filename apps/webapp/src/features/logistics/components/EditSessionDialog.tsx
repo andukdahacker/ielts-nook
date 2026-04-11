@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -83,6 +84,7 @@ export function EditSessionDialog({
   open,
   onOpenChange,
 }: EditSessionDialogProps) {
+  const { t } = useTranslation("logistics");
   const [forceSubmit, setForceSubmit] = useState(false);
   const [roomComboOpen, setRoomComboOpen] = useState(false);
   const { user } = useAuth();
@@ -188,16 +190,16 @@ export function EditSessionDialog({
       const newEndTime = setMinutes(setHours(values.date, endHour), endMin);
 
       if (newEndTime <= newStartTime) {
-        form.setError("endTime", { message: "End time must be after start time" });
+        form.setError("endTime", { message: t("editSession.errorEndTime") });
         return;
       }
 
       if (hasConflicts && !forceSubmit) {
         if (!canForceSave) {
-          toast.error("Please resolve scheduling conflicts before saving");
+          toast.error(t("editSession.toastResolveConflicts"));
           return;
         }
-        toast.warning("Scheduling conflicts detected. Use 'Force Save' to override.");
+        toast.warning(t("editSession.toastConflictWarning"));
         return;
       }
 
@@ -210,12 +212,12 @@ export function EditSessionDialog({
         },
       });
 
-      toast.success("Session updated successfully");
+      toast.success(t("editSession.toastSuccess"));
       onOpenChange(false);
       clearConflicts();
       setForceSubmit(false);
     } catch {
-      toast.error("Failed to update session");
+      toast.error(t("editSession.toastError"));
       setForceSubmit(false);
     }
   }
@@ -231,22 +233,22 @@ export function EditSessionDialog({
     }
   }
 
-  const courseName = session.class?.course?.name ?? "Course";
-  const className = session.class?.name ?? "Class";
+  const courseName = session.class?.course?.name ?? t("sessionBlock.courseFallback");
+  const className = session.class?.name ?? t("sessionBlock.classFallback");
   const teacherName = session.class?.teacher?.name ?? null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Session</DialogTitle>
+          <DialogTitle>{t("editSession.title")}</DialogTitle>
           <DialogDescription>
             {courseName} - {className}
           </DialogDescription>
         </DialogHeader>
         {teacherName && (
           <div className="text-sm text-muted-foreground">
-            Teacher: <span className="font-medium text-foreground">{teacherName}</span>
+            {t("conflictDrawer.teacher")} <span className="font-medium text-foreground">{teacherName}</span>
           </div>
         )}
         <Form {...form}>
@@ -256,7 +258,7 @@ export function EditSessionDialog({
               name="date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Date</FormLabel>
+                  <FormLabel>{t("editSession.date")}</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -270,7 +272,7 @@ export function EditSessionDialog({
                           {field.value ? (
                             format(field.value, "PPP")
                           ) : (
-                            <span>Pick a date</span>
+                            <span>{t("editSession.datePlaceholder")}</span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -296,11 +298,11 @@ export function EditSessionDialog({
                 name="startTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Time</FormLabel>
+                    <FormLabel>{t("editSession.startTime")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Start time" />
+                          <SelectValue placeholder={t("editSession.startTimePlaceholder")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -321,11 +323,11 @@ export function EditSessionDialog({
                 name="endTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>End Time</FormLabel>
+                    <FormLabel>{t("editSession.endTime")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="End time" />
+                          <SelectValue placeholder={t("editSession.endTimePlaceholder")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -348,7 +350,7 @@ export function EditSessionDialog({
               name="roomName"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Room (Optional)</FormLabel>
+                  <FormLabel>{t("editSession.roomOptional")}</FormLabel>
                   <Popover open={roomComboOpen} onOpenChange={setRoomComboOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -360,7 +362,7 @@ export function EditSessionDialog({
                             !field.value && "text-muted-foreground"
                           )}
                         >
-                          {field.value || "Select or type room..."}
+                          {field.value || t("editSession.roomPlaceholder")}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -368,12 +370,12 @@ export function EditSessionDialog({
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                       <Command>
                         <CommandInput
-                          placeholder="Search rooms..."
+                          placeholder={t("editSession.searchRooms")}
                           onValueChange={(val) => field.onChange(val)}
                         />
                         <CommandList>
                           <CommandEmpty>
-                            {field.value ? `Use "${field.value}"` : "No rooms found."}
+                            {field.value ? t("editSession.useRoomQuoted", { room: field.value }) : t("editSession.noRoomsFound")}
                           </CommandEmpty>
                           <CommandGroup>
                             {rooms.map((room) => (
@@ -406,7 +408,7 @@ export function EditSessionDialog({
 
             {checkError && (
               <p className="text-sm text-destructive">
-                Unable to check for conflicts. You may still save.
+                {t("editSession.errorConflictCheck")}
               </p>
             )}
 
@@ -423,7 +425,7 @@ export function EditSessionDialog({
 
             <div className="flex justify-end pt-4">
               <Button type="submit" disabled={isUpdating || isChecking}>
-                {isUpdating ? "Saving..." : isChecking ? "Checking..." : "Save Changes"}
+                {isUpdating ? t("editSession.saving") : isChecking ? t("editSession.checking") : t("button.saveChanges", { ns: "common" })}
               </Button>
             </div>
           </form>

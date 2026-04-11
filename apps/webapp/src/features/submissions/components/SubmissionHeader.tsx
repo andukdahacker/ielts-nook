@@ -3,6 +3,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
 import { useNavigate, useParams } from "react-router";
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import type { SaveStatus } from "../hooks/use-auto-save";
 
 interface SubmissionHeaderProps {
@@ -29,36 +30,37 @@ function formatTimer(seconds: number) {
 
 const SAVE_INDICATOR_CONFIG: Record<
   Exclude<SaveStatus, "idle">,
-  { icon: React.ReactNode; text: string; className: string }
+  { icon: React.ReactNode; textKey: string; className: string }
 > = {
   saving: {
     icon: <LoaderCircle className="size-3.5 animate-spin" />,
-    text: "Saving...",
+    textKey: "saveIndicator.saving",
     className: "text-muted-foreground",
   },
   saved: {
     icon: <Check className="size-3.5" />,
-    text: "Saved",
+    textKey: "saveIndicator.saved",
     className: "text-green-600",
   },
   error: {
     icon: <CircleAlert className="size-3.5" />,
-    text: "Save failed",
+    textKey: "saveIndicator.error",
     className: "text-destructive",
   },
   offline: {
     icon: <CloudOff className="size-3.5 text-amber-500" />,
-    text: "Offline",
+    textKey: "saveIndicator.offline",
     className: "text-amber-500",
   },
   syncing: {
     icon: <CloudUpload className="size-3.5 text-blue-600 animate-pulse" />,
-    text: "Syncing...",
+    textKey: "saveIndicator.syncing",
     className: "text-blue-600",
   },
 };
 
 function SaveIndicator({ saveStatus }: { saveStatus?: SaveStatus }) {
+  const { t } = useTranslation("submissions");
   const [displayStatus, setDisplayStatus] = useState<SaveStatus>("idle");
   const timerRef = useRef<number | null>(null);
 
@@ -96,18 +98,21 @@ function SaveIndicator({ saveStatus }: { saveStatus?: SaveStatus }) {
   return (
     <div className={`flex items-center gap-1 shrink-0 ${config.className}`} data-testid="save-indicator">
       {config.icon}
-      <span className="hidden sm:inline text-xs">{config.text}</span>
+      <span className="hidden sm:inline text-xs">{t(config.textKey)}</span>
     </div>
   );
 }
 
-function getStatusLabel(status: string | null | undefined): string {
-  switch (status) {
-    case "SUBMITTED": return "Submitted";
-    case "AI_PROCESSING": return "Grading...";
-    case "GRADED": return "Graded";
-    default: return status ?? "Submitted";
-  }
+function useStatusLabel() {
+  const { t } = useTranslation("submissions");
+  return (status: string | null | undefined): string => {
+    switch (status) {
+      case "SUBMITTED": return t("header.statusSubmitted");
+      case "AI_PROCESSING": return t("header.statusGrading");
+      case "GRADED": return t("header.statusGraded");
+      default: return status ?? t("header.statusSubmitted");
+    }
+  };
 }
 
 export function SubmissionHeader({
@@ -122,6 +127,8 @@ export function SubmissionHeader({
   isLocked,
   submissionStatus,
 }: SubmissionHeaderProps) {
+  const { t } = useTranslation("submissions");
+  const getStatusLabel = useStatusLabel();
   const navigate = useNavigate();
   const { centerId } = useParams();
   const [elapsed, setElapsed] = useState(0);
@@ -167,7 +174,7 @@ export function SubmissionHeader({
         <div className="flex-1 min-w-0">
           <h1 className="text-sm font-medium truncate">{title}</h1>
           <p className="text-xs text-muted-foreground">
-            Question {currentQuestion + 1} of {totalQuestions}
+            {t("header.question", { currentQuestion: currentQuestion + 1, totalQuestions })}
           </p>
         </div>
 

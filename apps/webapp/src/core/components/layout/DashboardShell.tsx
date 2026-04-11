@@ -28,11 +28,14 @@ import { MobileNavOverflow } from "./MobileNavOverflow";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { GracePeriodBanner } from "@/features/settings/components/GracePeriodBanner";
 import { BreadcrumbProvider } from "@/core/context/breadcrumb-context";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useTranslation } from "react-i18next";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [isAISidebarOpen, setIsAISidebarOpen] = useState(true);
   const location = useLocation();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const centerId = user?.centerId;
 
   // Auto-collapse on smaller screens
@@ -80,6 +83,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   <Breadcrumbs />
                 </div>
                 <div className="flex items-center gap-2">
+                  <LanguageToggle compact />
                   <NotificationBell />
                 </div>
               </div>
@@ -117,8 +121,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             >
               <SheetContent side="right" className="w-[320px] p-0">
                 <SheetHeader className="sr-only">
-                  <SheetTitle>AI Assistant</SheetTitle>
-                  <SheetDescription>AI chat assistant</SheetDescription>
+                  <SheetTitle>{t("aiSidebar.title")}</SheetTitle>
+                  <SheetDescription>{t("aiSidebar.description")}</SheetDescription>
                 </SheetHeader>
                 <AISidebarContent onClose={() => setIsAISidebarOpen(false)} />
               </SheetContent>
@@ -142,7 +146,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         {/* Mobile Bottom Bar */}
         <nav
           className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t bg-background px-4 md:hidden"
-          aria-label="Main navigation"
+          aria-label={t("nav.mainNavigation")}
         >
           {mobileNavItems.map((item) => {
             const isActive =
@@ -161,7 +165,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               >
                 <item.icon className="h-5 w-5" />
                 <span className="text-[10px] font-medium uppercase tracking-wider">
-                  {item.title}
+                  {t(item.title)}
                 </span>
               </Link>
             );
@@ -177,18 +181,19 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
 function AISidebarContent(_: { onClose: () => void }) {
   void _; // Satisfy unused param lint
+  const { t } = useTranslation();
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-2 font-semibold">
           <Sparkles className="h-4 w-4 text-primary" />
-          <span className="font-heading">AI Assistant</span>
+          <span className="font-heading">{t("aiSidebar.title")}</span>
         </div>
       </div>
       <div className="flex-1 p-4">
         <div className="rounded-xl border bg-card p-4 shadow-sm">
           <p className="text-sm text-muted-foreground">
-            Hello! I&apos;m your ClassLite AI assistant. How can I help you today?
+            {t("aiSidebar.greeting")}
           </p>
         </div>
       </div>

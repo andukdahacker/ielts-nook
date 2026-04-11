@@ -35,6 +35,7 @@ import {
 } from "@workspace/ui/components/sidebar";
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 
 export function NavUser({
   user,
@@ -48,6 +49,7 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const { logout, user: authUser } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [logoutConfirmDialogOpen, setLogoutConfirmDialogOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -107,13 +109,13 @@ export function NavUser({
                 disabled={!authUser?.centerId}
               >
                 <User />
-                My Profile
+                {t("user.myProfile")}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setLogoutConfirmDialogOpen(true)}>
               <LogOut />
-              Log out
+              {t("user.logOut")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -126,16 +128,16 @@ export function NavUser({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Are you sure you want to log out?
+              {t("user.logoutConfirmTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              You will be redirected to the login page.
+              {t("user.logoutConfirmDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("user.logoutCancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleLogout}>
-              Log Out
+              {t("user.logoutConfirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

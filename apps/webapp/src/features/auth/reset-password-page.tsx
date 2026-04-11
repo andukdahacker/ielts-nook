@@ -21,6 +21,8 @@ import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { type TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { z } from "zod";
 
@@ -42,24 +44,25 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 type TokenState = "loading" | "valid" | "invalid" | "expired";
 
-const getErrorMessage = (code: string): string => {
+const getErrorMessage = (code: string, t: TFunction): string => {
   switch (code) {
     case "auth/expired-action-code":
-      return "This link has expired. Please request a new one.";
+      return t("resetPasswordPage.expiredLinkError");
     case "auth/invalid-action-code":
-      return "This link is invalid or has already been used.";
+      return t("resetPasswordPage.invalidLinkError");
     case "auth/user-disabled":
-      return "This account has been disabled.";
+      return t("resetPasswordPage.accountDisabledError");
     case "auth/user-not-found":
-      return "No account found for this email.";
+      return t("resetPasswordPage.noAccountFoundError");
     case "auth/weak-password":
-      return "Password is too weak. Please choose a stronger password.";
+      return t("resetPasswordPage.weakPasswordError");
     default:
-      return "Something went wrong. Please try again.";
+      return t("resetPasswordPage.genericError");
   }
 };
 
 export function ResetPasswordPage() {
+  const { t } = useTranslation("auth");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const mode = searchParams.get("mode");
@@ -88,7 +91,7 @@ export function ResetPasswordPage() {
       if (mode !== "resetPassword") {
         if (isMounted) {
           setTokenState("invalid");
-          setError("Invalid password reset link.");
+          setError(t("resetPasswordPage.invalidPasswordResetLink"));
         }
         return;
       }
@@ -97,7 +100,7 @@ export function ResetPasswordPage() {
       if (!oobCode) {
         if (isMounted) {
           setTokenState("invalid");
-          setError("Missing password reset code.");
+          setError(t("resetPasswordPage.missingPasswordResetCode"));
         }
         return;
       }
@@ -113,10 +116,10 @@ export function ResetPasswordPage() {
           const firebaseError = err as { code?: string };
           if (firebaseError.code === "auth/expired-action-code") {
             setTokenState("expired");
-            setError("This link has expired. Please request a new one.");
+            setError(t("resetPasswordPage.expiredLinkError"));
           } else {
             setTokenState("invalid");
-            setError(getErrorMessage(firebaseError.code || ""));
+            setError(getErrorMessage(firebaseError.code || "", t));
           }
         }
       }
@@ -127,7 +130,7 @@ export function ResetPasswordPage() {
     return () => {
       isMounted = false;
     };
-  }, [mode, oobCode]);
+  }, [mode, oobCode, t]);
 
   const onSubmit = async (values: ResetPasswordFormValues) => {
     if (!oobCode) return;
@@ -141,7 +144,7 @@ export function ResetPasswordPage() {
       navigate("/sign-in?reset=true");
     } catch (err: unknown) {
       const firebaseError = err as { code?: string };
-      setError(getErrorMessage(firebaseError.code || ""));
+      setError(getErrorMessage(firebaseError.code || "", t));
     } finally {
       setIsLoading(false);
     }
@@ -155,7 +158,7 @@ export function ResetPasswordPage() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="mt-4 text-sm text-muted-foreground">
-              Validating reset link...
+              {t("resetPasswordPage.validatingResetLink")}
             </p>
           </CardContent>
         </Card>
@@ -170,22 +173,22 @@ export function ResetPasswordPage() {
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 text-center">
             <CardTitle className="text-2xl font-bold">
-              {tokenState === "expired" ? "Link expired" : "Invalid link"}
+              {tokenState === "expired" ? t("resetPasswordPage.linkExpired") : t("resetPasswordPage.invalidLink")}
             </CardTitle>
             <CardDescription>
-              {error || "This password reset link is no longer valid."}
+              {error || t("resetPasswordPage.passwordResetLinkNoLongerValid")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Button asChild className="w-full">
-              <Link to="/forgot-password">Request new link</Link>
+              <Link to="/forgot-password">{t("resetPasswordPage.requestNewLink")}</Link>
             </Button>
             <div className="text-center">
               <Link
                 to="/sign-in"
                 className="text-sm text-muted-foreground hover:underline"
               >
-                Back to sign in
+                {t("resetPasswordPage.backToSignIn")}
               </Link>
             </div>
           </CardContent>
@@ -200,10 +203,10 @@ export function ResetPasswordPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">
-            Create new password
+            {t("resetPasswordPage.createNewPassword")}
           </CardTitle>
           <CardDescription>
-            Enter a new password for your account
+            {t("resetPasswordPage.enterNewPasswordForAccount")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -219,7 +222,7 @@ export function ResetPasswordPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>New password</FormLabel>
+                    <FormLabel>{t("resetPasswordPage.newPassword")}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -234,7 +237,7 @@ export function ResetPasswordPage() {
                           size="sm"
                           className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                           onClick={() => setShowPassword(!showPassword)}
-                          aria-label={showPassword ? "Hide password" : "Show password"}
+                          aria-label={showPassword ? t("resetPasswordPage.hidePassword") : t("resetPasswordPage.showPassword")}
                         >
                           {showPassword ? (
                             <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -253,7 +256,7 @@ export function ResetPasswordPage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm password</FormLabel>
+                    <FormLabel>{t("resetPasswordPage.confirmPassword")}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -270,7 +273,7 @@ export function ResetPasswordPage() {
                           onClick={() =>
                             setShowConfirmPassword(!showConfirmPassword)
                           }
-                          aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                          aria-label={showConfirmPassword ? t("resetPasswordPage.hidePassword") : t("resetPasswordPage.showPassword")}
                         >
                           {showConfirmPassword ? (
                             <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -285,21 +288,20 @@ export function ResetPasswordPage() {
                 )}
               />
               <p className="text-xs text-muted-foreground">
-                Password must be at least 8 characters with 1 uppercase letter
-                and 1 number.
+                {t("resetPasswordPage.passwordRequirements")}
               </p>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && (
                   <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                 )}
-                Reset password
+                {t("resetPasswordPage.resetPassword")}
               </Button>
               <div className="text-center">
                 <Link
                   to="/sign-in"
                   className="text-sm text-muted-foreground hover:underline"
                 >
-                  Back to sign in
+                  {t("resetPasswordPage.backToSignIn")}
                 </Link>
               </div>
             </form>

@@ -13,6 +13,7 @@ import {
 } from "@workspace/ui/components/table";
 import { Loader2, Search, UserMinus, UserPlus } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useRoster } from "../hooks/use-logistics";
 
@@ -22,6 +23,7 @@ interface RosterManagerProps {
 }
 
 export function RosterManager({ classId, centerId }: RosterManagerProps) {
+  const { t } = useTranslation("logistics");
   const {
     roster,
     isLoading: isRosterLoading,
@@ -48,18 +50,18 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
   const handleAdd = async (studentId: string) => {
     try {
       await addStudent({ studentId });
-      toast.success("Student added to class");
+      toast.success(t("attendance.toastAddSuccess"));
     } catch {
-      toast.error("Failed to add student");
+      toast.error(t("attendance.toastAddError"));
     }
   };
 
   const handleRemove = async (studentId: string) => {
     try {
       await removeStudent(studentId);
-      toast.success("Student removed from class");
+      toast.success(t("attendance.toastRemoveSuccess"));
     } catch {
-      toast.error("Failed to remove student");
+      toast.error(t("attendance.toastRemoveError"));
     }
   };
 
@@ -72,15 +74,15 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Class Roster</h3>
-            <Badge variant="secondary">{roster.length} Students</Badge>
+            <h3 className="text-lg font-medium">{t("rosterManager.classRoster")}</h3>
+            <Badge variant="secondary">{roster.length} {t("rosterManager.studentsBadge")}</Badge>
           </div>
           <div className="overflow-x-auto rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead>{t("rosterManager.headerName")}</TableHead>
+                  <TableHead className="text-right">{t("rosterManager.headerAction")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -96,7 +98,7 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
                       colSpan={2}
                       className="h-24 text-center text-muted-foreground"
                     >
-                      No students in this class.
+                      {t("rosterManager.emptyNoStudents")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -105,7 +107,7 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
                       <TableCell>
                         <div>
                           <p className="font-medium">
-                            {item.student?.name || "Unknown"}
+                            {item.student?.name || t("attendance.unknown")}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {item.student?.email}
@@ -131,11 +133,11 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Add Students</h3>
+          <h3 className="text-lg font-medium">{t("rosterManager.addStudents")}</h3>
           <div className="relative">
             <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search students..."
+              placeholder={t("rosterManager.searchPlaceholder")}
               className="pl-8"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -145,8 +147,8 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead>{t("rosterManager.headerName")}</TableHead>
+                  <TableHead className="text-right">{t("rosterManager.headerAction")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -162,7 +164,7 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
                       colSpan={2}
                       className="h-24 text-center text-muted-foreground"
                     >
-                      No students found.
+                      {t("rosterManager.emptyNotFound")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -171,7 +173,7 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
                       <TableCell>
                         <div>
                           <p className="font-medium">
-                            {student.name || "Unknown"}
+                            {student.name || t("attendance.unknown")}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {student.email}

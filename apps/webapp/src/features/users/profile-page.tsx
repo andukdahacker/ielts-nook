@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useParams } from "react-router";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/features/auth/auth-context";
 import {
   useUser,
@@ -31,6 +32,7 @@ import { ParentEmailSection } from "./components/ParentEmailSection";
 import type { AuthUser } from "@workspace/types";
 
 export function ProfilePage() {
+  const { t } = useTranslation("users");
   const { userId } = useParams<{ userId?: string }>();
   const { user: currentUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
@@ -73,16 +75,16 @@ export function ProfilePage() {
     if (!file) return;
 
     if (file.size > 1 * 1024 * 1024) {
-      toast.error("Image must be less than 1MB");
+      toast.error(t("profilePage.avatarUploadError"));
       return;
     }
 
     try {
       const promise = uploadAvatar.mutateAsync(file);
       toast.promise(promise, {
-        loading: "Uploading avatar...",
-        success: "Avatar uploaded successfully",
-        error: "Failed to upload avatar",
+        loading: t("profilePage.avatarUploadLoading"),
+        success: t("profilePage.avatarUploadSuccess"),
+        error: t("profilePage.avatarUploadErrorGeneric"),
       });
       await promise;
     } catch (error) {
@@ -105,10 +107,10 @@ export function ProfilePage() {
   }) => {
     try {
       await updateProfile.mutateAsync(values);
-      toast.success("Profile updated successfully");
+      toast.success(t("profilePage.successProfileUpdate"));
       setIsEditing(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update profile");
+      toast.error(error instanceof Error ? error.message : t("profilePage.errorProfileUpdate"));
     }
   };
 
@@ -118,27 +120,27 @@ export function ProfilePage() {
   }) => {
     try {
       await changePassword.mutateAsync(values);
-      toast.success("Password updated. Other sessions have been logged out.");
+      toast.success(t("profilePage.successPasswordChange"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to change password");
+      toast.error(error instanceof Error ? error.message : t("profilePage.errorPasswordChange"));
     }
   };
 
   const handleRequestDeletion = async () => {
     try {
       await requestDeletion.mutateAsync();
-      toast.success("Account deletion scheduled. You have 7 days to cancel.");
+      toast.success(t("profilePage.successDeletionRequest"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to request deletion");
+      toast.error(error instanceof Error ? error.message : t("profilePage.errorDeletionRequest"));
     }
   };
 
   const handleCancelDeletion = async () => {
     try {
       await cancelDeletion.mutateAsync();
-      toast.success("Account deletion cancelled");
+      toast.success(t("profilePage.successDeletionCancel"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to cancel deletion");
+      toast.error(error instanceof Error ? error.message : t("profilePage.errorDeletionCancel"));
     }
   };
 
@@ -168,7 +170,7 @@ export function ProfilePage() {
       <div className="container max-w-2xl py-8">
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            User not found or you don&apos;t have permission to view this profile.
+            {t("profilePage.userNotFound")}
           </CardContent>
         </Card>
       </div>
@@ -185,11 +187,13 @@ export function ProfilePage() {
       {isOwnProfile && currentUser?.deletionRequestedAt && deletionDaysRemaining !== null && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Account Scheduled for Deletion</AlertTitle>
+          <AlertTitle>{t("profilePage.deletionWarningTitle")}</AlertTitle>
           <AlertDescription className="flex items-center justify-between">
             <span>
-              Your account will be deleted in {deletionDaysRemaining} day
-              {deletionDaysRemaining !== 1 ? "s" : ""}.
+              {t("profilePage.deletionWarningMessage", {
+                count: deletionDaysRemaining,
+                days: deletionDaysRemaining,
+              })}
             </span>
             <Button
               variant="outline"
@@ -202,7 +206,7 @@ export function ProfilePage() {
               ) : (
                 <>
                   <X className="h-4 w-4 mr-1" />
-                  Cancel Deletion
+                  {t("profilePage.deletionWarningCancel")}
                 </>
               )}
             </Button>
@@ -215,17 +219,17 @@ export function ProfilePage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>{isOwnProfile ? "My Profile" : "User Profile"}</CardTitle>
+              <CardTitle>{isOwnProfile ? t("profilePage.cardTitleOwn") : t("profilePage.cardTitleOther")}</CardTitle>
               <CardDescription>
                 {isOwnProfile
-                  ? "Manage your account information"
-                  : `Viewing ${displayUser.name || displayUser.email}'s profile`}
+                  ? t("profilePage.cardDescriptionOwn")
+                  : t("profilePage.cardDescriptionOther", { user: displayUser.name || displayUser.email })}
               </CardDescription>
             </div>
             {isOwnProfile && !isEditing && (
               <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
                 <Pencil className="h-4 w-4 mr-2" />
-                Edit Profile
+                {t("profilePage.editButton")}
               </Button>
             )}
           </div>
@@ -277,7 +281,7 @@ export function ProfilePage() {
                 </div>
                 <div className="space-y-1">
                   <h2 className="text-2xl font-semibold">
-                    {displayUser.name || "Add your name"}
+                    {displayUser.name || t("profilePage.addName")}
                   </h2>
                   <p className="text-muted-foreground">{displayUser.email}</p>
                   <Badge variant="secondary" className="capitalize">
@@ -288,53 +292,53 @@ export function ProfilePage() {
 
               <div className="grid gap-4 pt-4 border-t">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Email</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t("profilePage.labelEmail")}</p>
                   <p>{displayUser.email}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Name</p>
-                  <p>{displayUser.name || "Not set"}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t("profilePage.labelName")}</p>
+                  <p>{displayUser.name || t("profilePage.labelNotSet")}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Phone Number</p>
-                  <p>{(displayUser as AuthUser).phoneNumber || "Not set"}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t("profilePage.labelPhone")}</p>
+                  <p>{(displayUser as AuthUser).phoneNumber || t("profilePage.labelNotSet")}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
-                    Preferred Language
+                    {t("profilePage.labelLanguage")}
                   </p>
                   <p>
                     {(displayUser as AuthUser).preferredLanguage === "vi"
-                      ? "Vietnamese"
-                      : "English"}
+                      ? t("profilePage.languageVietnamese")
+                      : t("profilePage.languageEnglish")}
                   </p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-muted-foreground">
-                    Notification Preferences
+                    {t("profilePage.labelNotifications")}
                   </p>
                   {(displayUser as AuthUser).emailNotificationsPaused && (
                     <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
-                      All notifications paused
+                      {t("profilePage.notificationsPaused")}
                     </p>
                   )}
                   <div className={`text-sm space-y-1${(displayUser as AuthUser).emailNotificationsPaused ? " opacity-50" : ""}`}>
                     <p>
-                      Schedule changes:{" "}
+                      {t("profilePage.scheduleNotifications")}
                       {(displayUser as AuthUser).emailScheduleNotifications !== false
-                        ? "On"
-                        : "Off"}
+                        ? t("profilePage.scheduleOn")
+                        : t("profilePage.scheduleOff")}
                     </p>
                     <p>
-                      Achievements & streaks:{" "}
+                      {t("profilePage.engagementNotifications")}
                       {(displayUser as AuthUser).emailEngagementNotifications !== false
-                        ? "On"
-                        : "Off"}
+                        ? t("profilePage.engagementOn")
+                        : t("profilePage.engagementOff")}
                     </p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Role</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t("profilePage.labelRole")}</p>
                   <p className="capitalize">{displayUser.role?.toLowerCase()}</p>
                 </div>
               </div>
@@ -354,8 +358,8 @@ export function ProfilePage() {
       {isOwnProfile && (
         <Card>
           <CardHeader>
-            <CardTitle>Change Password</CardTitle>
-            <CardDescription>Update your password to keep your account secure</CardDescription>
+            <CardTitle>{t("profilePage.passwordSectionTitle")}</CardTitle>
+            <CardDescription>{t("profilePage.passwordSectionDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <PasswordChangeForm
@@ -371,19 +375,17 @@ export function ProfilePage() {
       {isOwnProfile && currentUser?.role !== "OWNER" && !currentUser?.deletionRequestedAt && (
         <Card className="border-destructive/50">
           <CardHeader>
-            <CardTitle className="text-destructive">Danger Zone</CardTitle>
+            <CardTitle className="text-destructive">{t("profilePage.dangerZoneTitle")}</CardTitle>
             <CardDescription>
-              Permanently delete your account and all associated data
+              {t("profilePage.dangerZoneDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Once you delete your account, there is no going back. Your profile, class
-              enrollments, and all associated data will be permanently removed after a 7-day
-              grace period.
+              {t("profilePage.dangerZoneMessage")}
             </p>
             <Button variant="destructive" onClick={() => setShowDeleteModal(true)}>
-              Delete My Account
+              {t("profilePage.dangerZoneButton")}
             </Button>
           </CardContent>
         </Card>

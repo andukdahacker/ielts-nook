@@ -23,6 +23,7 @@ import {
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useAssignments } from "../hooks/use-assignments";
 
@@ -39,6 +40,7 @@ export function CreateAssignmentDialog({
   onOpenChange,
   defaultExerciseId,
 }: CreateAssignmentDialogProps) {
+  const { t } = useTranslation("assignments");
   const { user } = useAuth();
   const centerId = user?.centerId;
 
@@ -69,23 +71,23 @@ export function CreateAssignmentDialog({
 
   const handleSubmit = async () => {
     if (!exerciseId) {
-      toast.error("Please select an exercise");
+      toast.error(t("create.toastSelectExercise"));
       return;
     }
     if (assignTarget === "classes" && selectedClassIds.length === 0) {
-      toast.error("Please select at least one class");
+      toast.error(t("create.toastSelectClass"));
       return;
     }
     if (assignTarget === "students" && selectedStudentIds.length === 0) {
-      toast.error("Please select at least one student");
+      toast.error(t("create.toastSelectStudent"));
       return;
     }
     if (dueDate && new Date(dueDate) < new Date()) {
-      toast.error("Due date must be in the future");
+      toast.error(t("create.toastFutureDate"));
       return;
     }
     if (timeLimit && (isNaN(Number(timeLimit)) || Number(timeLimit) <= 0)) {
-      toast.error("Time limit must be a positive number");
+      toast.error(t("create.toastPositiveTime"));
       return;
     }
 
@@ -100,11 +102,11 @@ export function CreateAssignmentDialog({
       });
       const count = assignTarget === "classes" ? selectedClassIds.length : selectedStudentIds.length;
       const unit = assignTarget === "classes" ? "class(es)" : "student(s)";
-      toast.success(`Assignment created for ${count} ${unit}`);
+      toast.success(t("create.toastSuccess", { count, unit }));
       resetForm();
       onOpenChange(false);
     } catch {
-      toast.error("Failed to create assignment");
+      toast.error(t("create.toastError"));
     }
   };
 
@@ -126,16 +128,16 @@ export function CreateAssignmentDialog({
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Assign Exercise</DialogTitle>
+          <DialogTitle>{t("create.title")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           {/* Exercise picker */}
           <div className="space-y-2">
-            <Label>Exercise</Label>
+            <Label>{t("create.exerciseLabel")}</Label>
             <Select value={exerciseId} onValueChange={setExerciseId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select an exercise..." />
+                <SelectValue placeholder={t("create.exercisePlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {publishedExercises.map((ex) => (
@@ -149,7 +151,7 @@ export function CreateAssignmentDialog({
 
           {/* Target selection: Classes or Individual Students */}
           <div className="space-y-2">
-            <Label>Assign to</Label>
+            <Label>{t("create.assignTo")}</Label>
             <div className="flex gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -158,7 +160,7 @@ export function CreateAssignmentDialog({
                   checked={assignTarget === "classes"}
                   onChange={() => { setAssignTarget("classes"); setSelectedStudentIds([]); }}
                 />
-                <span className="text-sm">Classes</span>
+                <span className="text-sm">{t("create.assignClasses")}</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -167,7 +169,7 @@ export function CreateAssignmentDialog({
                   checked={assignTarget === "students"}
                   onChange={() => { setAssignTarget("students"); setSelectedClassIds([]); }}
                 />
-                <span className="text-sm">Individual Students</span>
+                <span className="text-sm">{t("create.assignStudents")}</span>
               </label>
             </div>
           </div>
@@ -175,10 +177,10 @@ export function CreateAssignmentDialog({
           {/* Class selection */}
           {assignTarget === "classes" && (
             <div className="space-y-2">
-              <Label>Classes</Label>
+              <Label>{t("create.classesLabel")}</Label>
               <div className="max-h-40 overflow-y-auto rounded-md border p-2">
                 {classes.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No classes available</p>
+                  <p className="text-sm text-muted-foreground">{t("create.classesEmpty")}</p>
                 ) : (
                   classes.map((cls: { id: string; name: string; _count?: { students: number } }) => (
                     <label
@@ -193,7 +195,7 @@ export function CreateAssignmentDialog({
                       />
                       <span className="text-sm">
                         {cls.name}
-                        {cls._count ? ` (${cls._count.students} students)` : ""}
+                        {cls._count ? ` ${t("create.classStudentCount", { count: cls._count.students })}` : ""}
                       </span>
                     </label>
                   ))
@@ -201,7 +203,7 @@ export function CreateAssignmentDialog({
               </div>
               {selectedClassIds.length > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  {selectedClassIds.length} class(es) selected
+                  {t("create.classesSelected", { count: selectedClassIds.length })}
                 </p>
               )}
             </div>
@@ -210,10 +212,10 @@ export function CreateAssignmentDialog({
           {/* Student selection */}
           {assignTarget === "students" && (
             <div className="space-y-2">
-              <Label>Students</Label>
+              <Label>{t("create.studentsLabel")}</Label>
               <div className="max-h-40 overflow-y-auto rounded-md border p-2">
                 {students.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No students available</p>
+                  <p className="text-sm text-muted-foreground">{t("create.studentsEmpty")}</p>
                 ) : (
                   students.map((student: { id: string; name: string | null; email: string | null }) => (
                     <label
@@ -235,7 +237,7 @@ export function CreateAssignmentDialog({
               </div>
               {selectedStudentIds.length > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  {selectedStudentIds.length} student(s) selected
+                  {t("create.studentsSelected", { count: selectedStudentIds.length })}
                 </p>
               )}
             </div>
@@ -243,7 +245,7 @@ export function CreateAssignmentDialog({
 
           {/* Due date */}
           <div className="space-y-2">
-            <Label>Due Date (optional)</Label>
+            <Label>{t("create.dueDateLabel")}</Label>
             <Input
               type="datetime-local"
               value={dueDate}
@@ -253,11 +255,11 @@ export function CreateAssignmentDialog({
 
           {/* Time limit */}
           <div className="space-y-2">
-            <Label>Time Limit in minutes (optional)</Label>
+            <Label>{t("create.timeLimitLabel")}</Label>
             <Input
               type="number"
               min="1"
-              placeholder="e.g., 60"
+              placeholder={t("create.timeLimitPlaceholder")}
               value={timeLimit}
               onChange={(e) => setTimeLimit(e.target.value)}
             />
@@ -265,9 +267,9 @@ export function CreateAssignmentDialog({
 
           {/* Instructions */}
           <div className="space-y-2">
-            <Label>Instructions (optional)</Label>
+            <Label>{t("create.instructionsLabel")}</Label>
             <Textarea
-              placeholder="Additional instructions for students..."
+              placeholder={t("create.instructionsPlaceholder")}
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               maxLength={2000}
@@ -278,13 +280,13 @@ export function CreateAssignmentDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>
-            Cancel
+            {t("button.cancel", { ns: "common" })}
           </Button>
           <Button onClick={handleSubmit} disabled={isCreating}>
             {isCreating && <Loader2 className="mr-2 size-4 animate-spin" />}
             {assignTarget === "classes"
-              ? `Assign to ${selectedClassIds.length || 0} class(es)`
-              : `Assign to ${selectedStudentIds.length || 0} student(s)`}
+              ? t("create.submitClasses", { count: selectedClassIds.length || 0 })
+              : t("create.submitStudents", { count: selectedStudentIds.length || 0 })}
           </Button>
         </DialogFooter>
       </DialogContent>

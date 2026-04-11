@@ -1,7 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { SettingsLayout } from "./SettingsLayout";
+
+vi.mock("@/features/auth/auth-context", () => ({
+  useAuth: () => ({ user: { role: "OWNER", centerId: "center-1" } }),
+}));
 
 // Simple outlet content for testing
 const MockOutlet = ({ text }: { text: string }) => <div>{text}</div>;

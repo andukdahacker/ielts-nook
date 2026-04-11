@@ -19,6 +19,7 @@ import {
 } from "firebase/auth";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 import { z } from "zod";
 import { recordLoginAttempt } from "../auth.api";
@@ -32,6 +33,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
+  const { t } = useTranslation("auth");
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
@@ -77,7 +79,7 @@ export function LoginForm() {
       if (lockResult?.locked) {
         const retryAfter = lockResult.retryAfterMinutes || 15;
         setLoginError(
-          `Account locked due to too many failed attempts. Please try again in ${retryAfter} minutes.`,
+          t("loginForm.accountLockedRetry", { retryAfter }),
         );
         setIsLoading(false);
         return;
@@ -90,12 +92,12 @@ export function LoginForm() {
         firebaseError.code === "auth/wrong-password" ||
         firebaseError.code === "auth/invalid-credential"
       ) {
-        setLoginError("Email or password is incorrect");
+        setLoginError(t("loginForm.emailOrPasswordIncorrect"));
       } else if (firebaseError.code === "auth/too-many-requests") {
-        setLoginError("Too many failed attempts. Please try again later.");
+        setLoginError(t("loginForm.tooManyAttempts"));
       } else {
         setLoginError(
-          firebaseError.message || "Login failed. Please try again.",
+          firebaseError.message || t("loginForm.loginFailed"),
         );
       }
     } finally {
@@ -120,11 +122,11 @@ export function LoginForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>{t("loginForm.email")}</FormLabel>
               <FormControl>
                 <Input
                   type="email"
-                  placeholder="name@example.com"
+                  placeholder={t("loginForm.emailPlaceholder")}
                   autoComplete="email"
                   {...field}
                 />
@@ -138,11 +140,11 @@ export function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>{t("loginForm.password")}</FormLabel>
               <FormControl>
                 <Input
                   type="password"
-                  placeholder="••••••••"
+                  placeholder={t("loginForm.passwordPlaceholder")}
                   autoComplete="current-password"
                   {...field}
                 />
@@ -164,7 +166,7 @@ export function LoginForm() {
                   />
                 </FormControl>
                 <FormLabel className="text-sm font-normal cursor-pointer">
-                  Remember me
+                  {t("loginForm.rememberMe")}
                 </FormLabel>
               </FormItem>
             )}
@@ -173,22 +175,22 @@ export function LoginForm() {
             to="/forgot-password"
             className="text-sm text-muted-foreground hover:underline"
           >
-            Forgot password?
+            {t("loginForm.forgotPassword")}
           </Link>
         </div>
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading && (
             <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
           )}
-          Sign In
+          {t("loginForm.signIn")}
         </Button>
         {redirectPath && (
           <p className="text-center text-xs text-muted-foreground">
-            You&apos;ll be redirected after login
+            {t("loginForm.redirectedAfterLogin")}
           </p>
         )}
         <p className="text-center text-xs text-muted-foreground">
-          For Teachers, Students, and Center Staff
+          {t("loginForm.forTeachersStudentsStaff")}
         </p>
       </form>
     </Form>

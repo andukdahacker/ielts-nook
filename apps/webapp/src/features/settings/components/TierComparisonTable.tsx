@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/componen
 import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
 import { AlertTriangle, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { formatCurrency } from "@/lib/locale-utils";
 
 interface TierInfo {
   name: "starter" | "growth" | "enterprise";
@@ -25,10 +27,7 @@ interface TierComparisonTableProps {
 const TIER_ORDER = ["starter", "growth", "enterprise"] as const;
 
 function formatPrice(cents: number, currency = "USD"): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-  }).format(cents / 100);
+  return formatCurrency(cents / 100, currency);
 }
 
 function getTierAction(
@@ -40,11 +39,12 @@ function getTierAction(
   onCheckout: (tier: "starter" | "growth" | "enterprise") => void,
   isCheckoutPending: boolean,
   onDowngradeConfirm: (tier: TierInfo) => void,
+  t: (key: string) => string,
 ) {
   if (tier.isCurrent) {
     return (
       <Badge variant="secondary" className="text-sm px-3 py-1">
-        Current Plan
+        {t("billing.currentPlan")}
       </Badge>
     );
   }
@@ -56,7 +56,7 @@ function getTierAction(
         onClick={() => onCheckout(tier.name)}
         disabled={isCheckoutPending}
       >
-        {isCheckoutPending ? "Processing..." : "Subscribe"}
+        {isCheckoutPending ? t("billing.processing") : t("billing.subscribe")}
       </Button>
     );
   }
@@ -68,13 +68,13 @@ function getTierAction(
           size="sm"
           onClick={() => window.open(portalUrl, "_blank")}
         >
-          Upgrade
+          {t("billing.upgrade")}
         </Button>
       );
     }
     return (
       <Button size="sm" disabled>
-        Upgrade
+        {t("billing.upgrade")}
       </Button>
     );
   }
@@ -88,7 +88,7 @@ function getTierAction(
         onClick={() => onDowngradeConfirm(tier)}
         disabled={!portalUrl}
       >
-        Downgrade
+        {t("billing.downgrade")}
       </Button>
     );
   }
@@ -100,7 +100,7 @@ function getTierAction(
       onClick={() => portalUrl && window.open(portalUrl, "_blank")}
       disabled={!portalUrl}
     >
-      Downgrade
+      {t("billing.downgrade")}
     </Button>
   );
 }
@@ -115,13 +115,14 @@ export function TierComparisonTable({
   isCheckoutPending,
   onDowngradeConfirm,
 }: TierComparisonTableProps) {
+  const { t } = useTranslation("settings");
   const isPilot = currentTier === "pilot";
   const currentIdx = TIER_ORDER.indexOf(currentTier as typeof TIER_ORDER[number]);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Available Plans</CardTitle>
+        <CardTitle className="text-base">{t("billing.availablePlans")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -151,34 +152,32 @@ export function TierComparisonTable({
                   <span className="text-2xl font-bold">
                     {formatPrice(tier.flatPriceCents, currency)}
                   </span>
-                  <span className="text-muted-foreground text-sm">/month</span>
+                  <span className="text-muted-foreground text-sm">{t("billing.perMonth")}</span>
                 </div>
 
                 <p className="text-sm text-muted-foreground">
                   {tier.maxStudents !== null
-                    ? `Up to ${tier.maxStudents} students`
-                    : "Unlimited students"}
+                    ? t("billing.upToStudents", { maxStudents: tier.maxStudents })
+                    : t("billing.unlimitedStudents")}
                 </p>
 
                 {exceedsLimit && (
                   <div className="flex items-start gap-2 text-amber-600 bg-amber-50 rounded-md p-2 text-xs">
                     <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                     <span>
-                      You have {enrolledStudents} students enrolled. This plan
-                      supports up to {tier.maxStudents} students. Excess
-                      students may be affected when the downgrade takes effect.
+                      {t("billing.exceedsWarning", { enrolledStudents, maxStudents: tier.maxStudents })}
                     </span>
                   </div>
                 )}
 
                 {!tier.isCurrent && !isUpgrade && (
                   <p className="text-xs text-muted-foreground">
-                    Effective next billing cycle
+                    {t("billing.nextCycle")}
                   </p>
                 )}
                 {!tier.isCurrent && isUpgrade && (
                   <p className="text-xs text-muted-foreground">
-                    Immediate (prorated)
+                    {t("billing.prorated")}
                   </p>
                 )}
 
@@ -192,6 +191,7 @@ export function TierComparisonTable({
                     onCheckout,
                     isCheckoutPending,
                     onDowngradeConfirm,
+                    t,
                   )}
                 </div>
               </div>

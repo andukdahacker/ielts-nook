@@ -7,6 +7,7 @@ import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { Separator } from "@workspace/ui/components/separator";
 import { ChevronDown } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { CommentVisibility, TeacherComment } from "@workspace/types";
 import { HighlightedText } from "./HighlightedText";
 import { CommentPopover } from "./CommentPopover";
@@ -81,6 +82,7 @@ export function StudentWorkPane({
   anchorStatuses,
   onCreateComment,
 }: StudentWorkPaneProps) {
+  const { t } = useTranslation("grading");
   const [promptOpen, setPromptOpen] = useState(true);
   const answerContainerRef = useRef<HTMLDivElement>(null);
 
@@ -246,7 +248,7 @@ export function StudentWorkPane({
                   <div key={question.id}>
                     {sections.length > 1 || section.questions.length > 1 ? (
                       <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                        Question {qIdx + 1}
+                        {t("studentWork.question", { number: qIdx + 1 })}
                       </h3>
                     ) : null}
 
@@ -256,16 +258,16 @@ export function StudentWorkPane({
                       ) : (
                         <p className="text-sm italic text-muted-foreground">
                           {exerciseSkill === "SPEAKING"
-                            ? "No transcript available"
-                            : "No answer submitted"}
+                            ? t("studentWork.noTranscript")
+                            : t("studentWork.noAnswer")}
                         </p>
                       )}
                     </div>
 
                     <div className="mt-2 text-xs text-muted-foreground">
                       {minWords
-                        ? `${wordCount} / ${minWords} min words`
-                        : `${wordCount} words`}
+                        ? t("studentWork.wordCount", { wordCount, minWords })
+                        : t("studentWork.wordCountOnly", { wordCount })}
                     </div>
 
                     {showSeparator && <Separator className="my-4" />}
@@ -287,7 +289,7 @@ export function StudentWorkPane({
                 <div key={answer.id} data-answer-index={aIdx}>
                   {answers.length > 1 && (
                     <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                      Answer {aIdx + 1}
+                      {t("studentWork.answer", { number: aIdx + 1 })}
                     </h3>
                   )}
 
@@ -297,16 +299,16 @@ export function StudentWorkPane({
                     ) : (
                       <p className="text-sm italic text-muted-foreground">
                         {exerciseSkill === "SPEAKING"
-                          ? "No transcript available"
-                          : "No answer submitted"}
+                          ? t("studentWork.noTranscript")
+                          : t("studentWork.noAnswer")}
                       </p>
                     )}
                   </div>
 
                   <div className="mt-2 text-xs text-muted-foreground">
                     {minWords
-                      ? `${wordCount} / ${minWords} min words`
-                      : `${wordCount} words`}
+                      ? t("studentWork.wordCount", { wordCount, minWords })
+                      : t("studentWork.wordCountOnly", { wordCount })}
                   </div>
 
                   {showSeparator && <Separator className="my-4" />}

@@ -1,23 +1,24 @@
 import type { HealthStatus } from "@workspace/types";
+import { useTranslation } from "react-i18next";
 
 const STATUS_CONFIG: Record<
   HealthStatus,
-  { dotColor: string; textColor: string; label: string }
+  { dotColor: string; textColor: string; labelKey: string }
 > = {
   "at-risk": {
     dotColor: "bg-red-500",
     textColor: "text-red-700",
-    label: "At Risk",
+    labelKey: "trafficLight.atRisk",
   },
   warning: {
     dotColor: "bg-amber-500",
     textColor: "text-amber-700",
-    label: "Warning",
+    labelKey: "trafficLight.warning",
   },
   "on-track": {
     dotColor: "bg-emerald-500",
     textColor: "text-emerald-700",
-    label: "On Track",
+    labelKey: "trafficLight.onTrack",
   },
 };
 
@@ -30,17 +31,19 @@ export function TrafficLightBadge({
   status,
   size = "sm",
 }: TrafficLightBadgeProps) {
+  const { t } = useTranslation("student-health");
   const config = STATUS_CONFIG[status];
   const dotSize = size === "sm" ? "w-2.5 h-2.5" : "w-3 h-3";
+  const label = t(config.labelKey);
 
   return (
     <span
       className="inline-flex items-center gap-1.5"
-      aria-label={`Student status: ${config.label.toLowerCase()}`}
+      aria-label={t("trafficLight.ariaLabel", { status: label.toLowerCase() })}
     >
       <span className={`${dotSize} rounded-full ${config.dotColor}`} />
       <span className={`text-sm font-medium ${config.textColor}`}>
-        {config.label}
+        {label}
       </span>
     </span>
   );

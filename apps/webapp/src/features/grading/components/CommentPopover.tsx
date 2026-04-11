@@ -3,6 +3,7 @@ import { Card, CardContent } from "@workspace/ui/components/card";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Eye, EyeOff } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { CommentVisibility } from "@workspace/types";
 
 interface CommentPopoverProps {
@@ -18,6 +19,7 @@ export function CommentPopover({
   onCancel,
   selectedText,
 }: CommentPopoverProps) {
+  const { t } = useTranslation("grading");
   const [content, setContent] = useState("");
   const [visibility, setVisibility] = useState<CommentVisibility>("student_facing");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -80,7 +82,7 @@ export function CommentPopover({
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Add your comment..."
+            placeholder={t("commentPopover.placeholder")}
             maxLength={5000}
             rows={3}
             // eslint-disable-next-line jsx-a11y/no-autofocus
@@ -97,11 +99,11 @@ export function CommentPopover({
               }
               title={
                 isPrivate
-                  ? "Private — only you can see this"
-                  : "Visible to student"
+                  ? t("commentPopover.privateTitle")
+                  : t("commentPopover.visibleTitle")
               }
               aria-label={
-                isPrivate ? "Make visible to student" : "Make private"
+                isPrivate ? t("commentPopover.privateAriaLabel") : t("commentPopover.visibleAriaLabel")
               }
             >
               {isPrivate ? (
@@ -120,7 +122,7 @@ export function CommentPopover({
                 onClick={handleSubmit}
                 disabled={!content.trim()}
               >
-                Comment
+                {t("commentPopover.comment")}
               </Button>
             </div>
           </div>

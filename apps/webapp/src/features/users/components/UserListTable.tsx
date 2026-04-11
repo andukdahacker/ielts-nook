@@ -1,4 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
+import { useTranslation } from "react-i18next";
 import {
   Table,
   TableBody,
@@ -44,6 +45,7 @@ export function UserListTable({
   totalPages,
   hasMore,
 }: UserListTableProps) {
+  const { t } = useTranslation("users");
   const allSelected = users.length > 0 && users.every((u) => selectedUserIds.includes(u.id));
   const someSelected = users.some((u) => selectedUserIds.includes(u.id)) && !allSelected;
 
@@ -91,7 +93,7 @@ export function UserListTable({
   if (users.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        No users found
+        {t("userListTable.empty")}
       </div>
     );
   }
@@ -111,15 +113,15 @@ export function UserListTable({
                     }
                   }}
                   onCheckedChange={handleSelectAll}
-                  aria-label="Select all"
+                  aria-label={t("table.selectAll", { ns: "common" })}
                 />
               </TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Last Active</TableHead>
-              <TableHead className="w-12">Actions</TableHead>
+              <TableHead>{t("userListTable.headerUser")}</TableHead>
+              <TableHead>{t("userListTable.headerEmail")}</TableHead>
+              <TableHead>{t("userListTable.headerRole")}</TableHead>
+              <TableHead>{t("userListTable.headerStatus")}</TableHead>
+              <TableHead>{t("userListTable.headerLastActive")}</TableHead>
+              <TableHead className="w-12">{t("table.actions", { ns: "common" })}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -137,7 +139,7 @@ export function UserListTable({
                       handleSelectUser(user.id, checked as boolean)
                     }
                     disabled={user.role === "OWNER"}
-                    aria-label={`Select ${user.name || user.email}`}
+                    aria-label={t("userListTable.selectUser", { user: user.name || user.email })}
                   />
                 </TableCell>
                 <TableCell>
@@ -157,7 +159,7 @@ export function UserListTable({
                         user.status === "SUSPENDED" && "line-through"
                       )}
                     >
-                      {user.name || "No name"}
+                      {user.name || t("userListTable.noName")}
                     </span>
                   </div>
                 </TableCell>
@@ -189,7 +191,7 @@ export function UserListTable({
                     ? formatDistanceToNow(new Date(user.lastActiveAt), {
                         addSuffix: true,
                       })
-                    : "Never"}
+                    : t("userListTable.neverActive")}
                 </TableCell>
                 <TableCell>
                   <UserActionsDropdown user={user} />
@@ -203,7 +205,7 @@ export function UserListTable({
       {/* Pagination */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Page {currentPage} of {totalPages}
+          {t("userListTable.pagination", { current: currentPage, total: totalPages })}
         </p>
         <div className="flex gap-2">
           <Button

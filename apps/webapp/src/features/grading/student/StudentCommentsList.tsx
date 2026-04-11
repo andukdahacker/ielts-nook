@@ -1,5 +1,6 @@
 import { Badge } from "@workspace/ui/components/badge";
 import { Bot, User } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface FeedbackItem {
   id: string;
@@ -31,6 +32,7 @@ export function StudentCommentsList({
   teacherComments,
   generalFeedback,
 }: StudentCommentsListProps) {
+  const { t } = useTranslation("grading");
   // Unanchored AI items (no offsets)
   const unanchoredAI = feedbackItems.filter(
     (item) => item.startOffset == null && item.endOffset == null,
@@ -73,7 +75,7 @@ export function StudentCommentsList({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-medium">General Feedback</h3>
+      <h3 className="text-sm font-medium">{t("studentComments.generalFeedback")}</h3>
 
       {generalFeedback && (
         <div className="rounded-lg border bg-muted/30 p-4">
@@ -101,11 +103,11 @@ export function StudentCommentsList({
             <div className="flex items-center gap-2 mb-1">
               {item.type === "ai" ? (
                 <Badge variant="secondary" className="text-[10px]">
-                  AI
+                  {t("studentComments.ai")}
                 </Badge>
               ) : (
                 <>
-                  <Badge className="bg-emerald-600 text-[10px]">Teacher</Badge>
+                  <Badge className="bg-emerald-600 text-[10px]">{t("studentComments.teacher")}</Badge>
                   {item.authorName && (
                     <span className="text-xs text-muted-foreground">
                       {item.authorName}

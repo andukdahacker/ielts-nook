@@ -1,5 +1,6 @@
 import { CheckCircle2 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 interface StampedAnimationProps {
   isVisible: boolean;
@@ -7,6 +8,7 @@ interface StampedAnimationProps {
 }
 
 export function StampedAnimation({ isVisible, onComplete }: StampedAnimationProps) {
+  const { t } = useTranslation("grading");
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
@@ -23,7 +25,7 @@ export function StampedAnimation({ isVisible, onComplete }: StampedAnimationProp
       <div className="flex flex-col items-center gap-2 animate-stamp-in">
         <CheckCircle2 className="h-20 w-20 text-green-500" />
         <span className="text-lg font-semibold text-green-700 animate-fade-in">
-          Graded!
+          {t("stamped.graded")}
         </span>
       </div>
       <style>{`

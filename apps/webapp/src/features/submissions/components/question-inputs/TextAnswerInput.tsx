@@ -1,5 +1,6 @@
 import { Input } from "@workspace/ui/components/input";
 import { Badge } from "@workspace/ui/components/badge";
+import { useTranslation } from "react-i18next";
 
 interface TextAnswerInputProps {
   questionText: string;
@@ -18,6 +19,7 @@ export function TextAnswerInput({
   onChange,
   readOnly,
 }: TextAnswerInputProps) {
+  const { t } = useTranslation("submissions");
   const currentAnswer = (value as { answer?: string })?.answer ?? "";
 
   return (
@@ -29,13 +31,13 @@ export function TextAnswerInput({
         <Input
           value={currentAnswer}
           onChange={(e) => onChange({ answer: e.target.value })}
-          placeholder="Type your answer..."
+          placeholder={t("textAnswer.placeholder")}
           className="min-h-[44px] text-sm"
           disabled={readOnly}
         />
         {wordLimit && (
           <Badge variant="outline" className="text-xs shrink-0">
-            Max {wordLimit} word{wordLimit > 1 ? "s" : ""}
+            {t("textAnswer.maxWords", { wordLimit, count: wordLimit })}
           </Badge>
         )}
       </div>

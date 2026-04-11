@@ -8,9 +8,11 @@ import {
   SidebarMenuItem,
 } from "@workspace/ui/components/sidebar";
 import { Link, useLocation } from "react-router";
+import { useTranslation } from "react-i18next";
 import type { NavItem } from "./app-sidebar";
 
 export function NavMain({ items }: { items: NavItem[] }) {
+  const { t } = useTranslation();
   const location = useLocation();
 
   // Find the most specific matching nav item to avoid parent routes
@@ -44,7 +46,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
               >
                 <Link to={item.url} aria-current={isActive ? "page" : undefined}>
                   {item.icon}
-                  <span>{item.title}</span>
+                  <span>{t(item.title)}</span>
                 </Link>
               </SidebarMenuButton>
               {item.badge && (

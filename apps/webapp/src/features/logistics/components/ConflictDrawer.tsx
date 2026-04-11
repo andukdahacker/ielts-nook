@@ -7,6 +7,7 @@ import {
 } from "@workspace/ui/components/sheet";
 import { Button } from "@workspace/ui/components/button";
 import { AlertTriangle, Clock, DoorOpen, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { RBACWrapper } from "@/features/auth/components/RBACWrapper";
 import type { ConflictingSession, Suggestion } from "@workspace/types";
 import { format } from "date-fns";
@@ -34,6 +35,7 @@ export function ConflictDrawer({
   onForceSave,
   isForcing,
 }: ConflictDrawerProps) {
+  const { t } = useTranslation("logistics");
   const timeSuggestions = suggestions.filter((s) => s.type === "time");
   const roomSuggestions = suggestions.filter((s) => s.type === "room");
 
@@ -43,12 +45,12 @@ export function ConflictDrawer({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2 text-amber-800">
             <AlertTriangle className="size-5" />
-            Scheduling Conflicts
+            {t("conflictDrawer.title")}
           </SheetTitle>
           <SheetDescription>
             {sessionName
-              ? `Conflicts detected for "${sessionName}"`
-              : "The following scheduling conflicts were detected"}
+              ? t("conflictDrawer.descriptionDetected", { sessionName })
+              : t("conflictDrawer.descriptionGeneral")}
           </SheetDescription>
         </SheetHeader>
 
@@ -58,7 +60,7 @@ export function ConflictDrawer({
             <div className="space-y-3">
               <h3 className="flex items-center gap-2 font-semibold text-red-700">
                 <DoorOpen className="size-4" />
-                Room Double-Booking ({roomConflicts.length})
+                {t("conflictDrawer.roomDoubleBooking", { count: roomConflicts.length })}
               </h3>
               <div className="space-y-2">
                 {roomConflicts.map((conflict) => (
@@ -78,7 +80,7 @@ export function ConflictDrawer({
                     </div>
                     {conflict.teacherName && (
                       <div className="text-sm text-red-600">
-                        Teacher: {conflict.teacherName}
+                        {t("conflictDrawer.teacher")} {conflict.teacherName}
                       </div>
                     )}
                   </div>
@@ -92,7 +94,7 @@ export function ConflictDrawer({
             <div className="space-y-3">
               <h3 className="flex items-center gap-2 font-semibold text-orange-700">
                 <Clock className="size-4" />
-                Teacher Double-Booking ({teacherConflicts.length})
+                {t("conflictDrawer.teacherDoubleBooking", { count: teacherConflicts.length })}
               </h3>
               <div className="space-y-2">
                 {teacherConflicts.map((conflict) => (
@@ -101,7 +103,7 @@ export function ConflictDrawer({
                     className="rounded-lg border border-orange-200 bg-orange-50 p-3"
                   >
                     <div className="font-medium text-orange-800">
-                      {conflict.teacherName ?? "Assigned Teacher"}
+                      {conflict.teacherName ?? t("conflictDrawer.assignedTeacher")}
                     </div>
                     <div className="text-sm text-orange-700">
                       {conflict.courseName} - {conflict.className}
@@ -112,7 +114,7 @@ export function ConflictDrawer({
                     </div>
                     {conflict.roomName && (
                       <div className="text-sm text-orange-600">
-                        Room: {conflict.roomName}
+                        {t("conflictDrawer.room")} {conflict.roomName}
                       </div>
                     )}
                   </div>
@@ -125,13 +127,13 @@ export function ConflictDrawer({
           {(timeSuggestions.length > 0 || roomSuggestions.length > 0) && (
             <div className="space-y-3 border-t pt-4">
               <h3 className="font-semibold text-green-700">
-                Available Alternatives
+                {t("conflictDrawer.availableAlternatives")}
               </h3>
 
               {timeSuggestions.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    Alternative time slots:
+                    {t("conflictDrawer.alternativeTimeslots")}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {timeSuggestions.map((suggestion, idx) => (
@@ -153,7 +155,7 @@ export function ConflictDrawer({
               {roomSuggestions.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    Available rooms:
+                    {t("conflictDrawer.availableRooms")}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {roomSuggestions.map((suggestion, idx) => (
@@ -178,7 +180,7 @@ export function ConflictDrawer({
           <div className="flex gap-2 border-t pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               <X className="mr-1 size-4" />
-              Close
+              {t("button.close", { ns: "common" })}
             </Button>
             <RBACWrapper requiredRoles={["OWNER", "ADMIN"]}>
               <Button
@@ -186,7 +188,7 @@ export function ConflictDrawer({
                 onClick={onForceSave}
                 disabled={isForcing}
               >
-                {isForcing ? "Saving..." : "Force Save (Override)"}
+                {isForcing ? t("conflictDrawer.forceSaving") : t("conflictDrawer.forceSave")}
               </Button>
             </RBACWrapper>
           </div>

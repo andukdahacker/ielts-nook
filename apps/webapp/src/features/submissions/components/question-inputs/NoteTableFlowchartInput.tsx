@@ -1,5 +1,6 @@
 import { Input } from "@workspace/ui/components/input";
 import { Badge } from "@workspace/ui/components/badge";
+import { useTranslation } from "react-i18next";
 import { splitByBlanks, formatBlankDisplay } from "../../../exercises/components/question-types/blank-format";
 
 interface NoteTableFlowchartInputProps {
@@ -25,10 +26,11 @@ export function NoteTableFlowchartInput({
   onChange,
   readOnly,
 }: NoteTableFlowchartInputProps) {
+  const { t } = useTranslation("submissions");
   if (!options?.structure) {
     return (
       <div className="text-sm text-muted-foreground italic">
-        {questionIndex + 1}. No structure configured.
+        {questionIndex + 1}. {t("noteTableFlowchart.noStructure")}
       </div>
     );
   }
@@ -102,9 +104,10 @@ function TableContent({
   structure: string;
   renderBlank: (blankNum: string) => React.ReactNode;
 }) {
+  const { t } = useTranslation("submissions");
   const parsed = safeParseJson<{ columns: string[]; rows: string[][] }>(structure);
   if (!parsed) {
-    return <p className="text-sm text-muted-foreground italic">Invalid table structure.</p>;
+    return <p className="text-sm text-muted-foreground italic">{t("noteTableFlowchart.invalidTable")}</p>;
   }
 
   return (
@@ -147,9 +150,10 @@ function FlowchartContent({
   structure: string;
   renderBlank: (blankNum: string) => React.ReactNode;
 }) {
+  const { t } = useTranslation("submissions");
   const parsed = safeParseJson<{ steps: string[] }>(structure);
   if (!parsed) {
-    return <p className="text-sm text-muted-foreground italic">Invalid flowchart structure.</p>;
+    return <p className="text-sm text-muted-foreground italic">{t("noteTableFlowchart.invalidFlowchart")}</p>;
   }
 
   return (

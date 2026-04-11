@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Bell, CheckCheck } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -15,6 +16,7 @@ import { cn } from "@workspace/ui/lib/utils";
 import { useState } from "react";
 
 export function NotificationBell() {
+  const { t } = useTranslation("dashboard");
   const { user } = useAuth();
   const {
     notifications,
@@ -55,13 +57,13 @@ export function NotificationBell() {
             </Badge>
           )}
           <span className="sr-only">
-            {unreadCount} unread notifications
+            {unreadCount} {t("notificationBell.ariaLabel")}
           </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
         <div className="flex items-center justify-between p-4 pb-2">
-          <h4 className="font-semibold">Notifications</h4>
+          <h4 className="font-semibold">{t("notificationBell.heading")}</h4>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -70,7 +72,7 @@ export function NotificationBell() {
               onClick={handleMarkAllAsRead}
             >
               <CheckCheck className="size-3 mr-1" />
-              Mark all read
+              {t("notificationBell.markAllRead")}
             </Button>
           )}
         </div>
@@ -78,11 +80,11 @@ export function NotificationBell() {
         <ScrollArea className="h-[300px]">
           {isLoading ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              Loading...
+              {t("notificationBell.loading")}
             </div>
           ) : notifications.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              No notifications
+              {t("notificationBell.empty")}
             </div>
           ) : (
             <div className="divide-y">

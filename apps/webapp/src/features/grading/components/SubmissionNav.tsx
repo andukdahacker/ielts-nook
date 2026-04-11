@@ -1,6 +1,7 @@
 import { Button } from "@workspace/ui/components/button";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 interface SubmissionNavProps {
   currentIndex: number;
@@ -17,6 +18,7 @@ export function SubmissionNav({
   onNext,
   onBackToQueue,
 }: SubmissionNavProps) {
+  const { t } = useTranslation("grading");
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < total - 1;
 
@@ -55,7 +57,7 @@ export function SubmissionNav({
             onClick={onBackToQueue}
           >
             <ArrowLeft className="mr-1 h-4 w-4" />
-            Queue
+            {t("submissionNav.queue")}
           </Button>
         )}
         <Button
@@ -65,11 +67,11 @@ export function SubmissionNav({
           disabled={!hasPrev}
         >
           <ChevronLeft className="mr-1 h-4 w-4" />
-          Prev
+          {t("submissionNav.prev")}
         </Button>
       </div>
       <span className="text-sm text-muted-foreground">
-        {total > 0 ? `${currentIndex + 1} of ${total} submissions` : "No submissions"}
+        {total > 0 ? t("submissionNav.submissions", { current: currentIndex + 1, total }) : t("submissionNav.noSubmissions")}
       </span>
       <Button
         variant="ghost"
@@ -77,7 +79,7 @@ export function SubmissionNav({
         onClick={onNext}
         disabled={!hasNext}
       >
-        Next
+        {t("submissionNav.next")}
         <ChevronRight className="ml-1 h-4 w-4" />
       </Button>
     </div>

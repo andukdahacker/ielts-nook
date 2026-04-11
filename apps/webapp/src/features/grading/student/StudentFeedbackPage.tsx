@@ -1,5 +1,6 @@
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { AlertCircle, ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
 import { Button } from "@workspace/ui/components/button";
 import { useStudentFeedback } from "../hooks/use-student-feedback";
@@ -11,6 +12,7 @@ import { SubmissionHistoryPanel } from "./SubmissionHistoryPanel";
 import { useEffect } from "react";
 
 export function StudentFeedbackPage() {
+  const { t } = useTranslation("grading");
   const { centerId, submissionId } = useParams<{
     centerId: string;
     submissionId: string;
@@ -50,24 +52,24 @@ export function StudentFeedbackPage() {
         <AlertCircle className="h-12 w-12 text-muted-foreground" />
         <h2 className="text-lg font-semibold">
           {status === 403
-            ? "Not Authorized"
+            ? t("studentFeedbackPage.notAuthorized")
             : status === 404
-              ? "Submission Not Found"
-              : "Something went wrong"}
+              ? t("studentFeedbackPage.submissionNotFound")
+              : t("studentFeedbackPage.somethingWrong")}
         </h2>
         <p className="text-sm text-muted-foreground">
           {status === 403
-            ? "You don't have access to view this submission."
+            ? t("studentFeedbackPage.notAuthorizedMessage")
             : status === 404
-              ? "This submission could not be found."
-              : "Please try again later."}
+              ? t("studentFeedbackPage.submissionNotFoundMessage")
+              : t("studentFeedbackPage.somethingWrongMessage")}
         </p>
         <Button
           variant="outline"
           onClick={() => navigate(`/${centerId}/dashboard`)}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
+          {t("studentFeedbackPage.backToDashboard")}
         </Button>
       </div>
     );
@@ -93,7 +95,7 @@ export function StudentFeedbackPage() {
         className="mb-2"
       >
         <ArrowLeft className="mr-1 h-4 w-4" />
-        Back
+        {t("studentFeedbackPage.back")}
       </Button>
 
       {/* Sticky score header */}
@@ -117,7 +119,7 @@ export function StudentFeedbackPage() {
 
       {/* Student work with inline feedback */}
       <div>
-        <h3 className="mb-3 text-sm font-medium">Your Response</h3>
+        <h3 className="mb-3 text-sm font-medium">{t("studentFeedbackPage.yourResponse")}</h3>
         <StudentFeedbackContent
           answers={
             (submission?.answers as Array<{

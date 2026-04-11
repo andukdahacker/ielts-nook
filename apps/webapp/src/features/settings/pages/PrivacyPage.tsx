@@ -1,12 +1,14 @@
 import { Shield } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function PrivacyPage() {
+  const { t } = useTranslation("settings");
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Privacy</h2>
+        <h2 className="text-lg font-semibold">{t("privacy.heading")}</h2>
         <p className="text-muted-foreground">
-          Manage data privacy and compliance settings.
+          {t("privacy.description")}
         </p>
       </div>
 
@@ -14,10 +16,9 @@ export function PrivacyPage() {
         <div className="rounded-full bg-muted p-4 mb-4">
           <Shield className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="text-base font-semibold">Coming Soon</h3>
+        <h3 className="text-base font-semibold">{t("privacy.comingSoonTitle")}</h3>
         <p className="text-muted-foreground max-w-sm mt-2">
-          Data sovereignty controls and privacy center will be available in Epic
-          8.
+          {t("privacy.comingSoonDescription")}
         </p>
       </div>
     </div>

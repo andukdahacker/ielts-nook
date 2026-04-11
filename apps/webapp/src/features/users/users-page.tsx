@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
+import { useTranslation } from "react-i18next";
 import {
   Card,
   CardContent,
@@ -27,6 +28,7 @@ import { useAuth } from "@/features/auth/auth-context";
 const DEFAULT_LIMIT = 20;
 
 export function UsersPage() {
+  const { t } = useTranslation("users");
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<string>("users");
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
@@ -74,9 +76,9 @@ export function UsersPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
-            <CardTitle className="text-2xl">User Management</CardTitle>
+            <CardTitle className="text-2xl">{t("page.title")}</CardTitle>
             <CardDescription>
-              View and manage all users in your center
+              {t("page.description")}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -87,8 +89,8 @@ export function UsersPage() {
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
-              <TabsTrigger value="users">Active Users</TabsTrigger>
-              <TabsTrigger value="invitations">Pending Invitations</TabsTrigger>
+              <TabsTrigger value="users">{t("tab.activeUsers")}</TabsTrigger>
+              <TabsTrigger value="invitations">{t("tab.pendingInvitations")}</TabsTrigger>
             </TabsList>
             <TabsContent value="users" className="mt-4">
               <SearchFilterControls

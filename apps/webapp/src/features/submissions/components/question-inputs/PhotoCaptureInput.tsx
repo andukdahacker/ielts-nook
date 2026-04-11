@@ -1,6 +1,7 @@
 import { Button } from "@workspace/ui/components/button";
 import { Camera, X, RotateCcw } from "lucide-react";
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 interface PhotoCaptureInputProps {
   questionIndex: number;
@@ -17,6 +18,7 @@ export function PhotoCaptureInput({
   onPhotoCapture,
   readOnly,
 }: PhotoCaptureInputProps) {
+  const { t } = useTranslation("submissions");
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     (value as { photoUrl?: string })?.photoUrl ?? null,
   );
@@ -28,7 +30,7 @@ export function PhotoCaptureInput({
 
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size exceeds 5MB limit");
+      alert(t("photoCapture.sizeError"));
       return;
     }
 
@@ -52,7 +54,7 @@ export function PhotoCaptureInput({
   return (
     <div className="space-y-3">
       <p className="text-sm">
-        <span className="font-medium">{questionIndex + 1}.</span> Upload a photo of your handwritten answer
+        <span className="font-medium">{questionIndex + 1}.</span> {t("photoCapture.label")}
       </p>
 
       <input
@@ -71,19 +73,19 @@ export function PhotoCaptureInput({
           className="min-h-[44px] gap-2 w-full"
         >
           <Camera className="size-4" />
-          Take Photo or Choose File
+          {t("photoCapture.button")}
         </Button>
       )}
 
       {!previewUrl && readOnly && (
-        <p className="text-sm text-muted-foreground italic">No photo submitted.</p>
+        <p className="text-sm text-muted-foreground italic">{t("photoCapture.noPhoto")}</p>
       )}
 
       {previewUrl && (
         <div className="relative">
           <img
             src={previewUrl}
-            alt="Captured answer"
+            alt={t("photoCapture.alt")}
             className="max-w-full h-auto rounded-lg border max-h-[300px] object-contain"
           />
           {!readOnly && (
@@ -95,7 +97,7 @@ export function PhotoCaptureInput({
                 className="gap-1"
               >
                 <RotateCcw className="size-3" />
-                Retake
+                {t("photoCapture.retake")}
               </Button>
               <Button
                 variant="ghost"
@@ -104,7 +106,7 @@ export function PhotoCaptureInput({
                 className="gap-1 text-destructive"
               >
                 <X className="size-3" />
-                Remove
+                {t("photoCapture.remove")}
               </Button>
             </div>
           )}

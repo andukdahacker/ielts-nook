@@ -99,37 +99,43 @@ describe("AssignmentCard", () => {
 });
 
 describe("formatRelativeDue", () => {
-  it("returns 'No deadline' for null dueDate", () => {
-    expect(formatRelativeDue(null)).toEqual({ text: "No deadline", className: "" });
+  it("returns 'no deadline' i18n key for null dueDate", () => {
+    const result = formatRelativeDue(null);
+    expect(result.i18nKey).toBe("assignmentCard.due.noDeadline");
+    expect(result.className).toBe("");
+    expect(result.fallbackDate).toBeUndefined();
   });
 
-  it("returns 'Overdue' for past dates", () => {
+  it("returns 'overdue' for past dates", () => {
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const result = formatRelativeDue(yesterday);
-    expect(result.text).toBe("Overdue");
+    expect(result.i18nKey).toBe("assignmentCard.due.overdue");
     expect(result.className).toContain("text-red-600");
   });
 
-  it("returns 'Due today' for today's date", () => {
+  it("returns 'due today' for today's date", () => {
     const laterToday = new Date();
     laterToday.setHours(23, 59, 0, 0);
     const result = formatRelativeDue(laterToday.toISOString());
-    expect(result.text).toBe("Due today");
+    expect(result.i18nKey).toBe("assignmentCard.due.dueToday");
     expect(result.className).toContain("text-orange-600");
   });
 
-  it("returns 'Due tomorrow' for next day", () => {
+  it("returns 'due tomorrow' for next day", () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(12, 0, 0, 0);
     const result = formatRelativeDue(tomorrow.toISOString());
-    expect(result.text).toBe("Due tomorrow");
+    expect(result.i18nKey).toBe("assignmentCard.due.dueTomorrow");
   });
 
-  it("returns formatted date for dates beyond a week", () => {
-    const farFuture = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  it("returns absolute date key with fallback for dates beyond a week", () => {
+    const farFuture = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ).toISOString();
     const result = formatRelativeDue(farFuture);
-    expect(result.text).not.toContain("Due in");
+    expect(result.i18nKey).toBe("assignmentCard.due.absoluteDate");
+    expect(result.fallbackDate).toBe(farFuture);
     expect(result.className).toBe("");
   });
 });

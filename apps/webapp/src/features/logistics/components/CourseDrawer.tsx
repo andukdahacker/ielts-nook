@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -43,6 +44,7 @@ export function CourseDrawer({
   onOpenChange,
   centerId,
 }: CourseDrawerProps) {
+  const { t } = useTranslation("logistics");
   const [step, setStep] = useState(1);
   const [isSavingNext, setIsSavingNext] = useState(false);
   const isEditing = !!course;
@@ -80,23 +82,21 @@ export function CourseDrawer({
     try {
       if (isEditing && course) {
         await updateCourse({ id: course.id, input: values });
-        toast.success("Course updated successfully");
+        toast.success(t("courseDrawer.toastUpdateSuccess"));
       } else {
         await createCourse(values);
-        toast.success("Course created successfully");
+        toast.success(t("courseDrawer.toastSuccess"));
       }
       onOpenChange(false);
     } catch {
-      toast.error("Failed to save course");
+      toast.error(t("courseDrawer.toastError"));
     }
   };
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && form.formState.isDirty) {
       if (
-        confirm(
-          "You have unsaved changes. Are you sure you want to close this drawer?",
-        )
+        confirm(t("courseDrawer.unsavedChanges"))
       ) {
         onOpenChange(false);
       }
@@ -116,10 +116,10 @@ export function CourseDrawer({
       setIsSavingNext(true);
       try {
         await updateCourse({ id: course.id, input: form.getValues() });
-        toast.success("Changes saved");
+        toast.success(t("courseDrawer.toastSaveChanges"));
         setStep(2);
       } catch {
-        toast.error("Failed to save changes");
+        toast.error(t("courseDrawer.toastSaveError"));
       } finally {
         setIsSavingNext(false);
       }
@@ -133,12 +133,12 @@ export function CourseDrawer({
       <SheetContent className="sm:max-w-md">
         <SheetHeader>
           <SheetTitle>
-            {isEditing ? "Edit Course" : "Create New Course"}
+            {isEditing ? t("courseDrawer.titleEdit") : t("courseDrawer.titleCreate")}
           </SheetTitle>
           <SheetDescription>
             {step === 1
-              ? "Fill in the basic details for your course."
-              : "Configure scheduling and roster options."}
+              ? t("courseDrawer.descriptionStep1")
+              : t("courseDrawer.descriptionStep2")}
           </SheetDescription>
         </SheetHeader>
 
@@ -154,9 +154,9 @@ export function CourseDrawer({
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Course Name</FormLabel>
+                      <FormLabel>{t("courseDrawer.courseName")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. IELTS Foundation" {...field} />
+                        <Input placeholder={t("courseDrawer.courseNamePlaceholder")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -168,10 +168,10 @@ export function CourseDrawer({
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>{t("courseDrawer.description")}</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="What will students learn in this course?"
+                          placeholder={t("courseDrawer.descriptionPlaceholder")}
                           className="resize-none"
                           {...field}
                           value={field.value || ""}
@@ -187,7 +187,7 @@ export function CourseDrawer({
                   name="color"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Brand Color</FormLabel>
+                      <FormLabel>{t("courseDrawer.brandColor")}</FormLabel>
                       <div className="flex items-center gap-4">
                         <FormControl>
                           <Input
@@ -205,7 +205,7 @@ export function CourseDrawer({
                         />
                       </div>
                       <FormDescription>
-                        Used for course identification on the calendar.
+                        {t("courseDrawer.brandColorHelp")}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -218,12 +218,10 @@ export function CourseDrawer({
               <div className="space-y-4">
                 <div className="rounded-md bg-muted p-4 text-sm text-muted-foreground">
                   <p className="font-medium text-foreground">
-                    Scheduling & Roster
+                    {t("courseDrawer.schedulingRoster")}
                   </p>
                   <p className="mt-1">
-                    Specific classes and schedules will be managed in the
-                    Classes section. This step will allow you to pre-configure
-                    defaults in a future update.
+                    {t("courseDrawer.schedulingRosterInfo")}
                   </p>
                 </div>
                 {/*
@@ -232,15 +230,15 @@ export function CourseDrawer({
                   we keep them as progressive disclosure UI for now.
                 */}
                 <FormItem>
-                  <FormLabel>Default Teacher</FormLabel>
-                  <Input disabled placeholder="Select teacher..." />
+                  <FormLabel>{t("courseDrawer.defaultTeacher")}</FormLabel>
+                  <Input disabled placeholder={t("courseDrawer.defaultTeacherPlaceholder")} />
                 </FormItem>
                 <FormItem>
-                  <FormLabel>Room</FormLabel>
-                  <Input disabled placeholder="e.g. Room 101" />
+                  <FormLabel>{t("courseDrawer.room")}</FormLabel>
+                  <Input disabled placeholder={t("courseDrawer.roomPlaceholder")} />
                 </FormItem>
                 <FormItem>
-                  <FormLabel>Days</FormLabel>
+                  <FormLabel>{t("courseDrawer.days")}</FormLabel>
                   <div className="flex gap-2">
                     {["M", "T", "W", "T", "F", "S", "S"].map((day, i) => (
                       <Button
@@ -267,7 +265,7 @@ export function CourseDrawer({
                   onClick={() => setStep(1)}
                 >
                   <ChevronLeft className="mr-2 size-4" />
-                  Back
+                  {t("button.back", { ns: "common" })}
                 </Button>
               ) : (
                 <div /> // Spacer
@@ -283,7 +281,7 @@ export function CourseDrawer({
                     {isSavingNext && (
                       <Loader2 className="mr-2 size-4 animate-spin" />
                     )}
-                    Next
+                    {t("button.next", { ns: "common" })}
                     <ChevronRight className="ml-2 size-4" />
                   </Button>
                 ) : (
@@ -291,7 +289,7 @@ export function CourseDrawer({
                     {form.formState.isSubmitting && (
                       <Loader2 className="mr-2 size-4 animate-spin" />
                     )}
-                    {isEditing ? "Save Changes" : "Create Course"}
+                    {isEditing ? t("button.saveChanges", { ns: "common" }) : t("courseDrawer.createCourse")}
                   </Button>
                 )}
               </div>
