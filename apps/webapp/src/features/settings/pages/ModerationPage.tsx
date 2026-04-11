@@ -265,11 +265,12 @@ function FlagDetailPanel({ flag }: { flag: ModerationFlag | null }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">
+            <label htmlFor="redact-textarea" className="text-sm font-medium">
               <Scissors className="h-4 w-4 inline mr-1" />
               Redact — provide replacement text:
             </label>
             <Textarea
+              id="redact-textarea"
               value={redactedText}
               onChange={(e) => setRedactedText(e.target.value)}
               placeholder="Enter the redacted version of the content..."

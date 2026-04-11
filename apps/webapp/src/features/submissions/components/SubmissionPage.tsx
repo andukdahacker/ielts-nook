@@ -118,7 +118,7 @@ export function SubmissionPage() {
       .finally(() => {
         setLocalAnswersRestored(true);
       });
-  }, [centerId, assignmentId, submissionId]);
+  }, [centerId, assignmentId, submissionId, isLocked]);
 
   // Flatten questions from sections
   const flatQuestions = useMemo<FlatQuestion[]>(() => {

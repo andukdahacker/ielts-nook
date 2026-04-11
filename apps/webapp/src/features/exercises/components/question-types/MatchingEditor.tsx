@@ -200,9 +200,9 @@ export function MatchingEditor({
   onChange,
 }: MatchingEditorProps) {
   const config = MATCHING_CONFIGS[sectionType as MatchingSectionType];
-  const sourceItems = options?.sourceItems ?? [];
-  const targetItems = options?.targetItems ?? [];
-  const matches = correctAnswer?.matches ?? {};
+  const sourceItems = useMemo(() => options?.sourceItems ?? [], [options?.sourceItems]);
+  const targetItems = useMemo(() => options?.targetItems ?? [], [options?.targetItems]);
+  const matches = useMemo(() => correctAnswer?.matches ?? {}, [correctAnswer?.matches]);
 
   const [newSource, setNewSource] = useState("");
   const [newTarget, setNewTarget] = useState("");
@@ -231,6 +231,7 @@ export function MatchingEditor({
   }
 
   // Stabilize targetItems reference to avoid breaking React.memo on MatchingSourceRow
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on joined string for shallow equality
   const stableTargetItems = useMemo(() => targetItems, [targetItems.join("\0")]);
 
   // --- Refs for latest state (avoids stale closures in useCallback) ---

@@ -36,7 +36,8 @@ export function BreadcrumbProvider({ children }: { children: React.ReactNode }) 
 
   const removeLabel = useCallback((segment: string) => {
     setLabels((prev) => {
-      const { [segment]: _, ...rest } = prev;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [segment]: _removed, ...rest } = prev;
       return rest;
     });
   }, []);

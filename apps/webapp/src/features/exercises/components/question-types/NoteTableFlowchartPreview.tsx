@@ -40,7 +40,7 @@ export function NoteTableFlowchartPreview({
     );
   }
 
-  const { subFormat, structure, wordLimit } = options;
+  const { subFormat, structure } = options;
 
   return (
     <div className="space-y-2">

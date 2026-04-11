@@ -213,7 +213,7 @@ describe("MemoizedQuestionRow sibling isolation", () => {
 
     const { rerender } = render(
       <QuestionSectionEditor
-        section={section as any}
+        section={section as unknown as Parameters<typeof QuestionSectionEditor>[0]["section"]}
         skill="READING"
         index={0}
         onUpdateSection={stableOnUpdateSection}
@@ -236,7 +236,7 @@ describe("MemoizedQuestionRow sibling isolation", () => {
 
     rerender(
       <QuestionSectionEditor
-        section={updatedSection as any}
+        section={updatedSection as unknown as Parameters<typeof QuestionSectionEditor>[0]["section"]}
         skill="READING"
         index={0}
         onUpdateSection={stableOnUpdateSection}

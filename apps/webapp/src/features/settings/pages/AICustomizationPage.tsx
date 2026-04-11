@@ -170,7 +170,7 @@ export function AICustomizationPage() {
           {isAtLimit ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span tabIndex={0}>
+                <span role="button" tabIndex={0}>
                   <Button disabled>
                     <Plus className="mr-2 h-4 w-4" />
                     {t("ai.addSample")}
