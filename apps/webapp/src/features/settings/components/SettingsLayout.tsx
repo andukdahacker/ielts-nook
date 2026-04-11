@@ -55,7 +55,7 @@ export function SettingsLayout() {
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                {tab.label}
+                {t(tab.labelKey)}
                 {tab.badge && (
                   <Badge variant="secondary" className="text-[10px] ml-2">
                     {tab.badge}
@@ -86,7 +86,7 @@ export function SettingsLayout() {
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                {tab.label}
+                {t(tab.labelKey)}
                 {tab.badge && (
                   <Badge variant="secondary" className="text-[10px]">
                     {tab.badge}

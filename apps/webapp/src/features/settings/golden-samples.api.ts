@@ -80,6 +80,21 @@ export function useDeleteGoldenSample() {
   });
 }
 
+export function useReorderGoldenSamples() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await client.POST("/api/v1/golden-samples/reorder", {
+        body: { ids },
+      });
+      if (error) throw new Error((error as { message?: string }).message || "Failed to reorder samples");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: goldenSampleKeys.all });
+    },
+  });
+}
+
 export function useToggleGoldenSample() {
   const queryClient = useQueryClient();
   return useMutation({

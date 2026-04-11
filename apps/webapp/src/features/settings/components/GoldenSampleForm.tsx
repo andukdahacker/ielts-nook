@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
@@ -28,14 +29,12 @@ import {
 import { Button } from "@workspace/ui/components/button";
 import { Loader2 } from "lucide-react";
 
-const formSchema = z.object({
-  title: z.string().min(1, "Title is required").max(200),
-  skillType: z.enum(["WRITING", "SPEAKING"]),
-  studentWork: z.string().min(50, "Student work must be at least 50 characters").max(5000, "Student work must be at most 5000 characters"),
-  teacherFeedback: z.string().min(50, "Teacher feedback must be at least 50 characters").max(5000, "Teacher feedback must be at most 5000 characters"),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = {
+  title: string;
+  skillType: "WRITING" | "SPEAKING";
+  studentWork: string;
+  teacherFeedback: string;
+};
 
 interface GoldenSampleFormProps {
   open: boolean;
@@ -55,8 +54,19 @@ export function GoldenSampleForm({
   isEdit = false,
 }: GoldenSampleFormProps) {
   const { t } = useTranslation("settings");
+  const { t: tCommon } = useTranslation("common");
+  const localizedSchema = useMemo(
+    () =>
+      z.object({
+        title: z.string().min(1, t("ai.goldenSample.errorTitleRequired")).max(200, t("ai.goldenSample.errorTitleMax")),
+        skillType: z.enum(["WRITING", "SPEAKING"]),
+        studentWork: z.string().min(50, t("ai.goldenSample.errorStudentWorkMin")).max(5000, t("ai.goldenSample.errorStudentWorkMax")),
+        teacherFeedback: z.string().min(50, t("ai.goldenSample.errorFeedbackMin")).max(5000, t("ai.goldenSample.errorFeedbackMax")),
+      }),
+    [t],
+  );
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(localizedSchema),
     defaultValues: {
       title: initialData?.title ?? "",
       skillType: initialData?.skillType ?? "WRITING",
@@ -116,8 +126,8 @@ export function GoldenSampleForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="WRITING">Writing</SelectItem>
-                        <SelectItem value="SPEAKING">Speaking</SelectItem>
+                        <SelectItem value="WRITING">{tCommon("skill.writing")}</SelectItem>
+                        <SelectItem value="SPEAKING">{tCommon("skill.speaking")}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -169,13 +179,13 @@ export function GoldenSampleForm({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs font-medium mb-1">{t("ai.studentWork")}</p>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap max-h-40 overflow-y-auto">
                       {studentWork || "—"}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs font-medium mb-1">{t("ai.teacherFeedback")}</p>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap max-h-40 overflow-y-auto">
                       {teacherFeedback || "—"}
                     </p>
                   </div>
@@ -189,11 +199,11 @@ export function GoldenSampleForm({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {tCommon("button.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEdit ? "Update" : "Create"}
+                {isEdit ? tCommon("button.update") : tCommon("button.create")}
               </Button>
             </div>
           </form>
