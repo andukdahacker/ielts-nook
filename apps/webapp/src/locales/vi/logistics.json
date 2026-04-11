@@ -222,5 +222,7 @@
   "rosterManager.headerAction": "Thao tác",
   "rosterManager.emptyNoStudents": "Không có học viên trong lớp này.",
   "rosterManager.emptyNotFound": "Không tìm thấy học viên.",
+  "rosterManager.emptyAllEnrolled": "Tất cả học viên đã có trong lớp này.",
+  "rosterManager.emptyNoSearchResults": "Không có học viên nào phù hợp với tìm kiếm.",
   "rosterManager.studentsBadge": "Học viên"
 }

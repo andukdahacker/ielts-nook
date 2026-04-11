@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@workspace/ui/components/table";
 import { Loader2, Search, UserMinus, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useRoster } from "../hooks/use-logistics";
@@ -47,6 +47,18 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
     enabled: !!centerId,
   });
 
+  // P3: Memoize enrolled student IDs to avoid re-creating Set each render
+  const enrolledIds = useMemo(
+    () => new Set(roster.map((item) => item.studentId)),
+    [roster],
+  );
+
+  // P2: Memoize filtered available students list (replaces IIFE in JSX)
+  const filteredAvailableStudents = useMemo(() => {
+    const all = availableStudentsQuery.data ?? [];
+    return all.filter((student) => !enrolledIds.has(student.id));
+  }, [availableStudentsQuery.data, enrolledIds]);
+
   const handleAdd = async (studentId: string) => {
     try {
       await addStudent({ studentId });
@@ -65,9 +77,13 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
     }
   };
 
-  const isStudentInClass = (studentId: string) => {
-    return roster.some((item) => item.studentId === studentId);
-  };
+  // P6: Contextual empty state message for available students
+  const emptyMessage = useMemo(() => {
+    const rawCount = (availableStudentsQuery.data ?? []).length;
+    if (rawCount > 0) return t("rosterManager.emptyAllEnrolled");
+    if (search) return t("rosterManager.emptyNoSearchResults");
+    return t("rosterManager.emptyNotFound");
+  }, [availableStudentsQuery.data, search, t]);
 
   return (
     <div className="space-y-6">
@@ -152,23 +168,24 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {availableStudentsQuery.isLoading ? (
+                {/* P5: Show loading while either query or roster is loading */}
+                {availableStudentsQuery.isLoading || isRosterLoading ? (
                   <TableRow>
                     <TableCell colSpan={2} className="h-24 text-center">
                       <Loader2 className="mx-auto size-6 animate-spin" />
                     </TableCell>
                   </TableRow>
-                ) : (availableStudentsQuery.data || []).length === 0 ? (
+                ) : filteredAvailableStudents.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={2}
                       className="h-24 text-center text-muted-foreground"
                     >
-                      {t("rosterManager.emptyNotFound")}
+                      {emptyMessage}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  availableStudentsQuery.data?.map((student) => (
+                  filteredAvailableStudents.map((student) => (
                     <TableRow key={student.id}>
                       <TableCell>
                         <div>
@@ -184,7 +201,6 @@ export function RosterManager({ classId, centerId }: RosterManagerProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          disabled={isStudentInClass(student.id)}
                           onClick={() => handleAdd(student.id)}
                         >
                           <UserPlus className="size-4" />

@@ -126,7 +126,7 @@ export function CreateAssignmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="w-full max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("create.title")}</DialogTitle>
         </DialogHeader>
@@ -152,7 +152,7 @@ export function CreateAssignmentDialog({
           {/* Target selection: Classes or Individual Students */}
           <div className="space-y-2">
             <Label>{t("create.assignTo")}</Label>
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
@@ -278,11 +278,11 @@ export function CreateAssignmentDialog({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>
+        <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => { resetForm(); onOpenChange(false); }}>
             {t("button.cancel", { ns: "common" })}
           </Button>
-          <Button onClick={handleSubmit} disabled={isCreating}>
+          <Button className="w-full sm:w-auto" onClick={handleSubmit} disabled={isCreating}>
             {isCreating && <Loader2 className="mr-2 size-4 animate-spin" />}
             {assignTarget === "classes"
               ? t("create.submitClasses", { count: selectedClassIds.length || 0 })
