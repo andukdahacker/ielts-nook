@@ -69,7 +69,7 @@
 #   - Epic 8: Added 8.4-8.5 (i18n, golden sample UI)
 
 generated: 2026-01-29
-last_updated: 2026-04-11 # Story 12-12 done
+last_updated: 2026-04-11 # Story 12-13 ready-for-dev
 project: classlite
 project_key: classlite
 tracking_system: file-system
@@ -233,7 +233,7 @@ development_status:
   12-10-correct-answer-discoverability: done
   12-11-mock-test-drag-fix: done
   12-12-edit-after-publish-before-submissions-only: done
-  12-13-section-navigation-for-long-exercises: backlog
+  12-13-section-navigation-for-long-exercises: review
   12-14-table-overflow-with-sidebar: backlog
   epic-12-retrospective: optional
 

@@ -23,7 +23,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { QuestionEditorFactory } from "./question-types/QuestionEditorFactory";
 import { getAnswerCompletionStatus } from "./question-types/answer-status";
 
-const QUESTION_TYPES_BY_SKILL: Record<
+export const QUESTION_TYPES_BY_SKILL: Record<
   ExerciseSkill,
   { value: IeltsQuestionType; label: string }[]
 > = {

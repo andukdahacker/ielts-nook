@@ -77,6 +77,7 @@ import { AIGenerationPanel } from "./AIGenerationPanel";
 import { useAIGeneration } from "../hooks/use-ai-generation";
 import { CreateAssignmentDialog } from "@/features/assignments/components/create-assignment-dialog";
 import { useBreadcrumbOverrides } from "@/core/context/breadcrumb-context";
+import { SectionOutline } from "./SectionOutline";
 import type { Exercise } from "@workspace/types";
 
 // Default first question type per skill
@@ -447,7 +448,8 @@ export function ExerciseEditor() {
     const timer = setTimeout(() => {
       const el = document.querySelector(`[data-section-id="${CSS.escape(sectionId)}"]`);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        const top = el.getBoundingClientRect().top + window.scrollY - 56;
+        window.scrollTo({ top, behavior: "smooth" });
       }
       newSectionIdRef.current = null;
     }, 100);
@@ -940,7 +942,9 @@ export function ExerciseEditor() {
         </div>
       </header>
 
-      <fieldset disabled={!canEdit} className="disabled:opacity-60">
+      <div className="flex">
+        <SectionOutline sections={exercise?.sections ?? []} skill={selectedSkill!} />
+        <fieldset disabled={!canEdit} className="disabled:opacity-60 flex-1 min-w-0">
       <div className="py-6 space-y-6">
       {/* Title & Instructions */}
       <div className="space-y-4 max-w-3xl">
@@ -1318,6 +1322,7 @@ export function ExerciseEditor() {
       />
       </div>
       </fieldset>
+      </div>
     </div>
   );
 }

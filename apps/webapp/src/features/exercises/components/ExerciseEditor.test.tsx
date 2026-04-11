@@ -104,6 +104,11 @@ vi.mock("@/features/assignments/components/create-assignment-dialog", () => ({
 vi.mock("./PassageEditor", () => ({ PassageEditor: () => null }));
 vi.mock("./QuestionSectionEditor", () => ({
   QuestionSectionEditor: () => null,
+  QUESTION_TYPES_BY_SKILL: {},
+}));
+vi.mock("./SectionOutline", () => ({
+  SectionOutline: ({ sections }: { sections: unknown[] }) =>
+    sections.length >= 3 ? <nav data-testid="section-outline">Outline</nav> : null,
 }));
 vi.mock("./SkillSelector", () => ({ SkillSelector: () => null }));
 vi.mock("./AudioUploadEditor", () => ({ AudioUploadEditor: () => null }));
@@ -124,6 +129,13 @@ vi.mock("./question-types/QuestionPreviewFactory", () => ({
 
 // Mock ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+// Mock IntersectionObserver
+global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
@@ -327,5 +339,98 @@ describe("ExerciseEditor — edit-after-publish", () => {
 
     const titleInput = screen.getByLabelText("Title") as HTMLInputElement;
     expect(titleInput.disabled).toBe(false);
+  });
+});
+
+describe("ExerciseEditor — section outline", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseExercises.mockReturnValue({
+      exercises: [],
+      isLoading: false,
+      createExercise: vi.fn(),
+      updateExercise: vi.fn(),
+      publishExercise: vi.fn(),
+      archiveExercise: vi.fn(),
+      duplicateExercise: vi.fn(),
+      deleteExercise: vi.fn(),
+      restoreExercise: vi.fn(),
+      bulkArchive: vi.fn(),
+      bulkDuplicate: vi.fn(),
+      bulkTag: vi.fn(),
+      isCreating: false,
+      isUpdating: false,
+      isPublishing: false,
+      isArchiving: false,
+      isDuplicating: false,
+      isDeleting: false,
+      isRestoring: false,
+    });
+    mockUseExerciseHasSubmissions.mockReturnValue({
+      data: false,
+      isLoading: false,
+    });
+  });
+
+  const makeSection = (id: string) => ({
+    id,
+    exerciseId: "ex-1",
+    centerId: "center-1",
+    sectionType: "R1_MCQ_SINGLE",
+    instructions: null,
+    orderIndex: 0,
+    audioSectionIndex: null,
+    sectionTimeLimit: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    questions: [],
+  });
+
+  it("shows section outline when exercise has 3+ sections", () => {
+    mockUseExercise.mockReturnValue({
+      exercise: {
+        ...baseExercise,
+        sections: [makeSection("s1"), makeSection("s2"), makeSection("s3")],
+      },
+      isLoading: false,
+      autosave: vi.fn(),
+      isAutosaving: false,
+      refetch: vi.fn(),
+    });
+
+    renderEditor();
+
+    expect(screen.getByTestId("section-outline")).toBeInTheDocument();
+  });
+
+  it("hides section outline when exercise has fewer than 3 sections", () => {
+    mockUseExercise.mockReturnValue({
+      exercise: {
+        ...baseExercise,
+        sections: [makeSection("s1"), makeSection("s2")],
+      },
+      isLoading: false,
+      autosave: vi.fn(),
+      isAutosaving: false,
+      refetch: vi.fn(),
+    });
+
+    renderEditor();
+
+    expect(screen.queryByTestId("section-outline")).not.toBeInTheDocument();
+  });
+
+  it("hides section outline when exercise has no sections", () => {
+    mockUseExercise.mockReturnValue({
+      exercise: { ...baseExercise, sections: [] },
+      isLoading: false,
+      autosave: vi.fn(),
+      isAutosaving: false,
+      refetch: vi.fn(),
+    });
+
+    renderEditor();
+
+    expect(screen.queryByTestId("section-outline")).not.toBeInTheDocument();
   });
 });
