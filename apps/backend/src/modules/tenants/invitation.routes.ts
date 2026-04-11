@@ -21,7 +21,7 @@ export async function invitationRoutes(fastify: FastifyInstance) {
     fastify.prisma,
     fastify.resend,
     {
-      emailFrom: env.EMAIL_FROM || "ClassLite <no-reply@classlite.app>",
+      emailFrom: env.EMAIL_FROM || "ClassLite <no-reply@notifications.classlite.app>",
       webappUrl:
         env.NODE_ENV === "production"
           ? "https://classlite.app"

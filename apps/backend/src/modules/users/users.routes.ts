@@ -384,6 +384,10 @@ export async function usersRoutes(fastify: FastifyInstance) {
   // POST /api/v1/users/me/avatar - Upload profile avatar
   api.post("/me/avatar", {
     schema: {
+      consumes: ["multipart/form-data"],
+      body: z.object({
+        file: z.any().describe("Avatar image file"),
+      }),
       response: {
         200: z.object({
           data: z.object({ avatarUrl: z.string() }),
@@ -729,6 +733,10 @@ export async function usersRoutes(fastify: FastifyInstance) {
   // POST /api/v1/users/import/validate - Upload & validate CSV
   api.post("/import/validate", {
     schema: {
+      consumes: ["multipart/form-data"],
+      body: z.object({
+        file: z.any().describe("CSV file for import validation"),
+      }),
       response: {
         200: CsvValidationResponseSchema,
         400: ErrorResponseSchema,

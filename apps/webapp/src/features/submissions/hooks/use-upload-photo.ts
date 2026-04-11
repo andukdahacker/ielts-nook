@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { firebaseAuth } from "@/core/firebase";
+import client from "@/core/client";
 
 export function useUploadPhoto() {
   return useMutation({
@@ -13,30 +13,27 @@ export function useUploadPhoto() {
       questionId: string;
       file: File;
     }) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("questionId", questionId);
-
-      const token = firebaseAuth.currentUser
-        ? await firebaseAuth.currentUser.getIdToken()
-        : localStorage.getItem("token");
-
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/v1/student/submissions/${submissionId}/photo`,
+      const { data, error } = await client.POST(
+        "/api/v1/student/submissions/{id}/photo",
         {
-          method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          credentials: "include",
-          body: formData,
+          params: { path: { id: submissionId } },
+          body: { file, questionId },
+          bodySerializer: (body) => {
+            const fd = new FormData();
+            fd.append("file", body.file as Blob);
+            fd.append("questionId", body.questionId);
+            return fd;
+          },
         },
       );
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ message: "Upload failed" }));
-        throw new Error(err.message || "Upload failed");
+      if (error) {
+        throw new Error(
+          (error as { message?: string }).message || "Upload failed",
+        );
       }
 
-      return res.json() as Promise<{ data: { photoUrl: string }; message: string }>;
+      return data;
     },
   });
 }

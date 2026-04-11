@@ -654,8 +654,12 @@ export async function exercisesRoutes(fastify: FastifyInstance) {
   // POST /:exerciseId/diagram - Upload diagram image for R14
   api.post("/:exerciseId/diagram", {
     schema: {
+      consumes: ["multipart/form-data"],
       params: z.object({
         exerciseId: z.string(),
+      }),
+      body: z.object({
+        file: z.any().describe("Diagram image file (PNG or JPG)"),
       }),
       response: {
         200: z.object({
@@ -734,8 +738,12 @@ export async function exercisesRoutes(fastify: FastifyInstance) {
   // POST /:exerciseId/stimulus-image - Upload stimulus image for Writing W1
   api.post("/:exerciseId/stimulus-image", {
     schema: {
+      consumes: ["multipart/form-data"],
       params: z.object({
         exerciseId: z.string(),
+      }),
+      body: z.object({
+        file: z.any().describe("Stimulus image file (PNG or JPG)"),
       }),
       response: {
         200: z.object({
@@ -858,8 +866,12 @@ export async function exercisesRoutes(fastify: FastifyInstance) {
   // POST /:exerciseId/audio - Upload audio file for Listening exercises
   api.post("/:exerciseId/audio", {
     schema: {
+      consumes: ["multipart/form-data"],
       params: z.object({
         exerciseId: z.string(),
+      }),
+      body: z.object({
+        file: z.any().describe("Audio file (MP3, WAV, OGG, or M4A)"),
       }),
       response: {
         200: z.object({

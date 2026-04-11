@@ -39,7 +39,11 @@ export async function aiGenerationRoutes(fastify: FastifyInstance) {
   // POST /:exerciseId/upload-document — Upload PDF/DOCX, extract text, update passage
   api.post("/:exerciseId/upload-document", {
     schema: {
+      consumes: ["multipart/form-data"],
       params: z.object({ exerciseId: z.string() }),
+      body: z.object({
+        file: z.any().describe("Document file (PDF or DOCX)"),
+      }),
       response: {
         200: createResponseSchema(
           z.object({

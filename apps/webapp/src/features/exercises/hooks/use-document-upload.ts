@@ -17,15 +17,16 @@ export function useDocumentUpload() {
       passageSourceType: string;
       passageSourceUrl: string | null;
     }> => {
-      const formData = new FormData();
-      formData.append("file", file);
-
       const { data, error } = await client.POST(
         "/api/v1/exercises/{exerciseId}/upload-document",
         {
           params: { path: { exerciseId } },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          body: formData as any,
+          body: { file },
+          bodySerializer: (body) => {
+            const fd = new FormData();
+            fd.append("file", body.file as Blob);
+            return fd;
+          },
         },
       );
 

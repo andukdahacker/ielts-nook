@@ -13,15 +13,16 @@ export function useAudioUpload() {
       exerciseId: string;
       file: File;
     }): Promise<string> => {
-      const formData = new FormData();
-      formData.append("file", file);
-
       const { data, error } = await client.POST(
         "/api/v1/exercises/{exerciseId}/audio",
         {
           params: { path: { exerciseId } },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          body: formData as any,
+          body: { file },
+          bodySerializer: (body) => {
+            const fd = new FormData();
+            fd.append("file", body.file as Blob);
+            return fd;
+          },
         },
       );
 

@@ -55,12 +55,14 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({
   const uploadLogo = async (file: File) => {
     if (!user?.centerId) throw new Error("No centerId");
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     const { data, error } = await client.POST("/api/v1/tenants/{id}/logo", {
       params: { path: { id: user.centerId } },
-      body: formData as unknown,
+      body: { file },
+      bodySerializer: (body) => {
+        const formData = new FormData();
+        formData.append("file", body.file as Blob);
+        return formData;
+      },
     });
 
     if (error) throw error;

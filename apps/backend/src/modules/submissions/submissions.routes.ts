@@ -209,7 +209,12 @@ export async function submissionsRoutes(fastify: FastifyInstance) {
   // POST /:id/photo — Upload photo for handwritten answer
   api.post("/:id/photo", {
     schema: {
+      consumes: ["multipart/form-data"],
       params: z.object({ id: z.string() }),
+      body: z.object({
+        file: z.any().describe("Photo of handwritten answer"),
+        questionId: z.string().describe("ID of the question this photo answers"),
+      }),
       response: {
         200: z.object({ data: z.object({ photoUrl: z.string() }), message: z.string() }),
         400: ErrorResponseSchema,

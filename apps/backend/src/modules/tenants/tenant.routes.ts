@@ -33,7 +33,7 @@ export async function tenantRoutes(fastify: FastifyInstance) {
     fastify.firebaseStorage,
     fastify.resend,
     {
-      emailFrom: env.EMAIL_FROM || "ClassLite <no-reply@classlite.app>",
+      emailFrom: env.EMAIL_FROM || "ClassLite <no-reply@notifications.classlite.app>",
       bucketName: env.FIREBASE_STORAGE_BUCKET,
     },
   );
@@ -182,7 +182,11 @@ export async function tenantRoutes(fastify: FastifyInstance) {
 
   api.post("/:id/logo", {
     schema: {
+      consumes: ["multipart/form-data"],
       params: z.object({ id: z.string() }),
+      body: z.object({
+        file: z.any().describe("Logo image file (PNG or JPG)"),
+      }),
       response: {
         200: z.object({
           data: z.object({ logoUrl: z.string() }),

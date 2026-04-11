@@ -75,7 +75,7 @@ export const parentWelcomeEmailJob = inngest.createFunction(
 
         const resend = new Resend(resendApiKey);
         const emailFrom =
-          process.env.EMAIL_FROM || "ClassLite <noreply@classlite.app>";
+          process.env.EMAIL_FROM || "ClassLite <no-reply@notifications.classlite.app>";
 
         const db = getTenantedClient(prisma, centerId);
         try {

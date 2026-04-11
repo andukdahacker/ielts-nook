@@ -377,7 +377,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** @description Logo image file (PNG or JPG) */
+                        file: unknown;
+                    };
+                };
+            };
             responses: {
                 /** @description Default Response */
                 200: {
@@ -6761,7 +6768,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** @description Diagram image file (PNG or JPG) */
+                        file: unknown;
+                    };
+                };
+            };
             responses: {
                 /** @description Default Response */
                 200: {
@@ -6851,7 +6865,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** @description Stimulus image file (PNG or JPG) */
+                        file: unknown;
+                    };
+                };
+            };
             responses: {
                 /** @description Default Response */
                 200: {
@@ -7036,7 +7057,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** @description Audio file (MP3, WAV, OGG, or M4A) */
+                        file: unknown;
+                    };
+                };
+            };
             responses: {
                 /** @description Default Response */
                 200: {
@@ -8256,7 +8284,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** @description Document file (PDF or DOCX) */
+                        file: unknown;
+                    };
+                };
+            };
             responses: {
                 /** @description Default Response */
                 200: {
@@ -11676,7 +11711,16 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** @description Photo of handwritten answer */
+                        file: unknown;
+                        /** @description ID of the question this photo answers */
+                        questionId: string;
+                    };
+                };
+            };
             responses: {
                 /** @description Default Response */
                 200: {
@@ -16083,7 +16127,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** @description Avatar image file */
+                        file: unknown;
+                    };
+                };
+            };
             responses: {
                 /** @description Default Response */
                 200: {
@@ -16829,7 +16880,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** @description CSV file for import validation */
+                        file: unknown;
+                    };
+                };
+            };
             responses: {
                 /** @description Default Response */
                 200: {
@@ -18133,6 +18191,465 @@ export interface paths {
                         "application/json": {
                             /** @enum {string|null} */
                             data: null;
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/moderation/flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    status?: "PENDING" | "APPROVED" | "REDACTED" | "DELETED";
+                    contentType?: "EXERCISE" | "SUBMISSION" | "AI_FEEDBACK";
+                    page?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                centerId: string;
+                                /** @enum {string} */
+                                contentType: "EXERCISE" | "SUBMISSION" | "AI_FEEDBACK";
+                                contentId: string;
+                                flaggedText: string;
+                                matchedTerms: string[];
+                                /** @enum {string} */
+                                status: "PENDING" | "APPROVED" | "REDACTED" | "DELETED";
+                                resolvedById: string | null;
+                                resolvedAt: string | null;
+                                redactedText: string | null;
+                                createdAt: string;
+                                updatedAt: string;
+                            }[];
+                            total: number;
+                            page: number;
+                            limit: number;
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/moderation/flags/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                centerId: string;
+                                /** @enum {string} */
+                                contentType: "EXERCISE" | "SUBMISSION" | "AI_FEEDBACK";
+                                contentId: string;
+                                flaggedText: string;
+                                matchedTerms: string[];
+                                /** @enum {string} */
+                                status: "PENDING" | "APPROVED" | "REDACTED" | "DELETED";
+                                resolvedById: string | null;
+                                resolvedAt: string | null;
+                                redactedText: string | null;
+                                createdAt: string;
+                                updatedAt: string;
+                            };
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/moderation/flags/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        action: "APPROVED" | "REDACTED" | "DELETED";
+                        redactedText?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                centerId: string;
+                                /** @enum {string} */
+                                contentType: "EXERCISE" | "SUBMISSION" | "AI_FEEDBACK";
+                                contentId: string;
+                                flaggedText: string;
+                                matchedTerms: string[];
+                                /** @enum {string} */
+                                status: "PENDING" | "APPROVED" | "REDACTED" | "DELETED";
+                                resolvedById: string | null;
+                                resolvedAt: string | null;
+                                redactedText: string | null;
+                                createdAt: string;
+                                updatedAt: string;
+                            };
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/moderation/terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                centerId: string;
+                                terms: string[];
+                                isCustom: boolean;
+                                createdAt: string;
+                                updatedAt: string;
+                            };
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        terms: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                centerId: string;
+                                terms: string[];
+                                isCustom: boolean;
+                                createdAt: string;
+                                updatedAt: string;
+                            };
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/moderation/terms/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                centerId: string;
+                                terms: string[];
+                                isCustom: boolean;
+                                createdAt: string;
+                                updatedAt: string;
+                            };
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/moderation/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        text: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                matches: string[];
+                                clean: boolean;
+                            };
                             message: string;
                         };
                     };
