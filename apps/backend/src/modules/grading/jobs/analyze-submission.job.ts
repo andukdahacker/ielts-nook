@@ -1,5 +1,5 @@
 import { inngest } from "../../inngest/client.js";
-import { getTenantedClient } from "@workspace/db";
+import { Prisma, getTenantedClient } from "@workspace/db";
 import { createPrisma } from "../../../plugins/create-prisma.js";
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
@@ -242,7 +242,7 @@ export const analyzeSubmissionJob = inngest.createFunction(
             centerId,
             submissionId,
             overallScore: aiResult.overallScore,
-            criteriaScores: aiResult.criteriaScores as Record<string, unknown>,
+            criteriaScores: aiResult.criteriaScores as Prisma.InputJsonValue,
             generalFeedback: aiResult.generalFeedback,
           },
         });

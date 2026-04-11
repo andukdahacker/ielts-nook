@@ -1,5 +1,5 @@
-import { PrismaClient } from "@workspace/db";
-import { getTenantedClient } from "@workspace/db";
+import { PrismaClient, getTenantedClient } from "@workspace/db";
+import type { ExerciseSkill } from "@workspace/db";
 import { CreateGoldenSample, UpdateGoldenSample } from "@workspace/types";
 
 const MAX_SAMPLES_PER_SKILL_TYPE = 10;
@@ -116,7 +116,7 @@ export class GoldenSamplesService {
   async getActiveByCenterAndSkill(centerId: string, skillType: string) {
     const db = getTenantedClient(this.prisma, centerId);
     return db.goldenSample.findMany({
-      where: { skillType, isActive: true },
+      where: { skillType: skillType as ExerciseSkill, isActive: true },
       orderBy: { order: "asc" },
       select: { studentWork: true, teacherFeedback: true },
     });

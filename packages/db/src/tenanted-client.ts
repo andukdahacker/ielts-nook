@@ -47,6 +47,9 @@ export const getTenantedClient = (prisma: PrismaClient, centerId: string) => {
     throw new Error("getTenantedClient requires a centerId");
   }
 
+  // Prisma v7 $extends loses model accessors in the inferred return type.
+  // Cast back to PrismaClient so downstream code retains full model access.
+  // The extension only adds query middleware — it doesn't change the API surface.
   return prisma.$extends({
     query: {
       $allModels: {
@@ -137,5 +140,5 @@ export const getTenantedClient = (prisma: PrismaClient, centerId: string) => {
         },
       },
     },
-  });
+  }) as unknown as PrismaClient;
 };

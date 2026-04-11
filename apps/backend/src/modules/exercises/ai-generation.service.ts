@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { PrismaClient, getTenantedClient } from "@workspace/db";
+import { Prisma, PrismaClient, getTenantedClient } from "@workspace/db";
 import type {
   AIGenerationJob,
   AIGenerationJobStatus,
@@ -95,7 +95,7 @@ export class AIGenerationService {
         centerId,
         exerciseId,
         status: "pending",
-        questionTypes: questionTypes as unknown as Record<string, unknown>[],
+        questionTypes: questionTypes as unknown as Prisma.InputJsonValue,
         difficulty,
       },
     });
@@ -203,7 +203,7 @@ export class AIGenerationService {
         status: "pending",
         questionTypes: [
           { type: section.sectionType, count: questionCount },
-        ] as unknown as Record<string, unknown>[],
+        ] as unknown as Prisma.InputJsonValue,
         difficulty: difficulty ?? null,
       },
     });

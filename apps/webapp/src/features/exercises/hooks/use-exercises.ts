@@ -255,11 +255,11 @@ export const useExerciseHasSubmissions = (
     queryKey: [...exercisesKeys.detail(exerciseId!), "has-submissions"],
     queryFn: async () => {
       const { data, error } = await client.GET(
-        "/api/v1/exercises/{id}/has-submissions" as "/api/v1/exercises/{id}",
+        "/api/v1/exercises/{id}/has-submissions",
         { params: { path: { id: exerciseId! } } },
       );
       if (error) throw error;
-      return (data as unknown as { data: boolean })?.data as boolean;
+      return data?.data as boolean;
     },
     // Only query for PUBLISHED exercises — DRAFT never has submissions
     enabled: !!centerId && !!exerciseId && status === "PUBLISHED",

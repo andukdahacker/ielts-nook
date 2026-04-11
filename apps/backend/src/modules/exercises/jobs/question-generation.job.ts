@@ -1,5 +1,5 @@
 import { inngest } from "../../inngest/client.js";
-import { getTenantedClient } from "@workspace/db";
+import { Prisma, getTenantedClient } from "@workspace/db";
 import { createPrisma } from "../../../plugins/create-prisma.js";
 import type { IeltsQuestionType } from "@workspace/db";
 import { AIGenerationService } from "../ai-generation.service.js";
@@ -119,8 +119,8 @@ export const questionGenerationJob = inngest.createFunction(
                 centerId,
                 questionText: q.questionText,
                 questionType: q.questionType,
-                options: (q.options ?? undefined) as Record<string, unknown> | undefined,
-                correctAnswer: (q.correctAnswer ?? undefined) as Record<string, unknown> | undefined,
+                options: (q.options ?? undefined) as Prisma.InputJsonValue | undefined,
+                correctAnswer: (q.correctAnswer ?? undefined) as Prisma.InputJsonValue | undefined,
                 orderIndex: j,
                 wordLimit: q.wordLimit ?? null,
               },
