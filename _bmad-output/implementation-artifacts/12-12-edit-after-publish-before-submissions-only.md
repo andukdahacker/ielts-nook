@@ -1,6 +1,6 @@
 # Story 12.12: Edit After Publish — Before Submissions Only
 
-Status: review
+Status: done
 
 ## Story
 
