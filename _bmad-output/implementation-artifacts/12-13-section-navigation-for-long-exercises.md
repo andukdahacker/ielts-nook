@@ -1,6 +1,6 @@
 # Story 12.13: Section Navigation for Long Exercises
 
-Status: review
+Status: done
 
 ## Story
 
