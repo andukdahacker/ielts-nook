@@ -38,6 +38,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
               <SidebarMenuButton
                 asChild
                 isActive={isActive}
+                tooltip={item.title}
                 className={
                   isActive
                     ? "bg-nav-active text-nav-active-foreground hover:bg-nav-active/90 hover:text-nav-active-foreground"

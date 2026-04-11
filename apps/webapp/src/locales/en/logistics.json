@@ -222,5 +222,7 @@
   "rosterManager.headerAction": "Action",
   "rosterManager.emptyNoStudents": "No students in this class.",
   "rosterManager.emptyNotFound": "No students found.",
+  "rosterManager.emptyAllEnrolled": "All students are already in this class.",
+  "rosterManager.emptyNoSearchResults": "No students match your search.",
   "rosterManager.studentsBadge": "Students"
 }

@@ -227,7 +227,7 @@ export function SessionDetailsPopover({
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>
               {isRecurring ? t("sessionDetails.deleteRecurringTitle") : t("sessionDetails.deleteTitle")}
@@ -238,18 +238,18 @@ export function SessionDetailsPopover({
                 : t("sessionDetails.deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel>{t("button.cancel", { ns: "common" })}</AlertDialogCancel>
+          <AlertDialogFooter className="flex flex-col gap-2 sm:flex-row">
+            <AlertDialogCancel className="w-full sm:w-auto min-h-[44px]">{t("button.cancel", { ns: "common" })}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="w-full sm:w-auto min-h-[44px] bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isRecurring ? t("sessionDetails.deleteThisOnly") : t("button.delete", { ns: "common" })}
             </AlertDialogAction>
             {isRecurring && onDeleteFuture && (
               <AlertDialogAction
                 onClick={handleDeleteAllFuture}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="w-full sm:w-auto min-h-[44px] bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {t("sessionDetails.deleteAllFuture")}
               </AlertDialogAction>

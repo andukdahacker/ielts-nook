@@ -58,7 +58,7 @@ export function AttendanceModal({ session, open, onOpenChange }: AttendanceModal
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col">
+      <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col p-4 sm:p-6">
         <SheetHeader className="flex-shrink-0">
           <SheetTitle>{t("attendance.title")}</SheetTitle>
           <SheetDescription>
@@ -70,7 +70,7 @@ export function AttendanceModal({ session, open, onOpenChange }: AttendanceModal
           <AttendanceSheet sessionId={session.id} />
         </ScrollArea>
 
-        <SheetFooter className="flex-shrink-0 flex-row gap-2 border-t pt-4">
+        <SheetFooter className="flex-shrink-0 flex-col gap-2 border-t pt-4 sm:flex-row">
           {/* Mark All Present */}
           <AlertDialog
             open={confirmAction === "PRESENT"}
@@ -81,7 +81,7 @@ export function AttendanceModal({ session, open, onOpenChange }: AttendanceModal
                 variant="outline"
                 disabled={bulkMutation.isPending || studentCount === 0}
                 onClick={() => setConfirmAction("PRESENT")}
-                className="flex-1"
+                className="flex-1 min-h-[44px]"
               >
                 {t("attendance.markAllPresent")}
               </Button>
@@ -115,7 +115,7 @@ export function AttendanceModal({ session, open, onOpenChange }: AttendanceModal
                 variant="outline"
                 disabled={bulkMutation.isPending || studentCount === 0}
                 onClick={() => setConfirmAction("ABSENT")}
-                className="flex-1"
+                className="flex-1 min-h-[44px]"
               >
                 {t("attendance.markAllAbsent")}
               </Button>
