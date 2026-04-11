@@ -62,6 +62,7 @@ interface TagSelectorProps {
   questionTypes: IeltsQuestionType[];
   onBandLevelChange: (v: string | null) => void;
   onTagsChange: (tagIds: string[]) => void;
+  disabled?: boolean;
 }
 
 export function TagSelector({
@@ -71,6 +72,7 @@ export function TagSelector({
   questionTypes,
   onBandLevelChange,
   onTagsChange,
+  disabled,
 }: TagSelectorProps) {
   const { tags, createTag, isCreating } = useTags(centerId);
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
@@ -137,7 +139,7 @@ export function TagSelector({
       {/* Topic Tags */}
       <div className="space-y-1.5">
         <Label className="text-sm">Topic Tags</Label>
-        <Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
+        <Popover open={disabled ? false : tagPopoverOpen} onOpenChange={disabled ? undefined : setTagPopoverOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"

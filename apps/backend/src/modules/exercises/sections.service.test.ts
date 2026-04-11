@@ -69,6 +69,9 @@ describe("SectionsService", () => {
         update: vi.fn(),
         delete: vi.fn(),
       },
+      submission: {
+        count: vi.fn().mockResolvedValue(0),
+      },
     };
 
     mockPrisma = {
@@ -117,15 +120,16 @@ describe("SectionsService", () => {
       expect(result).toEqual(mockSection);
     });
 
-    it("should throw if exercise is not DRAFT", async () => {
+    it("should throw if exercise is PUBLISHED with submissions", async () => {
       mockDb.exercise.findUnique.mockResolvedValue(mockPublishedExercise);
+      mockDb.submission.count.mockResolvedValue(3);
 
       await expect(
         service.createSection(centerId, exerciseId, {
           sectionType: "R1_MCQ_SINGLE",
           orderIndex: 0,
         }),
-      ).rejects.toThrow("Sections can only be added to draft exercises");
+      ).rejects.toThrow("editable exercises");
     });
 
     it("should throw 404 if exercise not found", async () => {
@@ -157,14 +161,15 @@ describe("SectionsService", () => {
       expect(result.instructions).toBe("New instructions");
     });
 
-    it("should throw if exercise is not DRAFT", async () => {
+    it("should throw if exercise is PUBLISHED with submissions", async () => {
       mockDb.exercise.findUnique.mockResolvedValue(mockPublishedExercise);
+      mockDb.submission.count.mockResolvedValue(3);
 
       await expect(
         service.updateSection(centerId, exerciseId, sectionId, {
           instructions: "New",
         }),
-      ).rejects.toThrow("Sections can only be modified on draft exercises");
+      ).rejects.toThrow("editable exercises");
     });
 
     it("should throw 404 if section not found", async () => {
@@ -206,12 +211,13 @@ describe("SectionsService", () => {
       });
     });
 
-    it("should throw if exercise is not DRAFT", async () => {
+    it("should throw if exercise is PUBLISHED with submissions", async () => {
       mockDb.exercise.findUnique.mockResolvedValue(mockPublishedExercise);
+      mockDb.submission.count.mockResolvedValue(3);
 
       await expect(
         service.deleteSection(centerId, exerciseId, sectionId),
-      ).rejects.toThrow("Sections can only be deleted from draft exercises");
+      ).rejects.toThrow("editable exercises");
     });
 
     it("should throw 404 if section not found", async () => {
@@ -244,8 +250,9 @@ describe("SectionsService", () => {
       expect(result).toEqual(mockQuestion);
     });
 
-    it("should throw if exercise is not DRAFT", async () => {
+    it("should throw if exercise is PUBLISHED with submissions", async () => {
       mockDb.exercise.findUnique.mockResolvedValue(mockPublishedExercise);
+      mockDb.submission.count.mockResolvedValue(3);
 
       await expect(
         service.createQuestion(centerId, exerciseId, sectionId, {
@@ -253,7 +260,7 @@ describe("SectionsService", () => {
           questionType: "R1_MCQ_SINGLE",
           orderIndex: 0,
         }),
-      ).rejects.toThrow("Questions can only be modified on draft exercises");
+      ).rejects.toThrow("editable exercises");
     });
 
     it("should throw 404 if section not found", async () => {
@@ -289,14 +296,15 @@ describe("SectionsService", () => {
       expect(result.questionText).toBe("Updated?");
     });
 
-    it("should throw if exercise is not DRAFT", async () => {
+    it("should throw if exercise is PUBLISHED with submissions", async () => {
       mockDb.exercise.findUnique.mockResolvedValue(mockPublishedExercise);
+      mockDb.submission.count.mockResolvedValue(3);
 
       await expect(
         service.updateQuestion(centerId, exerciseId, sectionId, questionId, {
           questionText: "Updated?",
         }),
-      ).rejects.toThrow("Questions can only be modified on draft exercises");
+      ).rejects.toThrow("editable exercises");
     });
 
     it("should throw 404 if question not found", async () => {
@@ -344,12 +352,13 @@ describe("SectionsService", () => {
       });
     });
 
-    it("should throw if exercise is not DRAFT", async () => {
+    it("should throw if exercise is PUBLISHED with submissions", async () => {
       mockDb.exercise.findUnique.mockResolvedValue(mockPublishedExercise);
+      mockDb.submission.count.mockResolvedValue(3);
 
       await expect(
         service.deleteQuestion(centerId, exerciseId, sectionId, questionId),
-      ).rejects.toThrow("Questions can only be modified on draft exercises");
+      ).rejects.toThrow("editable exercises");
     });
 
     it("should throw 404 if question not found", async () => {

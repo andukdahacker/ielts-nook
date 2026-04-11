@@ -19,6 +19,28 @@ function toJsonValue(val: unknown): Prisma.InputJsonValue | typeof Prisma.DbNull
 export class SectionsService {
   constructor(private readonly prisma: PrismaClient) {}
 
+  /**
+   * Check if a PUBLISHED exercise with zero submissions can be edited.
+   * Returns true for DRAFT or PUBLISHED-without-submissions.
+   */
+  private async isEditable(
+    db: ReturnType<typeof getTenantedClient>,
+    exerciseId: string,
+  ): Promise<boolean> {
+    const exercise = await db.exercise.findUnique({
+      where: { id: exerciseId },
+    });
+    if (!exercise) throw AppError.notFound("Exercise not found");
+    if (exercise.status === "DRAFT") return true;
+    if (exercise.status === "PUBLISHED") {
+      const subCount = await db.submission.count({
+        where: { assignment: { exerciseId } },
+      });
+      return subCount === 0;
+    }
+    return false;
+  }
+
   async listSections(
     centerId: string,
     exerciseId: string,
@@ -49,15 +71,9 @@ export class SectionsService {
   ): Promise<QuestionSection> {
     const db = getTenantedClient(this.prisma, centerId);
 
-    const exercise = await db.exercise.findUnique({
-      where: { id: exerciseId },
-    });
-    if (!exercise) {
-      throw AppError.notFound("Exercise not found");
-    }
-    if (exercise.status !== "DRAFT") {
+    if (!(await this.isEditable(db, exerciseId))) {
       throw AppError.badRequest(
-        "Sections can only be added to draft exercises",
+        "Sections can only be added to editable exercises (draft or published without submissions)",
       );
     }
 
@@ -89,15 +105,9 @@ export class SectionsService {
   ): Promise<QuestionSection> {
     const db = getTenantedClient(this.prisma, centerId);
 
-    const exercise = await db.exercise.findUnique({
-      where: { id: exerciseId },
-    });
-    if (!exercise) {
-      throw AppError.notFound("Exercise not found");
-    }
-    if (exercise.status !== "DRAFT") {
+    if (!(await this.isEditable(db, exerciseId))) {
       throw AppError.badRequest(
-        "Sections can only be modified on draft exercises",
+        "Sections can only be modified on editable exercises (draft or published without submissions)",
       );
     }
 
@@ -140,15 +150,9 @@ export class SectionsService {
   ): Promise<void> {
     const db = getTenantedClient(this.prisma, centerId);
 
-    const exercise = await db.exercise.findUnique({
-      where: { id: exerciseId },
-    });
-    if (!exercise) {
-      throw AppError.notFound("Exercise not found");
-    }
-    if (exercise.status !== "DRAFT") {
+    if (!(await this.isEditable(db, exerciseId))) {
       throw AppError.badRequest(
-        "Sections can only be deleted from draft exercises",
+        "Sections can only be deleted from editable exercises (draft or published without submissions)",
       );
     }
 
@@ -169,15 +173,9 @@ export class SectionsService {
   ): Promise<QuestionSection[]> {
     const db = getTenantedClient(this.prisma, centerId);
 
-    const exercise = await db.exercise.findUnique({
-      where: { id: exerciseId },
-    });
-    if (!exercise) {
-      throw AppError.notFound("Exercise not found");
-    }
-    if (exercise.status !== "DRAFT") {
+    if (!(await this.isEditable(db, exerciseId))) {
       throw AppError.badRequest(
-        "Sections can only be reordered on draft exercises",
+        "Sections can only be reordered on editable exercises (draft or published without submissions)",
       );
     }
 
@@ -220,24 +218,6 @@ export class SectionsService {
 
   // --- Question operations ---
 
-  private async verifyDraftExercise(
-    db: ReturnType<typeof getTenantedClient>,
-    exerciseId: string,
-  ) {
-    const exercise = await db.exercise.findUnique({
-      where: { id: exerciseId },
-    });
-    if (!exercise) {
-      throw AppError.notFound("Exercise not found");
-    }
-    if (exercise.status !== "DRAFT") {
-      throw AppError.badRequest(
-        "Questions can only be modified on draft exercises",
-      );
-    }
-    return exercise;
-  }
-
   async createQuestion(
     centerId: string,
     exerciseId: string,
@@ -246,7 +226,11 @@ export class SectionsService {
   ): Promise<Question> {
     const db = getTenantedClient(this.prisma, centerId);
 
-    await this.verifyDraftExercise(db, exerciseId);
+    if (!(await this.isEditable(db, exerciseId))) {
+      throw AppError.badRequest(
+        "Questions can only be modified on editable exercises (draft or published without submissions)",
+      );
+    }
 
     const section = await db.questionSection.findUnique({
       where: { id: sectionId },
@@ -278,7 +262,11 @@ export class SectionsService {
   ): Promise<Question> {
     const db = getTenantedClient(this.prisma, centerId);
 
-    await this.verifyDraftExercise(db, exerciseId);
+    if (!(await this.isEditable(db, exerciseId))) {
+      throw AppError.badRequest(
+        "Questions can only be modified on editable exercises (draft or published without submissions)",
+      );
+    }
 
     const question = await db.question.findUnique({
       where: { id: questionId },
@@ -316,7 +304,11 @@ export class SectionsService {
   ): Promise<void> {
     const db = getTenantedClient(this.prisma, centerId);
 
-    await this.verifyDraftExercise(db, exerciseId);
+    if (!(await this.isEditable(db, exerciseId))) {
+      throw AppError.badRequest(
+        "Questions can only be modified on editable exercises (draft or published without submissions)",
+      );
+    }
 
     const question = await db.question.findUnique({
       where: { id: questionId },

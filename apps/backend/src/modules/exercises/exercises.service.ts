@@ -43,6 +43,39 @@ export class ExercisesService {
     return exercise;
   }
 
+  /**
+   * Check if an exercise is editable: DRAFT, or PUBLISHED with zero submissions.
+   */
+  async isExerciseEditable(
+    centerId: string,
+    exerciseId: string,
+  ): Promise<boolean> {
+    const db = getTenantedClient(this.prisma, centerId);
+    const exercise = await db.exercise.findUnique({ where: { id: exerciseId } });
+    if (!exercise) throw AppError.notFound("Exercise not found");
+    if (exercise.status === "DRAFT") return true;
+    if (exercise.status === "PUBLISHED") {
+      return !(await this.hasExerciseSubmissions(centerId, exerciseId));
+    }
+    return false;
+  }
+
+  private async verifyEditable(
+    db: ReturnType<typeof getTenantedClient>,
+    centerId: string,
+    id: string,
+    errorMessage: string,
+  ) {
+    const exercise = await db.exercise.findUnique({ where: { id } });
+    if (!exercise) throw AppError.notFound("Exercise not found");
+    if (exercise.status === "DRAFT") return exercise;
+    if (exercise.status === "PUBLISHED") {
+      const hasSubs = await this.hasExerciseSubmissions(centerId, id);
+      if (!hasSubs) return exercise;
+    }
+    throw AppError.badRequest(errorMessage);
+  }
+
   async listExercises(
     centerId: string,
     filters?: {
@@ -159,16 +192,23 @@ export class ExercisesService {
     });
   }
 
-  private async updateDraftExercise(
+  async hasExerciseSubmissions(
     centerId: string,
+    exerciseId: string,
+  ): Promise<boolean> {
+    const db = getTenantedClient(this.prisma, centerId);
+    const count = await db.submission.count({
+      where: { assignment: { exerciseId } },
+    });
+    return count > 0;
+  }
+
+  private async applyExerciseUpdate(
+    db: ReturnType<typeof getTenantedClient>,
     id: string,
     input: UpdateExerciseInput | AutosaveExerciseInput,
-    errorMessage: string,
+    exercise: { wordCountMin: number | null; wordCountMax: number | null },
   ): Promise<Exercise> {
-    const db = getTenantedClient(this.prisma, centerId);
-
-    const exercise = await this.verifyDraftExercise(db, id, errorMessage);
-
     // Cross-field validation: wordCountMax >= wordCountMin after merging with DB state
     const effectiveMin =
       "wordCountMin" in input && input.wordCountMin !== undefined
@@ -306,6 +346,17 @@ export class ExercisesService {
     });
   }
 
+  private async updateDraftExercise(
+    centerId: string,
+    id: string,
+    input: UpdateExerciseInput | AutosaveExerciseInput,
+    errorMessage: string,
+  ): Promise<Exercise> {
+    const db = getTenantedClient(this.prisma, centerId);
+    const exercise = await this.verifyDraftExercise(db, id, errorMessage);
+    return this.applyExerciseUpdate(db, id, input, exercise);
+  }
+
   async updateExercise(
     centerId: string,
     id: string,
@@ -320,21 +371,31 @@ export class ExercisesService {
     }
 
     if (exercise.status === "PUBLISHED") {
-      const allowedKeys = ["title", "bandLevel"];
-      const inputKeys = Object.keys(input).filter(
-        (k) => input[k as keyof typeof input] !== undefined,
-      );
-      const disallowed = inputKeys.filter((k) => !allowedKeys.includes(k));
-      if (disallowed.length > 0) {
-        throw AppError.badRequest(
-          `Published exercises only allow updating: ${allowedKeys.join(", ")}. ` +
-          `Disallowed fields: ${disallowed.join(", ")}`,
-        );
-      }
-      return await db.exercise.update({
-        where: { id },
-        data: { title: input.title, bandLevel: input.bandLevel },
-        include: EXERCISE_INCLUDE,
+      // Use transaction to prevent TOCTOU race between submission check and update
+      return await db.$transaction(async (tx) => {
+        const subCount = await tx.submission.count({
+          where: { assignment: { exerciseId: id } },
+        });
+        if (subCount > 0) {
+          const allowedKeys = ["title", "bandLevel"];
+          const inputKeys = Object.keys(input).filter(
+            (k) => input[k as keyof typeof input] !== undefined,
+          );
+          const disallowed = inputKeys.filter((k) => !allowedKeys.includes(k));
+          if (disallowed.length > 0) {
+            throw AppError.badRequest(
+              `Published exercises with submissions only allow updating: ${allowedKeys.join(", ")}. ` +
+              `Disallowed fields: ${disallowed.join(", ")}`,
+            );
+          }
+          return await tx.exercise.update({
+            where: { id },
+            data: { title: input.title, bandLevel: input.bandLevel },
+            include: EXERCISE_INCLUDE,
+          });
+        }
+        // No submissions yet — allow full edit like DRAFT
+        return await this.applyExerciseUpdate(tx as unknown as ReturnType<typeof getTenantedClient>, id, input, exercise);
       });
     }
 
@@ -351,6 +412,25 @@ export class ExercisesService {
     id: string,
     input: AutosaveExerciseInput,
   ): Promise<Exercise> {
+    const db = getTenantedClient(this.prisma, centerId);
+    const exercise = await db.exercise.findUnique({ where: { id } });
+    if (!exercise) throw AppError.notFound("Exercise not found");
+
+    if (exercise.status === "PUBLISHED") {
+      // Use transaction to prevent TOCTOU race between submission check and update
+      return await db.$transaction(async (tx) => {
+        const subCount = await tx.submission.count({
+          where: { assignment: { exerciseId: id } },
+        });
+        if (subCount > 0) {
+          throw AppError.badRequest(
+            "Cannot autosave: exercise has student submissions",
+          );
+        }
+        return await this.applyExerciseUpdate(tx as unknown as ReturnType<typeof getTenantedClient>, id, input, exercise);
+      });
+    }
+
     return this.updateDraftExercise(
       centerId,
       id,
@@ -580,10 +660,11 @@ export class ExercisesService {
     }
 
     const db = getTenantedClient(this.prisma, centerId);
-    await this.verifyDraftExercise(
+    await this.verifyEditable(
       db,
+      centerId,
       exerciseId,
-      "Only draft exercises can have audio uploaded",
+      "Only editable exercises can have audio uploaded",
     );
 
     const mimeToExt: Record<string, string> = {
@@ -622,10 +703,11 @@ export class ExercisesService {
     }
 
     const db = getTenantedClient(this.prisma, centerId);
-    const exercise = await this.verifyDraftExercise(
+    const exercise = await this.verifyEditable(
       db,
+      centerId,
       exerciseId,
-      "Only draft exercises can have audio removed",
+      "Only editable exercises can have audio removed",
     );
 
     if (exercise.audioUrl) {
@@ -668,10 +750,11 @@ export class ExercisesService {
     }
 
     const db = getTenantedClient(this.prisma, centerId);
-    await this.verifyDraftExercise(
+    await this.verifyEditable(
       db,
+      centerId,
       exerciseId,
-      "Only draft exercises can have stimulus images uploaded",
+      "Only editable exercises can have stimulus images uploaded",
     );
 
     const mimeToExt: Record<string, string> = {
@@ -713,10 +796,11 @@ export class ExercisesService {
     }
 
     const db = getTenantedClient(this.prisma, centerId);
-    const exercise = await this.verifyDraftExercise(
+    const exercise = await this.verifyEditable(
       db,
+      centerId,
       exerciseId,
-      "Only draft exercises can have stimulus images removed",
+      "Only editable exercises can have stimulus images removed",
     );
 
     if (exercise.stimulusImageUrl) {
@@ -776,10 +860,11 @@ export class ExercisesService {
     }
 
     const db = getTenantedClient(this.prisma, centerId);
-    await this.verifyDraftExercise(
+    await this.verifyEditable(
       db,
+      centerId,
       exerciseId,
-      "Only draft exercises can have documents uploaded",
+      "Only editable exercises can have documents uploaded",
     );
 
     const ext = contentType.includes("pdf") ? "pdf" : "docx";

@@ -211,6 +211,20 @@ export class ExercisesController {
     };
   }
 
+  async hasSubmissions(
+    exerciseId: string,
+    user: JwtPayload,
+  ): Promise<{ data: boolean }> {
+    const centerId = user.centerId;
+    if (!centerId) throw AppError.unauthorized("Center ID missing from token");
+
+    const result = await this.exercisesService.hasExerciseSubmissions(
+      centerId,
+      exerciseId,
+    );
+    return { data: result };
+  }
+
   async archiveExercise(
     id: string,
     user: JwtPayload,

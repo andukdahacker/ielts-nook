@@ -63,6 +63,9 @@ describe("ExercisesService", () => {
         updateMany: vi.fn(),
         delete: vi.fn(),
       },
+      submission: {
+        count: vi.fn().mockResolvedValue(0),
+      },
       questionSection: {
         create: vi.fn(),
         updateMany: vi.fn().mockResolvedValue({ count: 0 }),
@@ -220,11 +223,12 @@ describe("ExercisesService", () => {
       expect(result.title).toBe("Updated Title");
     });
 
-    it("should allow title and bandLevel update on PUBLISHED exercises", async () => {
+    it("should allow title and bandLevel update on PUBLISHED exercises with submissions", async () => {
       mockDb.exercise.findUnique.mockResolvedValue({
         ...mockExercise,
         status: "PUBLISHED",
       });
+      mockDb.submission.count.mockResolvedValue(3);
       mockDb.exercise.update.mockResolvedValue({
         ...mockExercise,
         status: "PUBLISHED",
@@ -241,15 +245,33 @@ describe("ExercisesService", () => {
       );
     });
 
-    it("should reject content fields on PUBLISHED exercises", async () => {
+    it("should reject content fields on PUBLISHED exercises with submissions", async () => {
       mockDb.exercise.findUnique.mockResolvedValue({
         ...mockExercise,
         status: "PUBLISHED",
       });
+      mockDb.submission.count.mockResolvedValue(1);
 
       await expect(
         service.updateExercise(centerId, "ex-1", { instructions: "new" }),
-      ).rejects.toThrow("Published exercises only allow updating: title, bandLevel");
+      ).rejects.toThrow("Published exercises with submissions only allow updating: title, bandLevel");
+    });
+
+    it("should allow full edit on PUBLISHED exercises with no submissions", async () => {
+      mockDb.exercise.findUnique.mockResolvedValue({
+        ...mockExercise,
+        status: "PUBLISHED",
+      });
+      mockDb.submission.count.mockResolvedValue(0);
+      mockDb.exercise.update.mockResolvedValue({
+        ...mockExercise,
+        status: "PUBLISHED",
+        instructions: "updated instructions",
+      });
+
+      const result = await service.updateExercise(centerId, "ex-1", { instructions: "updated instructions" });
+
+      expect(result.instructions).toBe("updated instructions");
     });
 
     it("should reject updates on ARCHIVED exercises", async () => {
@@ -409,6 +431,70 @@ describe("ExercisesService", () => {
       await expect(
         service.archiveExercise(centerId, "ex-1"),
       ).rejects.toThrow("Exercise is already archived");
+    });
+  });
+
+  describe("autosaveExercise", () => {
+    it("should autosave a PUBLISHED exercise with no submissions", async () => {
+      mockDb.exercise.findUnique.mockResolvedValue({
+        ...mockExercise,
+        status: "PUBLISHED",
+      });
+      mockDb.submission.count.mockResolvedValue(0);
+      mockDb.exercise.update.mockResolvedValue({
+        ...mockExercise,
+        status: "PUBLISHED",
+        title: "Autosaved",
+      });
+
+      const result = await service.autosaveExercise(centerId, "ex-1", { title: "Autosaved" });
+
+      expect(result.title).toBe("Autosaved");
+    });
+
+    it("should throw when autosaving a PUBLISHED exercise with submissions", async () => {
+      mockDb.exercise.findUnique.mockResolvedValue({
+        ...mockExercise,
+        status: "PUBLISHED",
+      });
+      mockDb.submission.count.mockResolvedValue(5);
+
+      await expect(
+        service.autosaveExercise(centerId, "ex-1", { title: "Autosaved" }),
+      ).rejects.toThrow("Cannot autosave: exercise has student submissions");
+    });
+
+    it("should autosave a DRAFT exercise", async () => {
+      mockDb.exercise.findUnique.mockResolvedValue(mockExercise);
+      mockDb.exercise.update.mockResolvedValue({
+        ...mockExercise,
+        title: "Autosaved Draft",
+      });
+
+      const result = await service.autosaveExercise(centerId, "ex-1", { title: "Autosaved Draft" });
+
+      expect(result.title).toBe("Autosaved Draft");
+    });
+  });
+
+  describe("hasExerciseSubmissions", () => {
+    it("should return true when submissions exist", async () => {
+      mockDb.submission.count.mockResolvedValue(3);
+
+      const result = await service.hasExerciseSubmissions(centerId, "ex-1");
+
+      expect(result).toBe(true);
+      expect(mockDb.submission.count).toHaveBeenCalledWith({
+        where: { assignment: { exerciseId: "ex-1" } },
+      });
+    });
+
+    it("should return false when no submissions exist", async () => {
+      mockDb.submission.count.mockResolvedValue(0);
+
+      const result = await service.hasExerciseSubmissions(centerId, "ex-1");
+
+      expect(result).toBe(false);
     });
   });
 });

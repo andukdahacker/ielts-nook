@@ -69,6 +69,9 @@ describe("ExercisesService", () => {
       question: {
         create: vi.fn(),
       },
+      submission: {
+        count: vi.fn().mockResolvedValue(0),
+      },
       exerciseTagAssignment: {
         create: vi.fn(),
         createMany: vi.fn(),
@@ -168,15 +171,16 @@ describe("ExercisesService", () => {
       );
     });
 
-    it("should throw if exercise is not DRAFT", async () => {
+    it("should throw if exercise is PUBLISHED with submissions", async () => {
       mockDb.exercise.findUnique.mockResolvedValue({
         ...mockExercise,
         status: "PUBLISHED",
       });
+      mockDb.submission.count.mockResolvedValue(3);
 
       await expect(
         service.uploadAudio(centerId, "ex-1", fileBuffer, "audio/mpeg"),
-      ).rejects.toThrow("Only draft exercises can have audio uploaded");
+      ).rejects.toThrow("Only editable exercises can have audio uploaded");
     });
 
     it("should throw if exercise not found", async () => {
@@ -227,15 +231,16 @@ describe("ExercisesService", () => {
       });
     });
 
-    it("should throw if exercise is not DRAFT", async () => {
+    it("should throw if exercise is PUBLISHED with submissions", async () => {
       mockDb.exercise.findUnique.mockResolvedValue({
         ...exerciseWithAudio,
         status: "PUBLISHED",
       });
+      mockDb.submission.count.mockResolvedValue(3);
 
       await expect(
         service.deleteAudio(centerId, "ex-1"),
-      ).rejects.toThrow("Only draft exercises can have audio removed");
+      ).rejects.toThrow("Only editable exercises can have audio removed");
     });
 
     it("should handle exercise with no audioUrl gracefully", async () => {
@@ -332,15 +337,16 @@ describe("ExercisesService", () => {
       );
     });
 
-    it("should throw if exercise is not DRAFT", async () => {
+    it("should throw if exercise is PUBLISHED with submissions", async () => {
       mockDb.exercise.findUnique.mockResolvedValue({
         ...mockExercise,
         status: "PUBLISHED",
       });
+      mockDb.submission.count.mockResolvedValue(3);
 
       await expect(
         service.uploadStimulusImage(centerId, "ex-1", fileBuffer, "image/png"),
-      ).rejects.toThrow("Only draft exercises can have stimulus images uploaded");
+      ).rejects.toThrow("Only editable exercises can have stimulus images uploaded");
     });
 
     it("should throw if exercise not found", async () => {
@@ -376,15 +382,16 @@ describe("ExercisesService", () => {
       );
     });
 
-    it("should throw if exercise is not DRAFT", async () => {
+    it("should throw if exercise is PUBLISHED with submissions", async () => {
       mockDb.exercise.findUnique.mockResolvedValue({
         ...exerciseWithStimulus,
         status: "PUBLISHED",
       });
+      mockDb.submission.count.mockResolvedValue(3);
 
       await expect(
         service.deleteStimulusImage(centerId, "ex-1"),
-      ).rejects.toThrow("Only draft exercises can have stimulus images removed");
+      ).rejects.toThrow("Only editable exercises can have stimulus images removed");
     });
 
     it("should handle exercise with no stimulusImageUrl gracefully", async () => {

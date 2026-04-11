@@ -1,5 +1,5 @@
 import { useAuth } from "@/features/auth/auth-context";
-import { useExercise, useExercises } from "../hooks/use-exercises";
+import { useExercise, useExercises, useExerciseHasSubmissions } from "../hooks/use-exercises";
 import { useExerciseTags } from "../hooks/use-tags";
 import { useSections } from "../hooks/use-sections";
 import { TagSelector } from "./TagSelector";
@@ -46,11 +46,18 @@ import {
   ClipboardList,
   Eye,
   Loader2,
+  Lock,
   Plus,
   Save,
   Settings,
   Upload,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
@@ -404,6 +411,11 @@ export function ExerciseEditor() {
     deleteQuestion,
   } = useSections(id);
   const { exerciseTags, setExerciseTags } = useExerciseTags(centerId, id);
+  const { data: hasSubmissions } =
+    useExerciseHasSubmissions(centerId, id, exercise?.status);
+  const canEdit =
+    exercise?.status === "DRAFT" ||
+    (exercise?.status === "PUBLISHED" && hasSubmissions === false);
   const { regenerateSection } = useAIGeneration(id);
   const { setLabel, removeLabel, setNonClickable, removeNonClickable } = useBreadcrumbOverrides();
 
@@ -499,7 +511,7 @@ export function ExerciseEditor() {
 
   // Auto-save effect (30 second debounce)
   const scheduleAutosave = useCallback(() => {
-    if (!id || !userHasEdited.current) return;
+    if (!id || !userHasEdited.current || !canEdit) return;
     setSaveStatus("unsaved");
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(async () => {
@@ -537,11 +549,15 @@ export function ExerciseEditor() {
         if (editCountRef.current === editCountAtSave) {
           userHasEdited.current = false;
         }
-      } catch {
+      } catch (err) {
         setSaveStatus("unsaved");
+        const msg = (err as { message?: string })?.message ?? "";
+        if (msg.includes("submissions")) {
+          toast.error("Exercise can no longer be edited — a student has submitted.");
+        }
       }
     }, 30000);
-  }, [id, title, instructions, passageContent, playbackMode, audioSections, showTranscriptAfterSubmit, writingPrompt, letterTone, wordCountMin, wordCountMax, wordCountMode, sampleResponse, showSampleAfterGrading, speakingPrepTime, speakingTime, maxRecordingDuration, enableTranscription, timeLimit, timerPosition, warningAlerts, autoSubmitOnExpiry, gracePeriodSeconds, enablePause, bandLevel, autosave, isW2SectionType]);
+  }, [id, title, instructions, passageContent, playbackMode, audioSections, showTranscriptAfterSubmit, writingPrompt, letterTone, wordCountMin, wordCountMax, wordCountMode, sampleResponse, showSampleAfterGrading, speakingPrepTime, speakingTime, maxRecordingDuration, enableTranscription, timeLimit, timerPosition, warningAlerts, autoSubmitOnExpiry, gracePeriodSeconds, enablePause, bandLevel, autosave, isW2SectionType, canEdit]);
 
   useEffect(() => {
     if (isEditing && userHasEdited.current) {
@@ -630,9 +646,14 @@ export function ExerciseEditor() {
         userHasEdited.current = false;
       }
       toast.success("Draft saved");
-    } catch {
+    } catch (err) {
       setSaveStatus("unsaved");
-      toast.error("Failed to save");
+      const msg = (err as { message?: string })?.message ?? "";
+      if (msg.includes("submissions")) {
+        toast.error("Exercise can no longer be edited — a student has submitted.");
+      } else {
+        toast.error("Failed to save");
+      }
     }
   };
 
@@ -882,10 +903,10 @@ export function ExerciseEditor() {
               <Eye className="sm:mr-2 size-4" />
               <span className="hidden sm:inline">Preview</span>
             </Button>
-            {exercise?.status === "DRAFT" && (
+            {canEdit && (
               <Button variant="outline" size="sm" aria-label="Save Draft" onClick={handleSaveDraft}>
                 <Save className="sm:mr-2 size-4" />
-                <span className="hidden sm:inline">Save Draft</span>
+                <span className="hidden sm:inline">{exercise?.status === "PUBLISHED" ? "Save" : "Save Draft"}</span>
               </Button>
             )}
             {exercise?.status === "DRAFT" && (
@@ -893,6 +914,21 @@ export function ExerciseEditor() {
                 <Upload className="sm:mr-2 size-4" />
                 <span className="hidden sm:inline">Publish</span>
               </Button>
+            )}
+            {exercise?.status === "PUBLISHED" && hasSubmissions && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Lock className="size-4" />
+                      <span className="hidden sm:inline">Read-only</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Editing is disabled because students have already submitted this exercise</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             {exercise?.status === "PUBLISHED" && (
               <Button size="sm" aria-label="Assign to Class" onClick={() => setShowAssignDialog(true)}>
@@ -904,6 +940,7 @@ export function ExerciseEditor() {
         </div>
       </header>
 
+      <fieldset disabled={!canEdit} className="disabled:opacity-60">
       <div className="py-6 space-y-6">
       {/* Title & Instructions */}
       <div className="space-y-4 max-w-3xl">
@@ -1154,6 +1191,7 @@ export function ExerciseEditor() {
             questionTypes={exercise?.sections?.map((s) => s.sectionType).filter(Boolean) ?? []}
             onBandLevelChange={(v) => { setBandLevel(v); userHasEdited.current = true; editCountRef.current++; }}
             onTagsChange={(tagIds) => setExerciseTags({ tagIds })}
+            disabled={!canEdit}
           />
         </div>
       )}
@@ -1162,7 +1200,7 @@ export function ExerciseEditor() {
       <div className="space-y-4 max-w-3xl">
         <div className="flex items-center justify-between">
           <Label>Question Sections</Label>
-          {!isWriting && !isSpeaking && (
+          {!isWriting && !isSpeaking && canEdit && (
             <Button variant="outline" size="sm" onClick={handleAddSection}>
               <Plus className="mr-1 size-4" />
               Add Section
@@ -1183,6 +1221,7 @@ export function ExerciseEditor() {
                     key={section.id}
                     draggableId={section.id}
                     index={idx}
+                    isDragDisabled={!canEdit}
                   >
                     {(provided) => (
                       <div
@@ -1278,6 +1317,7 @@ export function ExerciseEditor() {
         defaultExerciseId={id}
       />
       </div>
+      </fieldset>
     </div>
   );
 }

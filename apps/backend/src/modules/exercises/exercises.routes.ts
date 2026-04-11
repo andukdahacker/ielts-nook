@@ -145,6 +145,51 @@ export async function exercisesRoutes(fastify: FastifyInstance) {
     },
   });
 
+  // GET /:id/has-submissions - Check if exercise has any student submissions
+  const HasSubmissionsResponseSchema = z.object({ data: z.boolean() });
+  api.get("/:id/has-submissions", {
+    schema: {
+      params: z.object({
+        id: z.string(),
+      }),
+      response: {
+        200: HasSubmissionsResponseSchema,
+        401: ErrorResponseSchema,
+        404: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER"])],
+    handler: async (
+      request: FastifyRequest<{ Params: { id: string } }>,
+      reply,
+    ) => {
+      try {
+        const result = await exercisesController.hasSubmissions(
+          request.params.id,
+          request.jwtPayload!,
+        );
+        return reply.send(result);
+      } catch (error: unknown) {
+        request.log.error(error);
+        if (error instanceof AppError) {
+          return reply
+            .status(error.statusCode as 404)
+            .send({ message: error.message });
+        }
+        const prismaErr = mapPrismaError(error);
+        if (prismaErr) {
+          return reply
+            .status(prismaErr.statusCode as 500)
+            .send({ message: prismaErr.message });
+        }
+        return reply
+          .status(500)
+          .send({ message: "Failed to check exercise submissions" });
+      }
+    },
+  });
+
   // POST / - Create exercise
   api.post("/", {
     schema: {

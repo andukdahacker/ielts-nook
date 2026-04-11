@@ -99,6 +99,9 @@ export const useExercises = (
     onSettled: (_, __, { id }) => {
       queryClient.invalidateQueries({ queryKey: exercisesKeys.lists() });
       queryClient.invalidateQueries({ queryKey: exercisesKeys.detail(id) });
+      queryClient.invalidateQueries({
+        queryKey: [...exercisesKeys.detail(id), "has-submissions"],
+      });
     },
   });
 
@@ -243,6 +246,26 @@ export const useExercises = (
   };
 };
 
+export const useExerciseHasSubmissions = (
+  centerId?: string | null,
+  exerciseId?: string,
+  status?: string,
+) => {
+  return useQuery({
+    queryKey: [...exercisesKeys.detail(exerciseId!), "has-submissions"],
+    queryFn: async () => {
+      const { data, error } = await client.GET(
+        "/api/v1/exercises/{id}/has-submissions" as "/api/v1/exercises/{id}",
+        { params: { path: { id: exerciseId! } } },
+      );
+      if (error) throw error;
+      return (data as unknown as { data: boolean })?.data as boolean;
+    },
+    // Only query for PUBLISHED exercises — DRAFT never has submissions
+    enabled: !!centerId && !!exerciseId && status === "PUBLISHED",
+  });
+};
+
 export const useExercise = (centerId?: string | null, exerciseId?: string) => {
   const queryClient = useQueryClient();
 
@@ -276,6 +299,9 @@ export const useExercise = (centerId?: string | null, exerciseId?: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: exercisesKeys.detail(exerciseId!),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...exercisesKeys.detail(exerciseId!), "has-submissions"],
       });
     },
   });
