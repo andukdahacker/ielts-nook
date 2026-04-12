@@ -4,10 +4,6 @@ import {
   SidebarTrigger,
 } from "@workspace/ui/components/sidebar";
 import { AppSidebar } from "../common/app-sidebar";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles } from "lucide-react";
-import { Button } from "@workspace/ui/components/button";
 import { Link, useLocation } from "react-router";
 import { useAuth } from "@/features/auth/auth-context";
 import {
@@ -16,13 +12,6 @@ import {
   getOverflowNavItems,
 } from "@/core/config/navigation";
 import { NotificationBell } from "@/features/dashboard/components/NotificationBell";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@workspace/ui/components/sheet";
 import { Separator } from "@workspace/ui/components/separator";
 import { MobileNavOverflow } from "./MobileNavOverflow";
 import { Breadcrumbs } from "./Breadcrumbs";
@@ -32,26 +21,10 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { useTranslation } from "react-i18next";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
-  const [isAISidebarOpen, setIsAISidebarOpen] = useState(true);
   const location = useLocation();
   const { user } = useAuth();
   const { t } = useTranslation();
   const centerId = user?.centerId;
-
-  // Auto-collapse on smaller screens
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1280) {
-        setIsAISidebarOpen(false);
-      } else {
-        setIsAISidebarOpen(true);
-      }
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   const navConfig = getNavigationConfig(centerId || "default");
   const filteredNavItems = navConfig
@@ -96,51 +69,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </main>
             </BreadcrumbProvider>
           </SidebarInset>
-
-          {/* AI Sidebar - Desktop (Fixed Right) */}
-          <AnimatePresence>
-            {isAISidebarOpen && (
-              <motion.aside
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 320, opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                className="hidden border-l bg-muted/30 xl:block overflow-hidden"
-              >
-                <div className="flex h-full w-[320px] flex-col">
-                  <AISidebarContent onClose={() => setIsAISidebarOpen(false)} />
-                </div>
-              </motion.aside>
-            )}
-          </AnimatePresence>
-
-          {/* AI Sidebar - Mobile/Tablet (Sheet) */}
-          <div className="xl:hidden">
-            <Sheet
-              open={isAISidebarOpen}
-              onOpenChange={(open) => setIsAISidebarOpen(open)}
-            >
-              <SheetContent side="right" className="w-[320px] p-0">
-                <SheetHeader className="sr-only">
-                  <SheetTitle>{t("aiSidebar.title")}</SheetTitle>
-                  <SheetDescription>{t("aiSidebar.description")}</SheetDescription>
-                </SheetHeader>
-                <AISidebarContent onClose={() => setIsAISidebarOpen(false)} />
-              </SheetContent>
-            </Sheet>
-          </div>
-
-          {/* Floating Toggle Button */}
-          {!isAISidebarOpen && (
-            <div className="fixed right-4 bottom-20 z-40 md:bottom-4">
-              <Button
-                size="icon"
-                className="h-12 w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90"
-                onClick={() => setIsAISidebarOpen(true)}
-              >
-                <Sparkles className="h-6 w-6 text-primary-foreground" />
-              </Button>
-            </div>
-          )}
         </div>
 
         {/* Mobile Bottom Bar */}
@@ -176,27 +104,5 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </nav>
       </div>
     </SidebarProvider>
-  );
-}
-
-function AISidebarContent(_: { onClose: () => void }) {
-  void _; // Satisfy unused param lint
-  const { t } = useTranslation();
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b p-4">
-        <div className="flex items-center gap-2 font-semibold">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <span className="font-heading">{t("aiSidebar.title")}</span>
-        </div>
-      </div>
-      <div className="flex-1 p-4">
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-sm text-muted-foreground">
-            {t("aiSidebar.greeting")}
-          </p>
-        </div>
-      </div>
-    </div>
   );
 }
