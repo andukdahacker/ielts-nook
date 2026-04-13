@@ -125,6 +125,21 @@ function TeacherCommentCardInner({
     [handleEditSave, handleEditCancel],
   );
 
+  // Keyboard: Enter/Space → scroll to anchor
+  const handleCardKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      const tag = (document.activeElement?.tagName ?? "").toLowerCase();
+      if (tag === "textarea" || tag === "input" || document.activeElement?.getAttribute("contenteditable")) return;
+      if (e.key === "Enter" || e.key === " ") {
+        if (hasAnchor && onScrollTo) {
+          e.preventDefault();
+          onScrollTo(comment.id);
+        }
+      }
+    },
+    [hasAnchor, onScrollTo, comment.id],
+  );
+
   const toggleVisibility = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
     const newVisibility: CommentVisibility =
@@ -153,6 +168,7 @@ function TeacherCommentCardInner({
       onFocus={handleFocus}
       onBlur={handleBlur}
       onTouchStart={handleTouchStart}
+      onKeyDown={handleCardKeyDown}
     >
       <CardContent className="p-3">
         <div className="space-y-2">

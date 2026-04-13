@@ -118,15 +118,14 @@ function FeedbackItemCardInner({
 
   const handleClick = useCallback(() => {
     if (suppressMouseRef.current) return;
-    if (hasAnchor && onScrollTo) onScrollTo(item.id);
+    if (!hasAnchor) return;
+    if (onScrollTo) onScrollTo(item.id);
   }, [hasAnchor, onScrollTo, item.id]);
 
   const handleTouchStart = useCallback(
     () => {
       if (!hasAnchor) return;
-      if (onScrollTo) {
-        onScrollTo(item.id);
-      }
+      if (onScrollTo) onScrollTo(item.id);
       suppressMouseRef.current = true;
       setTimeout(() => { suppressMouseRef.current = false; }, 400);
     },
@@ -179,9 +178,19 @@ function FeedbackItemCardInner({
   // Keyboard shortcuts on card
   const handleCardKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (isFinalized) return;
       const tag = (document.activeElement?.tagName ?? "").toLowerCase();
       if (tag === "textarea" || tag === "input" || document.activeElement?.getAttribute("contenteditable")) return;
+
+      // Enter/Space → scroll to anchor
+      if (e.key === "Enter" || e.key === " ") {
+        if (hasAnchor && onScrollTo) {
+          e.preventDefault();
+          onScrollTo(item.id);
+        }
+        return;
+      }
+
+      if (isFinalized) return;
       if (item.type === "score_suggestion") return;
 
       if (e.key === "a" || e.key === "A") {
@@ -192,7 +201,7 @@ function FeedbackItemCardInner({
         onApprove?.(item.id, false);
       }
     },
-    [isFinalized, item.type, item.id, onApprove],
+    [isFinalized, item.type, item.id, onApprove, hasAnchor, onScrollTo],
   );
 
   useEffect(() => {
@@ -276,12 +285,13 @@ function FeedbackItemCardInner({
 
             {/* Override text editor */}
             {isEditing && (
-              <div className="space-y-1" role="presentation" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+              <div className="space-y-1">
                 <Textarea
                   ref={textareaRef}
                   value={editText}
                   onChange={(e) => setEditText(e.target.value)}
                   onKeyDown={handleEditKeyDown}
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   onBlur={handleSaveEdit}
                   rows={2}
                   maxLength={2000}

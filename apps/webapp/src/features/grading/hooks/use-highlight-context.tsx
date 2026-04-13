@@ -14,7 +14,12 @@ const HighlightSetterContext = createContext<
 >(() => {});
 
 // Scroll target context: set on click, triggers scroll + flash
-const ScrollTargetValueContext = createContext<string | null>(null);
+// Uses {id, seq} to ensure re-clicking the same card always triggers a new state change
+interface ScrollTarget {
+  id: string;
+  seq: number;
+}
+const ScrollTargetValueContext = createContext<ScrollTarget | null>(null);
 const ScrollTargetSetterContext = createContext<
   (id: string | null) => void
 >(() => {});
@@ -23,9 +28,10 @@ export function HighlightProvider({ children }: { children: React.ReactNode }) {
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(
     null,
   );
-  const [scrollTargetId, setScrollTargetIdState] = useState<string | null>(
+  const [scrollTarget, setScrollTargetState] = useState<ScrollTarget | null>(
     null,
   );
+  const scrollSeqRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const setHighlighted = useCallback(
@@ -48,7 +54,12 @@ export function HighlightProvider({ children }: { children: React.ReactNode }) {
   );
 
   const setScrollTarget = useCallback((id: string | null) => {
-    setScrollTargetIdState(id);
+    if (id === null) {
+      setScrollTargetState(null);
+    } else {
+      scrollSeqRef.current += 1;
+      setScrollTargetState({ id, seq: scrollSeqRef.current });
+    }
   }, []);
 
   // Clean up pending debounce timer on unmount
@@ -62,7 +73,7 @@ export function HighlightProvider({ children }: { children: React.ReactNode }) {
     <HighlightSetterContext.Provider value={setHighlighted}>
       <HighlightValueContext.Provider value={highlightedItemId}>
         <ScrollTargetSetterContext.Provider value={setScrollTarget}>
-          <ScrollTargetValueContext.Provider value={scrollTargetId}>
+          <ScrollTargetValueContext.Provider value={scrollTarget}>
             {children}
           </ScrollTargetValueContext.Provider>
         </ScrollTargetSetterContext.Provider>
@@ -89,7 +100,7 @@ export function useHighlightState() {
   };
 }
 
-export function useScrollTargetValue(): string | null {
+export function useScrollTargetValue(): ScrollTarget | null {
   return useContext(ScrollTargetValueContext);
 }
 

@@ -138,7 +138,28 @@ describe("useScrollTargetContext", () => {
       result.current.setter("item-1");
     });
 
-    expect(result.current.value).toBe("item-1");
+    expect(result.current.value).toEqual({ id: "item-1", seq: expect.any(Number) });
+  });
+
+  it("re-setting the same id produces a new object (different seq)", () => {
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <HighlightProvider>{children}</HighlightProvider>
+    );
+
+    const { result } = renderHook(
+      () => ({ value: useScrollTargetValue(), setter: useScrollTargetSetter() }),
+      { wrapper },
+    );
+
+    act(() => { result.current.setter("item-1"); });
+    const first = result.current.value;
+
+    act(() => { result.current.setter("item-1"); });
+    const second = result.current.value;
+
+    expect(first?.id).toBe("item-1");
+    expect(second?.id).toBe("item-1");
+    expect(second?.seq).toBeGreaterThan(first!.seq);
   });
 
   it("useScrollTargetSetter returns a stable function", () => {
@@ -171,7 +192,7 @@ describe("useScrollTargetContext", () => {
 
     // Highlight should remain null
     expect(result.current.highlight.highlightedItemId).toBeNull();
-    expect(result.current.scrollValue).toBe("scroll-1");
+    expect(result.current.scrollValue).toEqual({ id: "scroll-1", seq: expect.any(Number) });
 
     // Set highlight (immediate)
     act(() => {
@@ -180,6 +201,6 @@ describe("useScrollTargetContext", () => {
 
     // Both should be independently set
     expect(result.current.highlight.highlightedItemId).toBe("highlight-1");
-    expect(result.current.scrollValue).toBe("scroll-1");
+    expect(result.current.scrollValue).toEqual({ id: "scroll-1", seq: expect.any(Number) });
   });
 });

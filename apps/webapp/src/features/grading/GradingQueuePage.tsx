@@ -275,12 +275,13 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
     [setHighlightedItemId],
   );
 
-  // Click-to-scroll callback
+  // Click-to-scroll callback — also activates highlight (connection lines + ring)
   const handleScrollTo = useCallback(
     (id: string) => {
+      setHighlightedItemId(id, false);
       setScrollTarget(id);
     },
-    [setScrollTarget],
+    [setHighlightedItemId, setScrollTarget],
   );
 
   const highlightedSeverity = useMemo(() => {

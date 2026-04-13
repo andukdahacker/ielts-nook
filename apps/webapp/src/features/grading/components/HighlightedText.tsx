@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   useHighlightValue,
   useScrollTargetValue,
-  useScrollTargetSetter,
 } from "../hooks/use-highlight-context";
 import type { AnchorStatus } from "../hooks/use-anchor-validation";
 
@@ -38,6 +37,7 @@ const ACTIVE_BG: Record<string, string> = {
 interface TextSegment {
   text: string;
   feedbackId: string | null;
+  allFeedbackIds: string[];
   severity: Severity | null;
   anchorStatus: AnchorStatus | null;
 }
@@ -57,7 +57,7 @@ function buildSegments(
 
   if (validItems.length === 0) {
     return [
-      { text, feedbackId: null, severity: null, anchorStatus: null },
+      { text, feedbackId: null, allFeedbackIds: [], severity: null, anchorStatus: null },
     ];
   }
 
@@ -83,6 +83,7 @@ function buildSegments(
         segments.push({
           text: segText,
           feedbackId: topItem?.id ?? null,
+          allFeedbackIds: [...activeItems].map((i) => i.id),
           severity: (topItem?.severity as Severity) ?? null,
           anchorStatus: topItem?.anchorStatus ?? null,
         });
@@ -102,6 +103,7 @@ function buildSegments(
     segments.push({
       text: text.slice(cursor),
       feedbackId: null,
+      allFeedbackIds: [],
       severity: null,
       anchorStatus: null,
     });
@@ -133,11 +135,12 @@ const FLASH_BG: Record<string, string> = {
   teacher: "var(--highlight-flash-teacher, rgba(16, 185, 129, 0.3))",
 };
 
-// Injected once per document to avoid duplicate <style> tags across instances
-let flashStyleInjected = false;
+const FLASH_STYLE_ID = "highlight-flash-keyframes";
 function ensureFlashStyle() {
-  if (flashStyleInjected || typeof document === "undefined") return;
+  if (typeof document === "undefined") return;
+  if (document.getElementById(FLASH_STYLE_ID)) return;
   const style = document.createElement("style");
+  style.id = FLASH_STYLE_ID;
   style.textContent = `
     @keyframes highlight-flash {
       0% { background-color: var(--flash-color); }
@@ -148,16 +151,14 @@ function ensureFlashStyle() {
     }
   `;
   document.head.appendChild(style);
-  flashStyleInjected = true;
 }
 
 export function HighlightedText({ text, feedbackItems }: HighlightedTextProps) {
   const highlightedItemId = useHighlightValue();
-  const scrollTargetId = useScrollTargetValue();
-  const setScrollTarget = useScrollTargetSetter();
+  const scrollTarget = useScrollTargetValue();
   const [flashingId, setFlashingId] = useState<string | null>(null);
 
-  // Inject flash keyframe style once per document (D1 fix)
+  // Inject flash keyframe style once per document
   useEffect(() => { ensureFlashStyle(); }, []);
 
   const segments = useMemo(
@@ -165,17 +166,22 @@ export function HighlightedText({ text, feedbackItems }: HighlightedTextProps) {
     [text, feedbackItems],
   );
 
-  // Scroll to target on click (not hover) — use querySelector for reliable targeting (P1/D2 fix)
+  // Scroll to target on click (not hover)
   useEffect(() => {
-    if (!scrollTargetId) return;
-    const el = document.querySelector<HTMLElement>(`[data-feedback-id="${scrollTargetId}"]`);
+    if (!scrollTarget) return;
+    const escaped = CSS.escape(scrollTarget.id);
+    // Primary: exact data-feedback-id match. Fallback: overlapping item in data-feedback-ids.
+    const el =
+      document.querySelector<HTMLElement>(`[data-feedback-id="${escaped}"]`) ??
+      document.querySelector<HTMLElement>(`[data-feedback-ids~="${escaped}"]`);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      setFlashingId(scrollTargetId);
+      // Delay flash until element is likely visible after smooth scroll
+      requestAnimationFrame(() => {
+        setFlashingId(scrollTarget.id);
+      });
     }
-    // Clear scroll target so clicking the same card again works
-    setScrollTarget(null);
-  }, [scrollTargetId, setScrollTarget]);
+  }, [scrollTarget]);
 
   // Clear flash after animation completes
   const handleAnimationEnd = useCallback(() => {
@@ -242,14 +248,16 @@ export function HighlightedText({ text, feedbackItems }: HighlightedTextProps) {
                 return <span key={`t-${seg.charOffset}`} data-char-start={seg.charOffset}>{seg.text || "\u00A0"}</span>;
               }
 
-              const isActive = highlightedItemId === seg.feedbackId;
-              const isFlashing = flashingId === seg.feedbackId;
+              const isActive = highlightedItemId === seg.feedbackId || seg.allFeedbackIds.includes(highlightedItemId ?? "");
+              const isFlashing = flashingId === seg.feedbackId || seg.allFeedbackIds.includes(flashingId ?? "");
               const severity = seg.severity === null ? "teacher" : (seg.severity ?? "suggestion");
+              const extraIds = seg.allFeedbackIds.filter((id) => id !== seg.feedbackId);
 
               return (
                 <span
                   key={`fb-${seg.feedbackId}-${seg.charOffset}`}
                   data-feedback-id={seg.feedbackId}
+                  data-feedback-ids={extraIds.length > 0 ? extraIds.join(" ") : undefined}
                   data-char-start={seg.charOffset}
                   id={`anchor-${seg.feedbackId}`}
                   className={
