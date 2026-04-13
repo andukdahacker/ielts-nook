@@ -1,8 +1,9 @@
 "use client";
 
-import { ChevronsUpDown, LogOut, User } from "lucide-react";
+import { ChevronsUpDown, LogOut, Moon, Sun, User } from "lucide-react";
 
 import { useAuth } from "@/features/auth/auth-context";
+import { useTheme } from "./theme-provider";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +52,20 @@ export function NavUser({
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [logoutConfirmDialogOpen, setLogoutConfirmDialogOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+
+  const cycleTheme = () => {
+    const order = ["light", "dark", "system"] as const;
+    const current = order.indexOf(theme as (typeof order)[number]);
+    setTheme(order[(current + 1) % order.length]);
+  };
+
+  const themeLabel =
+    theme === "light"
+      ? t("theme.light")
+      : theme === "dark"
+        ? t("theme.dark")
+        : t("theme.system");
 
   const handleLogout = async () => {
     await logout();
@@ -110,6 +125,11 @@ export function NavUser({
               >
                 <User />
                 {t("user.myProfile")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={cycleTheme}>
+                <Sun className="h-4 w-4 scale-100 rotate-0 dark:scale-0 dark:-rotate-90" />
+                <Moon className="absolute h-4 w-4 scale-0 rotate-90 dark:scale-100 dark:rotate-0" />
+                {themeLabel}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

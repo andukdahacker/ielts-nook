@@ -30,27 +30,30 @@ import {
   useResetTerms,
   type ModerationFlag,
 } from "../moderation.api";
+import { useTranslation } from "react-i18next";
 
 // ── Flag Status Badge ──────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
-  const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-    PENDING: { variant: "destructive", label: "Pending" },
-    APPROVED: { variant: "default", label: "Approved" },
-    REDACTED: { variant: "secondary", label: "Redacted" },
-    DELETED: { variant: "outline", label: "Deleted" },
+  const { t } = useTranslation("settings");
+  const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; labelKey: string }> = {
+    PENDING: { variant: "destructive", labelKey: "moderation.badgePending" },
+    APPROVED: { variant: "default", labelKey: "moderation.badgeApproved" },
+    REDACTED: { variant: "secondary", labelKey: "moderation.badgeRedacted" },
+    DELETED: { variant: "outline", labelKey: "moderation.badgeDeleted" },
   };
-  const config = variants[status] ?? { variant: "outline" as const, label: status };
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+  const config = variants[status] ?? { variant: "outline" as const, labelKey: "" };
+  return <Badge variant={config.variant}>{config.labelKey ? t(config.labelKey) : status}</Badge>;
 }
 
 function ContentTypeBadge({ type }: { type: string }) {
+  const { t } = useTranslation("settings");
   const labels: Record<string, string> = {
-    EXERCISE: "Exercise",
-    SUBMISSION: "Submission",
-    AI_FEEDBACK: "AI Feedback",
+    EXERCISE: "moderation.badgeExercise",
+    SUBMISSION: "moderation.badgeSubmission",
+    AI_FEEDBACK: "moderation.badgeAiFeedback",
   };
-  return <Badge variant="outline">{labels[type] ?? type}</Badge>;
+  return <Badge variant="outline">{labels[type] ? t(labels[type]) : type}</Badge>;
 }
 
 // ── Flag List & Detail ─────────────────────────────────────────────
@@ -62,6 +65,7 @@ function FlagListPanel({
   selectedId: string | null;
   onSelect: (flag: ModerationFlag) => void;
 }) {
+  const { t } = useTranslation("settings");
   const [statusFilter, setStatusFilter] = useState<string>("PENDING");
   const [contentTypeFilter, setContentTypeFilter] = useState<string>("all");
 
@@ -76,29 +80,29 @@ function FlagListPanel({
   return (
     <div className="flex flex-col h-full border-r">
       <div className="p-4 border-b space-y-3">
-        <h3 className="font-semibold text-sm">Moderation Flags</h3>
+        <h3 className="font-semibold text-sm">{t("moderation.panelFlags")}</h3>
         <div className="flex gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={t("moderation.filterStatus")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
-              <SelectItem value="APPROVED">Approved</SelectItem>
-              <SelectItem value="REDACTED">Redacted</SelectItem>
-              <SelectItem value="DELETED">Deleted</SelectItem>
+              <SelectItem value="all">{t("moderation.filterAllStatus")}</SelectItem>
+              <SelectItem value="PENDING">{t("moderation.filterPending")}</SelectItem>
+              <SelectItem value="APPROVED">{t("moderation.filterApproved")}</SelectItem>
+              <SelectItem value="REDACTED">{t("moderation.filterRedacted")}</SelectItem>
+              <SelectItem value="DELETED">{t("moderation.filterDeleted")}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={contentTypeFilter} onValueChange={setContentTypeFilter}>
             <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Type" />
+              <SelectValue placeholder={t("moderation.filterType")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="EXERCISE">Exercise</SelectItem>
-              <SelectItem value="SUBMISSION">Submission</SelectItem>
-              <SelectItem value="AI_FEEDBACK">AI Feedback</SelectItem>
+              <SelectItem value="all">{t("moderation.filterAllTypes")}</SelectItem>
+              <SelectItem value="EXERCISE">{t("moderation.filterExercise")}</SelectItem>
+              <SelectItem value="SUBMISSION">{t("moderation.filterSubmission")}</SelectItem>
+              <SelectItem value="AI_FEEDBACK">{t("moderation.filterAiFeedback")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -106,11 +110,11 @@ function FlagListPanel({
 
       <div className="flex-1 overflow-auto">
         {isLoading && (
-          <div className="p-4 text-sm text-muted-foreground">Loading...</div>
+          <div className="p-4 text-sm text-muted-foreground">{t("moderation.loading")}</div>
         )}
         {!isLoading && flags.length === 0 && (
           <div className="p-4 text-sm text-muted-foreground text-center">
-            No flags found
+            {t("moderation.noFlags")}
           </div>
         )}
         {flags.map((flag) => (
@@ -151,6 +155,7 @@ function FlagListPanel({
 }
 
 function FlagDetailPanel({ flag }: { flag: ModerationFlag | null }) {
+  const { t } = useTranslation("settings");
   const resolveFlag = useResolveFlag();
   const [redactedText, setRedactedText] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -158,7 +163,7 @@ function FlagDetailPanel({ flag }: { flag: ModerationFlag | null }) {
   if (!flag) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
-        Select a flag to view details
+        {t("moderation.noFlagSelected")}
       </div>
     );
   }
@@ -208,12 +213,12 @@ function FlagDetailPanel({ flag }: { flag: ModerationFlag | null }) {
           <StatusBadge status={flag.status} />
         </div>
         <p className="text-xs text-muted-foreground">
-          Flagged: {new Date(flag.createdAt).toLocaleString()}
+          {new Date(flag.createdAt).toLocaleString()}
         </p>
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Matched Terms</h4>
+        <h4 className="text-sm font-semibold">{t("moderation.matchedTerms")}</h4>
         <div className="flex flex-wrap gap-1">
           {flag.matchedTerms.map((term) => (
             <Badge key={term} variant="destructive">
@@ -224,7 +229,7 @@ function FlagDetailPanel({ flag }: { flag: ModerationFlag | null }) {
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Flagged Content</h4>
+        <h4 className="text-sm font-semibold">{t("moderation.flaggedContent")}</h4>
         <div className="rounded-lg border p-4 text-sm whitespace-pre-wrap max-h-60 overflow-auto bg-muted/30">
           {highlightText(flag.flaggedText, flag.matchedTerms)}
         </div>
@@ -232,7 +237,7 @@ function FlagDetailPanel({ flag }: { flag: ModerationFlag | null }) {
 
       {flag.redactedText && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold">Redacted Version</h4>
+          <h4 className="text-sm font-semibold">{t("moderation.redactedVersion")}</h4>
           <div className="rounded-lg border p-4 text-sm whitespace-pre-wrap max-h-40 overflow-auto">
             {flag.redactedText}
           </div>
@@ -241,7 +246,7 @@ function FlagDetailPanel({ flag }: { flag: ModerationFlag | null }) {
 
       {isPending && (
         <div className="space-y-4 border-t pt-4">
-          <h4 className="text-sm font-semibold">Actions</h4>
+          <h4 className="text-sm font-semibold">{t("moderation.actions")}</h4>
 
           <div className="flex gap-2">
             <Button
@@ -251,7 +256,7 @@ function FlagDetailPanel({ flag }: { flag: ModerationFlag | null }) {
               disabled={resolveFlag.isPending}
             >
               <Check className="h-4 w-4 mr-1" />
-              Approve
+              {t("moderation.approve")}
             </Button>
             <Button
               variant="destructive"
@@ -260,20 +265,20 @@ function FlagDetailPanel({ flag }: { flag: ModerationFlag | null }) {
               disabled={resolveFlag.isPending}
             >
               <Trash2 className="h-4 w-4 mr-1" />
-              Delete
+              {t("moderation.badgeDeleted")}
             </Button>
           </div>
 
           <div className="space-y-2">
             <label htmlFor="redact-textarea" className="text-sm font-medium">
               <Scissors className="h-4 w-4 inline mr-1" />
-              Redact — provide replacement text:
+              {t("moderation.redactLabel")}
             </label>
             <Textarea
               id="redact-textarea"
               value={redactedText}
               onChange={(e) => setRedactedText(e.target.value)}
-              placeholder="Enter the redacted version of the content..."
+              placeholder={t("moderation.redactPlaceholder")}
               rows={3}
             />
             <Button
@@ -282,7 +287,7 @@ function FlagDetailPanel({ flag }: { flag: ModerationFlag | null }) {
               onClick={handleRedact}
               disabled={resolveFlag.isPending || !redactedText.trim()}
             >
-              Apply Redaction
+              {t("moderation.applyRedaction")}
             </Button>
           </div>
         </div>
@@ -291,15 +296,14 @@ function FlagDetailPanel({ flag }: { flag: ModerationFlag | null }) {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete flagged content?</AlertDialogTitle>
+            <AlertDialogTitle>{t("moderation.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove the flagged content. This action
-              cannot be undone.
+              {t("moderation.deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t("common:button.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>{t("moderation.badgeDeleted")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -310,6 +314,7 @@ function FlagDetailPanel({ flag }: { flag: ModerationFlag | null }) {
 // ── Term List Manager ──────────────────────────────────────────────
 
 function ModerationTermsSettings() {
+  const { t } = useTranslation("settings");
   const { user } = useAuth();
   const isOwner = user?.role === "OWNER";
   const { data: termList, isLoading } = useModerationTerms();
@@ -318,7 +323,7 @@ function ModerationTermsSettings() {
   const [editValue, setEditValue] = useState<string | null>(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
-  if (isLoading) return <div className="text-sm text-muted-foreground">Loading term list...</div>;
+  if (isLoading) return <div className="text-sm text-muted-foreground">{t("moderation.loading")}</div>;
 
   const terms = termList?.terms ?? [];
   const isEditing = editValue !== null;
@@ -351,10 +356,10 @@ function ModerationTermsSettings() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold">Prohibited Terms</h3>
+          <h3 className="text-sm font-semibold">{t("moderation.termsTitle")}</h3>
           <p className="text-xs text-muted-foreground">
-            {terms.length} terms configured
-            {termList?.isCustom ? " (customized)" : " (defaults)"}
+            {t("moderation.termsConfigured", { count: terms.length })}
+            {termList?.isCustom ? ` ${t("moderation.termsCustomized")}` : ` ${t("moderation.termsDefaults")}`}
           </p>
         </div>
         {isOwner && (
@@ -366,20 +371,20 @@ function ModerationTermsSettings() {
                   size="sm"
                   onClick={() => setEditValue(null)}
                 >
-                  Cancel
+                  {t("common:button.cancel")}
                 </Button>
                 <Button
                   size="sm"
                   onClick={handleSave}
                   disabled={updateTerms.isPending}
                 >
-                  Save
+                  {t("common:button.save")}
                 </Button>
               </>
             ) : (
               <>
                 <Button variant="outline" size="sm" onClick={handleStartEdit}>
-                  Edit Terms
+                  {t("moderation.editTerms")}
                 </Button>
                 <Button
                   variant="ghost"
@@ -387,7 +392,7 @@ function ModerationTermsSettings() {
                   onClick={() => setResetDialogOpen(true)}
                 >
                   <RotateCcw className="h-4 w-4 mr-1" />
-                  Reset Defaults
+                  {t("moderation.resetDefaults")}
                 </Button>
               </>
             )}
@@ -401,12 +406,11 @@ function ModerationTermsSettings() {
             value={editValue ?? ""}
             onChange={(e) => setEditValue(e.target.value)}
             rows={15}
-            placeholder="One term per line..."
+            placeholder={t("moderation.termsPlaceholder")}
             className="font-mono text-sm"
           />
           <p className="text-xs text-muted-foreground">
-            Enter one prohibited term per line. Maximum 500 terms, 100
-            characters each.
+            {t("moderation.termsHelp")}
           </p>
         </div>
       ) : (
@@ -424,16 +428,15 @@ function ModerationTermsSettings() {
       <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Reset to default terms?</AlertDialogTitle>
+            <AlertDialogTitle>{t("moderation.resetTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will replace your custom term list with the default
-              Vietnamese compliance terms. Custom terms will be lost.
+              {t("moderation.resetDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common:button.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleReset}>
-              Reset to Defaults
+              {t("moderation.resetConfirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -445,6 +448,7 @@ function ModerationTermsSettings() {
 // ── Main Page ──────────────────────────────────────────────────────
 
 export function ModerationPage() {
+  const { t } = useTranslation("settings");
   const { user } = useAuth();
   const isAdminOrOwner = user?.role === "OWNER" || user?.role === "ADMIN";
   const [selectedFlag, setSelectedFlag] = useState<ModerationFlag | null>(null);
@@ -453,18 +457,18 @@ export function ModerationPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-lg font-semibold">Compliance</h2>
+          <h2 className="text-lg font-semibold">{t("moderation.heading")}</h2>
           <p className="text-muted-foreground">
-            Content moderation and compliance settings.
+            {t("moderation.description")}
           </p>
         </div>
         <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg">
           <div className="rounded-full bg-muted p-4 mb-4">
             <Shield className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="text-base font-semibold">Access Restricted</h3>
+          <h3 className="text-base font-semibold">{t("moderation.errorTitle")}</h3>
           <p className="text-muted-foreground max-w-sm mt-2">
-            Only Admins and Owners can access compliance settings.
+            {t("moderation.errorMessage")}
           </p>
         </div>
       </div>
@@ -476,17 +480,17 @@ export function ModerationPage() {
       <div>
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <AlertTriangle className="h-5 w-5" />
-          Compliance
+          {t("moderation.heading")}
         </h2>
         <p className="text-muted-foreground">
-          Content moderation and compliance review workspace.
+          {t("moderation.descriptionFull")}
         </p>
       </div>
 
       <Tabs defaultValue="flags">
         <TabsList>
-          <TabsTrigger value="flags">Flagged Content</TabsTrigger>
-          <TabsTrigger value="terms">Prohibited Terms</TabsTrigger>
+          <TabsTrigger value="flags">{t("moderation.tabFlaggedContent")}</TabsTrigger>
+          <TabsTrigger value="terms">{t("moderation.tabProhibitedTerms")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="flags" className="mt-4">

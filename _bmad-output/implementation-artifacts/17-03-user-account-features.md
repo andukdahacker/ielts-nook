@@ -14,8 +14,8 @@ So that the platform feels personalized and convenient.
 
 ### AC1: Google Account Avatar (was 17.8)
 - On Google OAuth login, the user's Google profile photo URL is stored in the database.
-- Avatar appears in: top bar (nav-user), sidebar, and profile page.
-- If no Google photo exists, fallback to initials (existing behavior in `nav-user.tsx`).
+- Avatar appears in: top bar (TopBar), sidebar (nav-user via app-sidebar), and profile page.
+- If no Google photo exists, fallback to initials (existing behavior).
 
 ### AC2: Selectable Timezone in Settings (was 17.10)
 - Timezone field in center settings is a searchable dropdown (not a text input).
@@ -29,80 +29,99 @@ So that the platform feels personalized and convenient.
 - System preference is respected as default.
 
 ### AC4: Extend Login Session (was 17.12)
-- A "Keep me logged in" checkbox is available on the login page.
-- When checked, session/refresh token persistence is set to `LOCAL` (survives browser close, ~90 days via Firebase).
-- When unchecked, session persistence is set to `SESSION` (cleared on browser close).
+- ALREADY IMPLEMENTED. Verify existing "Remember me" checkbox works correctly.
+- When checked, session persistence is `LOCAL` (survives browser close).
+- When unchecked, session persistence is `SESSION` (cleared on browser close).
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Google Avatar Storage & Display** (AC: #1)
-  - [ ] **Backend:** In the Google signup/login endpoint (`POST /api/v1/auth/signup/center/google` and login flow): extract `user.photoURL` from the Firebase user object and store it in the `avatarUrl` field on the User model
-  - [ ] **Backend:** Add a Prisma migration if `avatarUrl` column doesn't exist on the User table (check schema first)
-  - [ ] **Frontend:** Verify `nav-user.tsx` (~lines 67-72, 88-92) already uses `user.avatarUrl` for `AvatarImage` — if so, this should work automatically once backend stores it
-  - [ ] **Frontend:** Verify avatar also displays on the profile page (`ProfileEditForm.tsx`)
-  - [ ] Ensure fallback to initials still works when `avatarUrl` is null
+- [ ] **Task 1: Google Avatar — Verify Backend + Fix Frontend Display** (AC: #1)
+  - [ ] **Backend ALREADY DONE:** `auth.service.ts` already extracts `picture` from Firebase decoded token (line 122) and stores it as `avatarUrl` on user create (line 174) and update (line 166). Prisma schema has `avatarUrl String? @map("avatar_url")` on the User model. **No backend changes needed.**
+  - [ ] **Frontend — Verify display chain:** `app-sidebar.tsx:87` maps `user?.avatarUrl` → `avatar` prop for `NavUser`. `TopBar.tsx:67` uses `user.avatarUrl` directly. `profile-page.tsx:251` uses `displayUser.avatarUrl`. All three display points are already wired.
+  - [ ] **Verify:** Log in with a Google account that has a profile photo. Confirm avatar appears in sidebar, top bar, and profile page. Confirm initials fallback works when `avatarUrl` is null.
+  - [ ] **If avatar does NOT appear:** Check that the Google OAuth flow actually reaches `auth.service.ts` and that the `picture` field is populated in the Firebase decoded token. Debug from there.
 
 - [ ] **Task 2: Timezone Searchable Dropdown** (AC: #2)
-  - [ ] In `apps/webapp/src/features/tenants/center-settings-page.tsx` (~line 29): replace the timezone text input with a searchable Combobox/Select
-  - [ ] Use `Intl.supportedValuesOf('timeZone')` to get IANA timezone list (modern browsers support this)
-  - [ ] Use Shadcn `Command` + `Popover` pattern (Combobox) for searchable dropdown — this is the standard Shadcn pattern for searchable selects
-  - [ ] Pre-select the current center timezone value
+  - [ ] In `apps/webapp/src/features/tenants/center-settings-page.tsx` (~line 170-185): replace the timezone `<Input placeholder="e.g. Asia/Ho_Chi_Minh">` with a searchable Combobox
+  - [ ] Use `Intl.supportedValuesOf('timeZone')` to get the IANA timezone list (modern browsers support this)
+  - [ ] Build Combobox by composing `Command` + `Popover` from existing Shadcn components:
+    - `Command` is at `packages/ui/src/components/command.tsx` (based on `cmdk` library)
+    - `Popover` is at `packages/ui/src/components/popover.tsx`
+    - There is NO standalone Combobox component — you must compose them. Follow the Shadcn Combobox pattern: `<Popover><PopoverTrigger><Button>` + `<PopoverContent><Command><CommandInput><CommandList><CommandEmpty><CommandGroup><CommandItem>`
+  - [ ] Pre-select the current center timezone value from the form state
   - [ ] Keep `UpdateCenterSchema` Zod validation as-is (timezone is already a string field)
+  - [ ] Ensure the dropdown is accessible (keyboard navigation, aria labels) — the `Command` component handles most of this
 
-- [ ] **Task 3: Expose Dark Mode Toggle** (AC: #3)
-  - [ ] **Existing infrastructure:** `theme-provider.tsx` and `theme-toggle-button.tsx` already exist with full implementation (localStorage persistence, system preference detection, light/dark/system options)
-  - [ ] Add the `ThemeToggleButton` to the user nav dropdown in `apps/webapp/src/core/components/common/nav-user.tsx`
+- [ ] **Task 3: Expose Dark Mode Toggle in Nav** (AC: #3)
+  - [ ] **Existing infrastructure:** `theme-provider.tsx` and `theme-toggle-button.tsx` already exist at `apps/webapp/src/core/components/common/` with full implementation (localStorage persistence, system preference detection, light/dark/system options)
+  - [ ] Add `ThemeToggleButton` as a `DropdownMenuItem` in the user nav dropdown in `apps/webapp/src/core/components/common/nav-user.tsx` — insert it between the "My Profile" item and the "Log Out" item (between lines 114-115)
+  - [ ] **Integration approach:** `ThemeToggleButton` currently renders its own `DropdownMenu`. To embed it inside `NavUser`'s dropdown, you may need to either: (a) extract the theme cycling logic and render a simple `DropdownMenuItem` that cycles through themes on click, or (b) use a sub-menu pattern. Option (a) is cleaner.
   - [ ] Verify dark mode renders correctly across key pages (dashboard, exercises, grading, settings)
   - [ ] Fix any Tailwind classes that don't have proper `dark:` variants if visual issues are found
-  - [ ] The existing implementation stores theme in localStorage key `"vite-ui-theme"` — this is sufficient
+  - [ ] Theme is stored in localStorage key `"vite-ui-theme"` — this is sufficient, do not change
 
-- [ ] **Task 4: Extend Login Session ("Keep Me Logged In")** (AC: #4)
-  - [ ] In the login page component: add a "Keep me logged in" checkbox using Shadcn `Checkbox` + `Label`
-  - [ ] **Firebase persistence:** Before calling `signInWithEmailAndPassword` or `signInWithPopup`, set persistence:
-    - Checked: `setPersistence(auth, browserLocalPersistence)` — token survives browser close (~default Firebase behavior)
-    - Unchecked: `setPersistence(auth, browserSessionPersistence)` — token cleared on browser close
-  - [ ] Import `browserLocalPersistence`, `browserSessionPersistence`, `setPersistence` from `firebase/auth`
-  - [ ] Default checkbox state: checked (most users want persistent sessions)
-  - [ ] This is purely frontend — no backend changes needed. Firebase manages token refresh automatically.
+- [ ] **Task 4: Verify Existing "Keep Me Logged In"** (AC: #4)
+  - [ ] **ALREADY FULLY IMPLEMENTED** in `apps/webapp/src/features/auth/components/login-form.tsx`:
+    - `rememberMe` field in Zod schema (line 30) with default `false` (line 47)
+    - Checkbox UI with label from i18n `loginForm.rememberMe` (lines 157-173)
+    - `setPersistence()` call before `signInWithEmailAndPassword` (lines 58-61)
+    - Imports: `browserLocalPersistence`, `browserSessionPersistence`, `setPersistence` from `firebase/auth` (lines 14-18)
+  - [ ] **Verify only:** Confirm checkbox is visible on login page. Test that checking "Remember me" persists the session across browser close. Test that unchecking it clears the session on browser close.
+  - [ ] **Google OAuth note:** Check if `signInWithPopup` (Google login in `login-page.tsx`) also calls `setPersistence`. If not, Google logins may always use the default Firebase persistence (LOCAL). This may be acceptable — document the behavior.
 
-- [ ] **Task 5: Verify & Test**
+- [ ] **Task 5: Build & Regression Check**
   - [ ] Run `pnpm build` — zero errors
-  - [ ] Test Google login flow — avatar should appear after login
-  - [ ] Test timezone dropdown — search and select a timezone
-  - [ ] Test dark mode — toggle and verify persistence across page reloads
-  - [ ] Test "Keep me logged in" — verify session behavior difference
+  - [ ] Run existing tests: `pnpm test` — no regressions
+  - [ ] Manual checks: avatar display, timezone search/select, dark mode toggle + persistence, remember-me behavior
 
 ## Dev Notes
 
 ### Architecture Compliance
-- **Auth:** Firebase Auth with custom claims — session persistence is controlled via Firebase SDK, not custom JWT
-- **Backend:** Fastify + Prisma — follow Controller-Service-Repository pattern in `apps/backend/src/modules/auth/`
+- **Auth:** Firebase Auth with custom claims — session persistence controlled via Firebase SDK, not custom JWT
+- **Backend:** Fastify + Prisma — Controller-Service-Repository pattern in `apps/backend/src/modules/auth/`
 - **Frontend:** React + Vite + Shadcn/UI + Tailwind CSS
 - **State:** React Context for auth (`auth-context.tsx`), React Query for server state
+- **Styling:** Mobile-first Tailwind responsive (`sm:`, `md:` prefixes). Min 44px touch targets per WCAG. CSS-only responsiveness, no JS-based detection.
 - **Types:** Zod schemas in `packages/types/` — if schema changes needed, update there first then regenerate
 
 ### Key Files to Touch
 | File | Change |
 |------|--------|
-| Backend auth module (Google signup/login handler) | Store `photoURL` → `avatarUrl` |
-| `packages/db/prisma/schema.prisma` | Verify `avatarUrl` field exists on User model |
-| `apps/webapp/src/core/components/common/nav-user.tsx` | Verify avatar display, add ThemeToggleButton |
-| `apps/webapp/src/features/tenants/center-settings-page.tsx` | Replace timezone input with Combobox |
-| `apps/webapp/src/features/auth/` (login page) | Add "Keep me logged in" checkbox + Firebase persistence |
-| `apps/webapp/src/core/components/common/theme-toggle-button.tsx` | Already exists — just needs to be wired into nav |
+| `apps/webapp/src/features/tenants/center-settings-page.tsx` | Replace timezone `<Input>` with `Command` + `Popover` Combobox |
+| `apps/webapp/src/core/components/common/nav-user.tsx` | Add theme toggle to dropdown menu |
+| `apps/webapp/src/core/components/common/theme-toggle-button.tsx` | May need to extract cycling logic for embedding in dropdown |
+
+### Already Implemented (Verify Only)
+| File | What's Done |
+|------|-------------|
+| `apps/backend/src/modules/auth/auth.service.ts` | Google `picture` → `avatarUrl` storage (lines 122, 166, 174) |
+| `packages/db/prisma/schema.prisma` | `avatarUrl String? @map("avatar_url")` on User model |
+| `apps/webapp/src/core/components/common/app-sidebar.tsx` | Maps `user.avatarUrl` → `avatar` prop for `NavUser` (line 87) |
+| `apps/webapp/src/core/components/layout/TopBar.tsx` | Displays `user.avatarUrl` in avatar (line 67) |
+| `apps/webapp/src/features/users/profile-page.tsx` | Displays `displayUser.avatarUrl` in avatar (line 251) |
+| `apps/webapp/src/features/auth/components/login-form.tsx` | Full "Remember me" with `setPersistence` (lines 14-18, 30, 47, 58-61, 157-173) |
 
 ### Existing Infrastructure to Reuse
 - **Theme system:** `theme-provider.tsx` + `theme-toggle-button.tsx` are fully implemented. Do NOT rebuild.
-- **Avatar component:** `nav-user.tsx` already renders `<Avatar>` with `user.avatarUrl` and fallback. Just needs backend to populate the field.
-- **Combobox pattern:** Shadcn has a standard Combobox pattern using `Command` + `Popover`. Use it for timezone.
-- **Firebase persistence API:** `setPersistence()` is a standard Firebase method — no custom session logic needed.
+- **Avatar display chain:** Fully wired from backend to all three frontend display points. Do NOT recreate.
+- **Command component:** `packages/ui/src/components/command.tsx` — use with `Popover` for Combobox pattern.
+- **Firebase persistence:** Already implemented in login form. Do NOT duplicate.
 
 ### Anti-Patterns to Avoid
+- Do NOT re-implement Google avatar storage — it's already in `auth.service.ts`
+- Do NOT re-implement "Keep me logged in" — it's already in `login-form.tsx`
 - Do NOT create a custom session management system — Firebase handles token refresh
 - Do NOT store avatars as base64 in the DB — store the URL string from Google
 - Do NOT use a third-party timezone library — `Intl.supportedValuesOf('timeZone')` is sufficient
 - Do NOT rebuild the theme system — it already exists and works
 - Do NOT modify `schema.d.ts` directly — it's auto-generated from the backend OpenAPI spec
+- Do NOT create a standalone Combobox component file — compose `Command` + `Popover` inline
+
+### Previous Story Patterns (from 17-02)
+- Responsive: `flex flex-col sm:flex-row` for stacking on mobile
+- Touch targets: `min-h-[44px]` for WCAG compliance
+- Components: Shadcn only — no custom implementations
+- Sidebar tooltips: `delayDuration={250}` standardized
 
 ### Generated Files Warning
 - `apps/webapp/src/schema/schema.d.ts` is auto-generated. If backend API changes are needed:
@@ -112,7 +131,9 @@ So that the platform feels personalized and convenient.
 ### References
 - [Source: _bmad-output/planning-artifacts/epics.md — Epic 17, Stories 17.8, 17.10-17.12]
 - [Source: _bmad-output/planning-artifacts/architecture.md — Auth, Frontend Patterns, Component Library]
-- [Source: CLAUDE.md — Generated Files Warning]
+- [Source: apps/backend/src/modules/auth/auth.service.ts — Google avatar already implemented]
+- [Source: apps/webapp/src/features/auth/components/login-form.tsx — Remember me already implemented]
+- [Source: 17-02-responsive-and-polish.md — Responsive patterns and WCAG standards]
 
 ## Dev Agent Record
 
