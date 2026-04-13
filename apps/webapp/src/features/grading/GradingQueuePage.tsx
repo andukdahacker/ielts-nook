@@ -37,6 +37,7 @@ import type { AnchorStatus } from "./hooks/use-anchor-validation";
 import {
   HighlightProvider,
   useHighlightState,
+  useScrollTargetSetter,
 } from "./hooks/use-highlight-context";
 import { useApproveFeedbackItem } from "./hooks/use-approve-feedback-item";
 import { useBulkApprove } from "./hooks/use-bulk-approve";
@@ -75,6 +76,7 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
   const [searchParams] = useSearchParams();
   const workbenchRef = useRef<HTMLDivElement>(null);
   const { highlightedItemId, setHighlightedItemId } = useHighlightState();
+  const setScrollTarget = useScrollTargetSetter();
   const isMobile = useMediaQuery("(max-width: 767px)");
 
   const {
@@ -271,6 +273,14 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
       setHighlightedItemId(id, debounce);
     },
     [setHighlightedItemId],
+  );
+
+  // Click-to-scroll callback
+  const handleScrollTo = useCallback(
+    (id: string) => {
+      setScrollTarget(id);
+    },
+    [setScrollTarget],
   );
 
   const highlightedSeverity = useMemo(() => {
@@ -632,6 +642,7 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
               anchorStatuses={anchorStatuses}
               highlightedItemId={highlightedItemId}
               onHighlight={handleHighlight}
+              onScrollTo={handleScrollTo}
               teacherComments={teacherComments}
               currentUserId={user?.id}
               onCreateComment={(data) => createComment.mutate(data)}

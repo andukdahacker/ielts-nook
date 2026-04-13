@@ -237,4 +237,40 @@ describe("AIFeedbackPane", () => {
       screen.getByText("AI analysis completed with no feedback items."),
     ).toBeInTheDocument();
   });
+
+  // --- Click-to-scroll tests (Story 13.1) ---
+
+  it("passes onScrollTo to FeedbackItemCard components", () => {
+    const onScrollTo = vi.fn();
+    render(
+      <AIFeedbackPane
+        {...defaultProps}
+        onScrollTo={onScrollTo}
+        feedback={{
+          ...mockFeedback,
+          items: [
+            {
+              id: "item-1",
+              type: "grammar" as const,
+              content: "Test error",
+              severity: "error" as const,
+              confidence: 0.9,
+              suggestedFix: null,
+              originalContextSnippet: null,
+            },
+          ],
+        }}
+        anchorStatuses={new Map([["item-1", "valid"]])}
+      />,
+    );
+
+    // Click the card — if onScrollTo is threaded, cursor-pointer should be present
+    const cards = screen.getAllByTestId("card");
+    // The first card is the BandScoreCard, find the feedback item card
+    const feedbackCard = cards.find(
+      (c) => c.getAttribute("data-card-id") === "item-1",
+    );
+    expect(feedbackCard).toBeDefined();
+    expect(feedbackCard?.className).toContain("cursor-pointer");
+  });
 });

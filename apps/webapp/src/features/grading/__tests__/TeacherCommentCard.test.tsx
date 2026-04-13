@@ -199,4 +199,84 @@ describe("TeacherCommentCard", () => {
       screen.getByText(/Anchor lost — text changed since analysis/),
     ).toBeInTheDocument();
   });
+
+  // --- Click-to-scroll tests (Story 13.1) ---
+
+  it("calls onScrollTo with comment id when card is clicked with valid anchor", () => {
+    const onScrollTo = vi.fn();
+    render(
+      <TeacherCommentCard
+        {...defaultProps}
+        anchorStatus="valid"
+        onScrollTo={onScrollTo}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("card"));
+    expect(onScrollTo).toHaveBeenCalledWith("c-1");
+  });
+
+  it("does NOT call onScrollTo on click for no-anchor comments", () => {
+    const onScrollTo = vi.fn();
+    render(
+      <TeacherCommentCard
+        {...defaultProps}
+        anchorStatus="no-anchor"
+        onScrollTo={onScrollTo}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("card"));
+    expect(onScrollTo).not.toHaveBeenCalled();
+  });
+
+  it("hovering does NOT call onScrollTo", () => {
+    const onScrollTo = vi.fn();
+    render(
+      <TeacherCommentCard
+        {...defaultProps}
+        anchorStatus="valid"
+        onScrollTo={onScrollTo}
+      />,
+    );
+
+    fireEvent.mouseEnter(screen.getByTestId("card"));
+    fireEvent.mouseLeave(screen.getByTestId("card"));
+    expect(onScrollTo).not.toHaveBeenCalled();
+  });
+
+  it("clicking interactive elements (dropdown) does NOT trigger onScrollTo", () => {
+    const onScrollTo = vi.fn();
+    render(
+      <TeacherCommentCard
+        {...defaultProps}
+        anchorStatus="valid"
+        onScrollTo={onScrollTo}
+        isAuthor={true}
+      />,
+    );
+
+    // Click on dropdown trigger area (wrapped in stopPropagation div)
+    const dropdownItems = screen.getAllByTestId("dropdown-item");
+    fireEvent.click(dropdownItems[0]); // Edit button
+    expect(onScrollTo).not.toHaveBeenCalled();
+  });
+
+  it("has cursor-pointer class when anchor is valid", () => {
+    render(
+      <TeacherCommentCard {...defaultProps} anchorStatus="valid" />,
+    );
+
+    const card = screen.getByTestId("card");
+    expect(card.className).toContain("cursor-pointer");
+  });
+
+  it("has title tooltip when anchor is valid", () => {
+    render(
+      <TeacherCommentCard {...defaultProps} anchorStatus="valid" />,
+    );
+
+    const card = screen.getByTestId("card");
+    expect(card).toHaveAttribute("title", "Click to scroll to text");
+  });
 });

@@ -13,8 +13,17 @@ const HighlightSetterContext = createContext<
   (id: string | null, debounce?: boolean) => void
 >(() => {});
 
+// Scroll target context: set on click, triggers scroll + flash
+const ScrollTargetValueContext = createContext<string | null>(null);
+const ScrollTargetSetterContext = createContext<
+  (id: string | null) => void
+>(() => {});
+
 export function HighlightProvider({ children }: { children: React.ReactNode }) {
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(
+    null,
+  );
+  const [scrollTargetId, setScrollTargetIdState] = useState<string | null>(
     null,
   );
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -38,6 +47,10 @@ export function HighlightProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const setScrollTarget = useCallback((id: string | null) => {
+    setScrollTargetIdState(id);
+  }, []);
+
   // Clean up pending debounce timer on unmount
   useEffect(() => {
     return () => {
@@ -48,7 +61,11 @@ export function HighlightProvider({ children }: { children: React.ReactNode }) {
   return (
     <HighlightSetterContext.Provider value={setHighlighted}>
       <HighlightValueContext.Provider value={highlightedItemId}>
-        {children}
+        <ScrollTargetSetterContext.Provider value={setScrollTarget}>
+          <ScrollTargetValueContext.Provider value={scrollTargetId}>
+            {children}
+          </ScrollTargetValueContext.Provider>
+        </ScrollTargetSetterContext.Provider>
       </HighlightValueContext.Provider>
     </HighlightSetterContext.Provider>
   );
@@ -70,4 +87,12 @@ export function useHighlightState() {
     highlightedItemId: useHighlightValue(),
     setHighlightedItemId: useHighlightSetter(),
   };
+}
+
+export function useScrollTargetValue(): string | null {
+  return useContext(ScrollTargetValueContext);
+}
+
+export function useScrollTargetSetter(): (id: string | null) => void {
+  return useContext(ScrollTargetSetterContext);
 }

@@ -6,14 +6,21 @@ Element.prototype.scrollIntoView = vi.fn();
 
 // Mock highlight context
 const mockHighlightValue = vi.fn().mockReturnValue(null);
+const mockScrollTargetValue = vi.fn().mockReturnValue(null);
+const mockSetScrollTarget = vi.fn();
 vi.mock("../hooks/use-highlight-context", () => ({
   useHighlightValue: () => mockHighlightValue(),
+  useScrollTargetValue: () => mockScrollTargetValue(),
+  useScrollTargetSetter: () => mockSetScrollTarget,
 }));
 
 import { HighlightedText } from "../components/HighlightedText";
 
 beforeEach(() => {
   mockHighlightValue.mockReturnValue(null);
+  mockScrollTargetValue.mockReturnValue(null);
+  mockSetScrollTarget.mockClear();
+  (Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>).mockClear();
 });
 
 describe("HighlightedText", () => {
@@ -180,5 +187,76 @@ describe("HighlightedText", () => {
     expect(paragraphs.length).toBe(2);
     expect(paragraphs[0].textContent).toBe("Hello");
     expect(paragraphs[1].textContent).toBe("world");
+  });
+
+  // --- New tests for click-to-scroll (Story 13.1) ---
+
+  it("scrolls into view when scrollTargetId changes", () => {
+    mockScrollTargetValue.mockReturnValue("item-1");
+    const items = [
+      {
+        id: "item-1",
+        startOffset: 0,
+        endOffset: 5,
+        severity: "error" as const,
+        anchorStatus: "valid" as const,
+      },
+    ];
+    render(<HighlightedText text="Hello world" feedbackItems={items} />);
+
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  });
+
+  it("does NOT scroll on highlightedItemId changes alone", () => {
+    mockHighlightValue.mockReturnValue("item-1");
+    mockScrollTargetValue.mockReturnValue(null);
+    const items = [
+      {
+        id: "item-1",
+        startOffset: 0,
+        endOffset: 5,
+        severity: "error" as const,
+        anchorStatus: "valid" as const,
+      },
+    ];
+    render(<HighlightedText text="Hello world" feedbackItems={items} />);
+
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it("applies flash animation class when scrollTargetId is set", () => {
+    mockScrollTargetValue.mockReturnValue("item-1");
+    const items = [
+      {
+        id: "item-1",
+        startOffset: 0,
+        endOffset: 5,
+        severity: "error" as const,
+        anchorStatus: "valid" as const,
+      },
+    ];
+    render(<HighlightedText text="Hello world" feedbackItems={items} />);
+
+    const span = document.querySelector('[data-feedback-id="item-1"]');
+    expect(span?.className).toContain("animate-highlight-flash");
+  });
+
+  it("clears scrollTarget after scrolling (calls setScrollTarget(null))", () => {
+    mockScrollTargetValue.mockReturnValue("item-1");
+    const items = [
+      {
+        id: "item-1",
+        startOffset: 0,
+        endOffset: 5,
+        severity: "error" as const,
+        anchorStatus: "valid" as const,
+      },
+    ];
+    render(<HighlightedText text="Hello world" feedbackItems={items} />);
+
+    expect(mockSetScrollTarget).toHaveBeenCalledWith(null);
   });
 });

@@ -38,6 +38,7 @@ interface TeacherCommentCardProps {
   isAuthor: boolean;
   isHighlighted?: boolean;
   onHighlight?: (id: string | null, debounce?: boolean) => void;
+  onScrollTo?: (id: string) => void;
   onEdit: (commentId: string, content: string) => void;
   onDelete: (commentId: string) => void;
   onVisibilityChange: (commentId: string, visibility: CommentVisibility) => void;
@@ -49,6 +50,7 @@ function TeacherCommentCardInner({
   isAuthor,
   isHighlighted = false,
   onHighlight,
+  onScrollTo,
   onEdit,
   onDelete,
   onVisibilityChange,
@@ -58,7 +60,6 @@ function TeacherCommentCardInner({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const touchActiveRef = useRef(false);
   const suppressMouseRef = useRef(false);
 
   const hasAnchor = anchorStatus === "valid" || anchorStatus === "drifted";
@@ -83,15 +84,21 @@ function TeacherCommentCardInner({
     if (hasAnchor && onHighlight) onHighlight(null, false);
   }, [hasAnchor, onHighlight]);
 
+  const handleClick = useCallback(() => {
+    if (suppressMouseRef.current) return;
+    if (hasAnchor && onScrollTo) onScrollTo(comment.id);
+  }, [hasAnchor, onScrollTo, comment.id]);
+
   const handleTouchStart = useCallback(
     () => {
-      if (!hasAnchor || !onHighlight) return;
-      touchActiveRef.current = !touchActiveRef.current;
-      onHighlight(touchActiveRef.current ? comment.id : null, false);
+      if (!hasAnchor) return;
+      if (onScrollTo) {
+        onScrollTo(comment.id);
+      }
       suppressMouseRef.current = true;
       setTimeout(() => { suppressMouseRef.current = false; }, 400);
     },
-    [hasAnchor, onHighlight, comment.id],
+    [hasAnchor, onScrollTo, comment.id],
   );
 
   const handleEditSave = useCallback(() => {
@@ -118,7 +125,8 @@ function TeacherCommentCardInner({
     [handleEditSave, handleEditCancel],
   );
 
-  const toggleVisibility = useCallback(() => {
+  const toggleVisibility = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const newVisibility: CommentVisibility =
       comment.visibility === "private" ? "student_facing" : "private";
     onVisibilityChange(comment.id, newVisibility);
@@ -135,9 +143,11 @@ function TeacherCommentCardInner({
 
   return (
     <Card
-      className={`border-l-4 border-l-emerald-500 transition-shadow duration-150 ${highlightRing} ${orphanedOpacity} ${privateStyle} ${editingStyle}`}
+      className={`border-l-4 border-l-emerald-500 transition-shadow duration-150 ${highlightRing} ${orphanedOpacity} ${privateStyle} ${editingStyle} ${hasAnchor ? "cursor-pointer" : ""}`}
       data-card-id={comment.id}
       tabIndex={0}
+      title={hasAnchor ? t("teacherComment.clickToScroll") : undefined}
+      onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onFocus={handleFocus}
@@ -182,31 +192,33 @@ function TeacherCommentCardInner({
               <span className="text-xs text-muted-foreground">{timestamp}</span>
             </div>
             {isAuthor && !isEditing && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setEditContent(comment.content);
-                      setIsEditing(true);
-                    }}
-                  >
-                    <Pencil className="mr-2 h-4 w-4" />
-                    {t("teacherComment.edit")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={() => setDeleteDialogOpen(true)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    {t("teacherComment.delete")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div role="presentation" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setEditContent(comment.content);
+                        setIsEditing(true);
+                      }}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      {t("teacherComment.edit")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => setDeleteDialogOpen(true)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {t("teacherComment.delete")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             )}
           </div>
 
@@ -223,7 +235,7 @@ function TeacherCommentCardInner({
 
           {/* Content / Edit mode */}
           {isEditing ? (
-            <div className="space-y-2">
+            <div className="space-y-2" role="presentation" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
               <Textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
@@ -233,7 +245,7 @@ function TeacherCommentCardInner({
                 // eslint-disable-next-line jsx-a11y/no-autofocus
                 autoFocus
               />
-              <div className="flex gap-2">
+              <div className="flex gap-2" role="presentation" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                 <Button size="sm" onClick={handleEditSave}>
                   {t("teacherComment.save")}
                 </Button>

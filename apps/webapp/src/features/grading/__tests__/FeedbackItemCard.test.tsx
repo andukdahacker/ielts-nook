@@ -260,4 +260,105 @@ describe("FeedbackItemCard", () => {
     fireEvent.keyDown(card, { key: "a" });
     expect(onApprove).toHaveBeenCalledWith("item-1", true);
   });
+
+  // --- Click-to-scroll tests (Story 13.1) ---
+
+  it("calls onScrollTo with item id when card is clicked with valid anchor", () => {
+    const onScrollTo = vi.fn();
+    render(
+      <FeedbackItemCard
+        item={baseItem}
+        anchorStatus="valid"
+        onScrollTo={onScrollTo}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("card"));
+    expect(onScrollTo).toHaveBeenCalledWith("item-1");
+  });
+
+  it("calls onScrollTo on click with drifted anchor", () => {
+    const onScrollTo = vi.fn();
+    render(
+      <FeedbackItemCard
+        item={baseItem}
+        anchorStatus="drifted"
+        onScrollTo={onScrollTo}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("card"));
+    expect(onScrollTo).toHaveBeenCalledWith("item-1");
+  });
+
+  it("does NOT call onScrollTo on click for orphaned items", () => {
+    const onScrollTo = vi.fn();
+    render(
+      <FeedbackItemCard
+        item={baseItem}
+        anchorStatus="orphaned"
+        onScrollTo={onScrollTo}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("card"));
+    expect(onScrollTo).not.toHaveBeenCalled();
+  });
+
+  it("does NOT call onScrollTo on click for no-anchor items", () => {
+    const onScrollTo = vi.fn();
+    render(
+      <FeedbackItemCard
+        item={baseItem}
+        anchorStatus="no-anchor"
+        onScrollTo={onScrollTo}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("card"));
+    expect(onScrollTo).not.toHaveBeenCalled();
+  });
+
+  it("hovering does NOT call onScrollTo", () => {
+    const onScrollTo = vi.fn();
+    render(
+      <FeedbackItemCard
+        item={baseItem}
+        anchorStatus="valid"
+        onScrollTo={onScrollTo}
+      />,
+    );
+
+    fireEvent.mouseEnter(screen.getByTestId("card"));
+    fireEvent.mouseLeave(screen.getByTestId("card"));
+    // onScrollTo should NOT be called by hover
+    expect(onScrollTo).not.toHaveBeenCalled();
+  });
+
+  it("has cursor-pointer class when anchor is valid", () => {
+    render(
+      <FeedbackItemCard item={baseItem} anchorStatus="valid" />,
+    );
+
+    const card = screen.getByTestId("card");
+    expect(card.className).toContain("cursor-pointer");
+  });
+
+  it("does NOT have cursor-pointer class for no-anchor items", () => {
+    render(
+      <FeedbackItemCard item={baseItem} anchorStatus="no-anchor" />,
+    );
+
+    const card = screen.getByTestId("card");
+    expect(card.className).not.toContain("cursor-pointer");
+  });
+
+  it("has title tooltip when anchor is valid", () => {
+    render(
+      <FeedbackItemCard item={baseItem} anchorStatus="valid" />,
+    );
+
+    const card = screen.getByTestId("card");
+    expect(card).toHaveAttribute("title", "Click to scroll to text");
+  });
 });

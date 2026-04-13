@@ -67,6 +67,7 @@ interface FeedbackItemCardProps {
   anchorStatus?: AnchorStatus;
   isHighlighted?: boolean;
   onHighlight?: (id: string | null, debounce?: boolean) => void;
+  onScrollTo?: (id: string) => void;
   onApprove?: (itemId: string, isApproved: boolean) => void;
   onOverrideText?: (itemId: string, text: string | null) => void;
   isFinalized?: boolean;
@@ -77,6 +78,7 @@ function FeedbackItemCardInner({
   anchorStatus = "no-anchor",
   isHighlighted = false,
   onHighlight,
+  onScrollTo,
   onApprove,
   onOverrideText,
   isFinalized = false,
@@ -90,7 +92,6 @@ function FeedbackItemCardInner({
   const severity = (item.severity ?? "suggestion") as Severity;
   const hasAnchor = anchorStatus === "valid" || anchorStatus === "drifted";
   const isOrphaned = anchorStatus === "orphaned";
-  const touchActiveRef = useRef(false);
   const suppressMouseRef = useRef(false);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -115,26 +116,35 @@ function FeedbackItemCardInner({
     if (hasAnchor && onHighlight) onHighlight(null, false);
   }, [hasAnchor, onHighlight]);
 
+  const handleClick = useCallback(() => {
+    if (suppressMouseRef.current) return;
+    if (hasAnchor && onScrollTo) onScrollTo(item.id);
+  }, [hasAnchor, onScrollTo, item.id]);
+
   const handleTouchStart = useCallback(
     () => {
-      if (!hasAnchor || !onHighlight) return;
-      touchActiveRef.current = !touchActiveRef.current;
-      onHighlight(touchActiveRef.current ? item.id : null, false);
+      if (!hasAnchor) return;
+      if (onScrollTo) {
+        onScrollTo(item.id);
+      }
       suppressMouseRef.current = true;
       setTimeout(() => { suppressMouseRef.current = false; }, 400);
     },
-    [hasAnchor, onHighlight, item.id],
+    [hasAnchor, onScrollTo, item.id],
   );
 
-  const handleApprove = useCallback(() => {
+  const handleApprove = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
     onApprove?.(item.id, true);
   }, [onApprove, item.id]);
 
-  const handleReject = useCallback(() => {
+  const handleReject = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
     onApprove?.(item.id, false);
   }, [onApprove, item.id]);
 
-  const handleStartEdit = useCallback(() => {
+  const handleStartEdit = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setEditText(item.teacherOverrideText ?? item.content);
     setIsEditing(true);
   }, [item.teacherOverrideText, item.content]);
@@ -217,11 +227,13 @@ function FeedbackItemCardInner({
 
   return (
     <Card
-      className={`transition-shadow duration-150 ${approvalBorder} ${highlightRing} ${orphanedOpacity}`}
+      className={`transition-shadow duration-150 ${approvalBorder} ${highlightRing} ${orphanedOpacity} ${hasAnchor ? "cursor-pointer" : ""}`}
       data-card-id={item.id}
       tabIndex={0}
       aria-label={ariaLabel}
       aria-details={hasAnchor ? `anchor-${item.id}` : undefined}
+      title={hasAnchor ? t("feedbackItem.clickToScroll") : undefined}
+      onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onFocus={handleFocus}
@@ -264,7 +276,7 @@ function FeedbackItemCardInner({
 
             {/* Override text editor */}
             {isEditing && (
-              <div className="space-y-1">
+              <div className="space-y-1" role="presentation" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                 <Textarea
                   ref={textareaRef}
                   value={editText}

@@ -77,6 +77,7 @@ interface AIFeedbackPaneProps {
   anchorStatuses?: Map<string, AnchorStatus>;
   highlightedItemId?: string | null;
   onHighlight?: (id: string | null, debounce?: boolean) => void;
+  onScrollTo?: (id: string) => void;
   teacherComments?: TeacherComment[];
   currentUserId?: string;
   onCreateComment?: (data: CreateTeacherComment) => void;
@@ -182,6 +183,7 @@ function TeacherCommentsSection({
   anchorStatuses,
   highlightedItemId,
   onHighlight,
+  onScrollTo,
   onUpdateComment,
   onDeleteComment,
   onCreateComment,
@@ -192,6 +194,7 @@ function TeacherCommentsSection({
   anchorStatuses?: Map<string, AnchorStatus>;
   highlightedItemId?: string | null;
   onHighlight?: (id: string | null, debounce?: boolean) => void;
+  onScrollTo?: (id: string) => void;
   onUpdateComment?: (commentId: string, data: UpdateTeacherComment) => void;
   onDeleteComment?: (commentId: string) => void;
   onCreateComment?: (data: CreateTeacherComment) => void;
@@ -252,6 +255,7 @@ function TeacherCommentsSection({
                 isAuthor={comment.authorId === currentUserId}
                 isHighlighted={highlightedItemId === comment.id}
                 onHighlight={onHighlight}
+                onScrollTo={onScrollTo}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onVisibilityChange={handleVisibilityChange}
@@ -351,6 +355,7 @@ export function AIFeedbackPane({
   anchorStatuses,
   highlightedItemId,
   onHighlight,
+  onScrollTo,
   teacherComments = [],
   currentUserId,
   onCreateComment,
@@ -376,6 +381,7 @@ export function AIFeedbackPane({
       anchorStatuses={anchorStatuses}
       highlightedItemId={highlightedItemId}
       onHighlight={onHighlight}
+      onScrollTo={onScrollTo}
       onUpdateComment={onUpdateComment}
       onDeleteComment={onDeleteComment}
       onCreateComment={onCreateComment}
@@ -470,6 +476,7 @@ export function AIFeedbackPane({
                     anchorStatus={anchorStatuses?.get(item.id)}
                     isHighlighted={highlightedItemId === item.id}
                     onHighlight={onHighlight}
+                    onScrollTo={onScrollTo}
                     onApprove={onApproveFeedbackItem}
                     onOverrideText={onOverrideFeedbackText}
                     isFinalized={isFinalized}

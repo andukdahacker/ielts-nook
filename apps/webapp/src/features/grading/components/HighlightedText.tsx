@@ -1,5 +1,9 @@
-import { useEffect, useMemo, useRef } from "react";
-import { useHighlightValue } from "../hooks/use-highlight-context";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useHighlightValue,
+  useScrollTargetValue,
+  useScrollTargetSetter,
+} from "../hooks/use-highlight-context";
 import type { AnchorStatus } from "../hooks/use-anchor-validation";
 
 interface HighlightFeedbackItem {
@@ -122,24 +126,61 @@ function getHighestSeverityItem(
   return best;
 }
 
+const FLASH_BG: Record<string, string> = {
+  error: "var(--highlight-flash-error, rgba(239, 68, 68, 0.3))",
+  warning: "var(--highlight-flash-warning, rgba(245, 158, 11, 0.3))",
+  suggestion: "var(--highlight-flash-suggestion, rgba(59, 130, 246, 0.3))",
+  teacher: "var(--highlight-flash-teacher, rgba(16, 185, 129, 0.3))",
+};
+
+// Injected once per document to avoid duplicate <style> tags across instances
+let flashStyleInjected = false;
+function ensureFlashStyle() {
+  if (flashStyleInjected || typeof document === "undefined") return;
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes highlight-flash {
+      0% { background-color: var(--flash-color); }
+      100% { background-color: transparent; }
+    }
+    .animate-highlight-flash {
+      animation: highlight-flash 1.5s ease-out forwards;
+    }
+  `;
+  document.head.appendChild(style);
+  flashStyleInjected = true;
+}
+
 export function HighlightedText({ text, feedbackItems }: HighlightedTextProps) {
   const highlightedItemId = useHighlightValue();
-  const scrollRef = useRef<HTMLSpanElement>(null);
+  const scrollTargetId = useScrollTargetValue();
+  const setScrollTarget = useScrollTargetSetter();
+  const [flashingId, setFlashingId] = useState<string | null>(null);
+
+  // Inject flash keyframe style once per document (D1 fix)
+  useEffect(() => { ensureFlashStyle(); }, []);
 
   const segments = useMemo(
     () => buildSegments(text, feedbackItems),
     [text, feedbackItems],
   );
 
-  // Auto-scroll to highlighted text
+  // Scroll to target on click (not hover) — use querySelector for reliable targeting (P1/D2 fix)
   useEffect(() => {
-    if (highlightedItemId && scrollRef.current) {
-      scrollRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-      });
+    if (!scrollTargetId) return;
+    const el = document.querySelector<HTMLElement>(`[data-feedback-id="${scrollTargetId}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      setFlashingId(scrollTargetId);
     }
-  }, [highlightedItemId]);
+    // Clear scroll target so clicking the same card again works
+    setScrollTarget(null);
+  }, [scrollTargetId, setScrollTarget]);
+
+  // Clear flash after animation completes
+  const handleAnimationEnd = useCallback(() => {
+    setFlashingId(null);
+  }, []);
 
   // Split text into paragraphs and render segments within each
   const paragraphs = useMemo(() => {
@@ -202,22 +243,26 @@ export function HighlightedText({ text, feedbackItems }: HighlightedTextProps) {
               }
 
               const isActive = highlightedItemId === seg.feedbackId;
+              const isFlashing = flashingId === seg.feedbackId;
               const severity = seg.severity === null ? "teacher" : (seg.severity ?? "suggestion");
 
               return (
                 <span
                   key={`fb-${seg.feedbackId}-${seg.charOffset}`}
-                  ref={isActive ? scrollRef : undefined}
                   data-feedback-id={seg.feedbackId}
                   data-char-start={seg.charOffset}
                   id={`anchor-${seg.feedbackId}`}
                   className={
-                    isActive
-                      ? `${ACTIVE_BG[severity]} rounded-sm transition-colors duration-200`
-                      : severity === "teacher"
-                        ? "underline decoration-dotted decoration-emerald-400/40"
-                        : "underline decoration-dotted decoration-muted-foreground/40"
+                    isFlashing
+                      ? "animate-highlight-flash rounded-sm"
+                      : isActive
+                        ? `${ACTIVE_BG[severity]} rounded-sm transition-colors duration-200`
+                        : severity === "teacher"
+                          ? "underline decoration-dotted decoration-emerald-400/40"
+                          : "underline decoration-dotted decoration-muted-foreground/40"
                   }
+                  style={isFlashing ? { "--flash-color": FLASH_BG[severity] } as React.CSSProperties : undefined}
+                  onAnimationEnd={isFlashing ? handleAnimationEnd : undefined}
                 >
                   {seg.text}
                 </span>
