@@ -3,8 +3,14 @@ import { Badge } from "@workspace/ui/components/badge";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { Separator } from "@workspace/ui/components/separator";
 import { Skeleton } from "@workspace/ui/components/skeleton";
-import { AlertTriangle, ArrowRight, CheckCheck, RefreshCw } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip";
+import { AlertTriangle, ArrowRight, CheckCheck, PenLine, RefreshCw } from "lucide-react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import type {
   CommentVisibility,
@@ -93,6 +99,30 @@ interface AIFeedbackPaneProps {
   teacherFinalScore?: number | null;
   teacherCriteriaScores?: CriteriaScores | null;
   onScoreChange?: (field: string, value: number | null) => void;
+  isManualMode?: boolean;
+  onManualMode?: (value: boolean) => void;
+}
+
+function useManualGradingTooltip(centerId?: string) {
+  const key = `classlite:manual-grading-seen:${centerId ?? "default"}`;
+  const [show, setShow] = useState(() => {
+    try {
+      return !localStorage.getItem(key);
+    } catch {
+      return true;
+    }
+  });
+
+  const dismiss = useCallback(() => {
+    setShow(false);
+    try {
+      localStorage.setItem(key, "1");
+    } catch {
+      // localStorage unavailable
+    }
+  }, [key]);
+
+  return { showTooltip: show, dismissTooltip: dismiss };
 }
 
 const TYPE_ORDER: FeedbackType[] = [
@@ -140,14 +170,64 @@ function LoadingSkeleton() {
   );
 }
 
+function GradeManuallyButton({
+  onClick,
+  label,
+  showTooltip,
+  tooltipText,
+  onTooltipDismiss,
+  variant = "secondary",
+}: {
+  onClick: () => void;
+  label: string;
+  showTooltip?: boolean;
+  tooltipText?: string;
+  onTooltipDismiss?: () => void;
+  variant?: "secondary" | "outline";
+}) {
+  const btn = (
+    <Button
+      variant={variant}
+      size="sm"
+      onClick={() => {
+        onClick();
+        onTooltipDismiss?.();
+      }}
+      aria-label={label}
+    >
+      <PenLine className="mr-2 h-4 w-4" />
+      {label}
+    </Button>
+  );
+
+  if (showTooltip && tooltipText) {
+    return (
+      <Tooltip defaultOpen onOpenChange={(open) => { if (!open) onTooltipDismiss?.(); }}>
+        <TooltipTrigger asChild>{btn}</TooltipTrigger>
+        <TooltipContent side="bottom">{tooltipText}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return btn;
+}
+
 function FailedState({
   failureReason,
   onRetrigger,
   isRetriggering,
+  onGradeManually,
+  showTooltip,
+  tooltipText,
+  onTooltipDismiss,
 }: {
   failureReason?: string | null;
   onRetrigger: () => void;
   isRetriggering: boolean;
+  onGradeManually?: () => void;
+  showTooltip?: boolean;
+  tooltipText?: string;
+  onTooltipDismiss?: () => void;
 }) {
   const { t } = useTranslation("grading");
   return (
@@ -159,20 +239,33 @@ function FailedState({
           <p className="text-sm text-muted-foreground">{failureReason}</p>
         )}
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onRetrigger}
-        disabled={isRetriggering}
-      >
-        <RefreshCw
-          className={`mr-2 h-4 w-4 ${isRetriggering ? "animate-spin" : ""}`}
-        />
-        {t("aiFeedback.retrigger")}
-      </Button>
-      <p className="text-xs text-muted-foreground">
-        {t("aiFeedback.helpText")}
-      </p>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRetrigger}
+          disabled={isRetriggering}
+        >
+          <RefreshCw
+            className={`mr-2 h-4 w-4 ${isRetriggering ? "animate-spin" : ""}`}
+          />
+          {t("aiFeedback.retrigger")}
+        </Button>
+        {onGradeManually && (
+          <GradeManuallyButton
+            onClick={onGradeManually}
+            label={t("aiFeedback.gradeManually")}
+            showTooltip={showTooltip}
+            tooltipText={tooltipText}
+            onTooltipDismiss={onTooltipDismiss}
+          />
+        )}
+      </div>
+      {!onGradeManually && (
+        <p className="text-xs text-muted-foreground">
+          {t("aiFeedback.helpText")}
+        </p>
+      )}
     </div>
   );
 }
@@ -371,8 +464,13 @@ export function AIFeedbackPane({
   teacherFinalScore,
   teacherCriteriaScores,
   onScoreChange,
+  isManualMode = false,
+  onManualMode,
 }: AIFeedbackPaneProps) {
   const { t } = useTranslation("grading");
+  const { centerId } = useParams<{ centerId: string }>();
+  const bandScoreRef = useRef<HTMLDivElement>(null);
+  const { showTooltip, dismissTooltip } = useManualGradingTooltip(centerId);
 
   const teacherSection = (
     <TeacherCommentsSection
@@ -391,22 +489,93 @@ export function AIFeedbackPane({
 
   const feedbackItems = useMemo(() => feedback?.items ?? [], [feedback?.items]);
 
+  const handleGradeManually = useCallback(() => {
+    onManualMode?.(true);
+    dismissTooltip();
+  }, [onManualMode, dismissTooltip]);
+
+  const handleScrollToBandScore = useCallback(() => {
+    bandScoreRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Focus first editable score input inside the card
+    const firstInput = bandScoreRef.current?.querySelector<HTMLElement>(
+      '[role="button"], input',
+    );
+    firstInput?.focus();
+  }, []);
+
+  // Manual grading panel — rendered when isManualMode is true in failed/empty/analyzing states
+  const manualGradingPanel = isManualMode ? (
+    <div className="flex h-full flex-col">
+      <ScrollArea className="flex-1">
+        <div className="space-y-4 p-4">
+          {analysisStatus === "analyzing" && (
+            <p className="text-xs text-muted-foreground text-center">
+              {t("aiFeedback.aiStillRunningNote")}
+            </p>
+          )}
+          <BandScoreCard
+            ref={bandScoreRef}
+            overallScore={null}
+            criteriaScores={{}}
+            skill={skill}
+            teacherFinalScore={teacherFinalScore}
+            teacherCriteriaScores={teacherCriteriaScores}
+            onScoreChange={onScoreChange}
+            isFinalized={isFinalized}
+          />
+          {teacherSection}
+        </div>
+      </ScrollArea>
+      <ApprovalToolbar
+        items={[]}
+        onFinalize={onFinalize}
+        isFinalized={isFinalized}
+        isFinalizing={isFinalizing}
+        teacherFinalScore={teacherFinalScore}
+        teacherCriteriaScores={teacherCriteriaScores}
+      />
+    </div>
+  ) : null;
+
   if (analysisStatus === "analyzing") {
+    if (isManualMode) return manualGradingPanel;
     return (
       <ScrollArea className="h-full">
         <LoadingSkeleton />
-        <div className="px-4 pb-4">{teacherSection}</div>
+        <div className="px-4 pb-4">
+          {onManualMode && (
+            <div className="flex flex-col items-center gap-2 py-3">
+              <GradeManuallyButton
+                onClick={handleGradeManually}
+                label={t("aiFeedback.skipAiGradeManually")}
+                variant="outline"
+                showTooltip={showTooltip}
+                tooltipText={t("aiFeedback.manualGradingTooltip")}
+                onTooltipDismiss={dismissTooltip}
+              />
+              <p className="text-xs text-muted-foreground text-center max-w-[280px]">
+                {t("aiFeedback.aiStillRunningNote")}
+              </p>
+            </div>
+          )}
+          {teacherSection}
+        </div>
       </ScrollArea>
     );
   }
 
   if (analysisStatus === "failed") {
+    if (isManualMode) return manualGradingPanel;
     return (
       <ScrollArea className="h-full">
         <FailedState
           failureReason={failureReason}
           onRetrigger={onRetrigger}
           isRetriggering={isRetriggering}
+          onGradeManually={onManualMode ? handleGradeManually : undefined}
+          showTooltip={showTooltip}
+          tooltipText={t("aiFeedback.manualGradingTooltip")}
+          onTooltipDismiss={dismissTooltip}
         />
         <div className="px-4 pb-4">{teacherSection}</div>
       </ScrollArea>
@@ -414,13 +583,23 @@ export function AIFeedbackPane({
   }
 
   if (!feedback) {
+    if (isManualMode) return manualGradingPanel;
     return (
       <div className="flex h-full flex-col">
         <ScrollArea className="flex-1">
-          <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
+          <div className="flex flex-col items-center justify-center gap-3 p-6 text-center">
             <p className="text-sm text-muted-foreground">
               {t("aiFeedback.noFeedback")}
             </p>
+            {onManualMode && (
+              <GradeManuallyButton
+                onClick={handleGradeManually}
+                label={t("aiFeedback.gradeManually")}
+                showTooltip={showTooltip}
+                tooltipText={t("aiFeedback.manualGradingTooltip")}
+                onTooltipDismiss={dismissTooltip}
+              />
+            )}
           </div>
           <div className="px-4 pb-4">{teacherSection}</div>
         </ScrollArea>
@@ -445,6 +624,7 @@ export function AIFeedbackPane({
       <ScrollArea className="flex-1">
         <div className="space-y-4 p-4">
           <BandScoreCard
+            ref={bandScoreRef}
             overallScore={feedback.overallScore}
             criteriaScores={feedback.criteriaScores}
             skill={skill}
@@ -453,6 +633,17 @@ export function AIFeedbackPane({
             onScoreChange={onScoreChange}
             isFinalized={isFinalized}
           />
+
+          {onManualMode && !isFinalized && (
+            <button
+              type="button"
+              className="text-xs text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+              onClick={handleScrollToBandScore}
+              aria-label={t("aiFeedback.switchToManual")}
+            >
+              {t("aiFeedback.switchToManual")}
+            </button>
+          )}
 
           {feedback.generalFeedback && (
             <div className="rounded-lg border p-3">

@@ -138,6 +138,9 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
   const finalizeGrading = useFinalizeGrading(activeSubmissionId ?? "");
   const unlockSubmission = useUnlockSubmission(activeSubmissionId ?? "");
 
+  // Manual grading mode state
+  const [isManualMode, setIsManualMode] = useState(false);
+
   // Teacher score override state
   const [teacherFinalScore, setTeacherFinalScore] = useState<number | null>(null);
   const [teacherCriteriaScores, setTeacherCriteriaScores] = useState<Record<string, number> | null>(null);
@@ -163,11 +166,17 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
   const currentQueueItem = queueItems[currentIndex];
 
   // Reset teacher overrides when submission changes
+  const prevSubmissionIdRef = useRef(activeSubmissionId);
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fb = feedback as any;
     setTeacherFinalScore(fb?.teacherFinalScore ?? null);
     setTeacherCriteriaScores(fb?.teacherCriteriaScores ?? null);
+    // Only reset manual mode when switching submissions, not when feedback arrives
+    if (prevSubmissionIdRef.current !== activeSubmissionId) {
+      setIsManualMode(false);
+      prevSubmissionIdRef.current = activeSubmissionId;
+    }
   }, [activeSubmissionId, feedback]);
 
   const isFinalized = submission?.status === "GRADED";
@@ -661,6 +670,8 @@ function WorkbenchMode({ centerId, urlSubmissionId }: { centerId: string; urlSub
               teacherFinalScore={teacherFinalScore}
               teacherCriteriaScores={teacherCriteriaScores as Record<string, number> | null}
               onScoreChange={handleScoreChange}
+              isManualMode={isManualMode}
+              onManualMode={setIsManualMode}
             />
           }
         />

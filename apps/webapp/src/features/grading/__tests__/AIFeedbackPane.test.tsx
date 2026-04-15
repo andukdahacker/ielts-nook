@@ -40,6 +40,22 @@ vi.mock("@workspace/ui/components/skeleton", () => ({
   Skeleton: (props: { className?: string }) => <div data-testid="skeleton" {...props} />,
 }));
 
+vi.mock("@workspace/ui/components/tooltip", () => ({
+  Tooltip: ({ children }: { children: React.ReactNode; defaultOpen?: boolean }) => (
+    <div data-testid="tooltip">{children}</div>
+  ),
+  TooltipTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
+    <div data-testid="tooltip-trigger">{children}</div>
+  ),
+  TooltipContent: ({ children }: { children: React.ReactNode; side?: string }) => (
+    <div data-testid="tooltip-content">{children}</div>
+  ),
+}));
+
+vi.mock("react-router", () => ({
+  useParams: () => ({ centerId: "center-1" }),
+}));
+
 import { AIFeedbackPane } from "../components/AIFeedbackPane";
 
 const mockFeedback = {
@@ -239,6 +255,158 @@ describe("AIFeedbackPane", () => {
   });
 
   // --- Click-to-scroll tests (Story 13.1) ---
+
+  // --- Manual grading discoverability tests (Story 13.3) ---
+
+  it("renders 'Grade Manually' button in failed state when onManualMode provided", () => {
+    render(
+      <AIFeedbackPane
+        {...defaultProps}
+        analysisStatus="failed"
+        feedback={null}
+        failureReason="API timeout"
+        onManualMode={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Grade Manually")).toBeInTheDocument();
+  });
+
+  it("renders 'Grade Manually' button in empty (!feedback) state when onManualMode provided", () => {
+    render(
+      <AIFeedbackPane
+        {...defaultProps}
+        feedback={null}
+        onManualMode={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Grade Manually")).toBeInTheDocument();
+  });
+
+  it("renders 'Skip AI — Grade Manually' button in analyzing state when onManualMode provided", () => {
+    render(
+      <AIFeedbackPane
+        {...defaultProps}
+        analysisStatus="analyzing"
+        feedback={null}
+        onManualMode={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Skip AI — Grade Manually")).toBeInTheDocument();
+    expect(
+      screen.getByText(/You can start entering scores now/),
+    ).toBeInTheDocument();
+  });
+
+  it("calls onManualMode when 'Grade Manually' button is clicked in failed state", async () => {
+    const onManualMode = vi.fn();
+    render(
+      <AIFeedbackPane
+        {...defaultProps}
+        analysisStatus="failed"
+        feedback={null}
+        onManualMode={onManualMode}
+      />,
+    );
+
+    await userEvent.click(screen.getByText("Grade Manually"));
+    expect(onManualMode).toHaveBeenCalledWith(true);
+  });
+
+  it("renders BandScoreCard and ApprovalToolbar when isManualMode is true in failed state", () => {
+    render(
+      <AIFeedbackPane
+        {...defaultProps}
+        analysisStatus="failed"
+        feedback={null}
+        isManualMode={true}
+        onManualMode={vi.fn()}
+        onFinalize={vi.fn()}
+        onScoreChange={vi.fn()}
+      />,
+    );
+
+    // BandScoreCard renders inside a card
+    expect(screen.getByText("Band Score")).toBeInTheDocument();
+    // ApprovalToolbar renders the Approve & Next button
+    expect(screen.getByText("Approve & Next")).toBeInTheDocument();
+  });
+
+  it("renders BandScoreCard when isManualMode is true in empty state", () => {
+    render(
+      <AIFeedbackPane
+        {...defaultProps}
+        feedback={null}
+        isManualMode={true}
+        onManualMode={vi.fn()}
+        onFinalize={vi.fn()}
+        onScoreChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Band Score")).toBeInTheDocument();
+  });
+
+  it("renders BandScoreCard when isManualMode is true in analyzing state", () => {
+    render(
+      <AIFeedbackPane
+        {...defaultProps}
+        analysisStatus="analyzing"
+        feedback={null}
+        isManualMode={true}
+        onManualMode={vi.fn()}
+        onFinalize={vi.fn()}
+        onScoreChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Band Score")).toBeInTheDocument();
+  });
+
+  it("renders 'Grade Manually' link near BandScoreCard when AI feedback IS present", () => {
+    render(
+      <AIFeedbackPane
+        {...defaultProps}
+        onManualMode={vi.fn()}
+      />,
+    );
+
+    // The "Grade Manually" link should appear when feedback exists
+    expect(screen.getByText("Grade Manually")).toBeInTheDocument();
+  });
+
+  it("shows onboarding tooltip on first visit (no localStorage key)", () => {
+    localStorage.removeItem("classlite:manual-grading-seen:center-1");
+    render(
+      <AIFeedbackPane
+        {...defaultProps}
+        analysisStatus="failed"
+        feedback={null}
+        onManualMode={vi.fn()}
+      />,
+    );
+
+    // Tooltip should be rendered
+    expect(screen.getByTestId("tooltip")).toBeInTheDocument();
+    expect(screen.getByTestId("tooltip-content")).toBeInTheDocument();
+  });
+
+  it("does not show onboarding tooltip after dismissal (localStorage key set)", () => {
+    localStorage.setItem("classlite:manual-grading-seen:center-1", "1");
+    render(
+      <AIFeedbackPane
+        {...defaultProps}
+        analysisStatus="failed"
+        feedback={null}
+        onManualMode={vi.fn()}
+      />,
+    );
+
+    // Tooltip wrapper should not render when already seen
+    expect(screen.queryByTestId("tooltip")).not.toBeInTheDocument();
+  });
 
   it("passes onScrollTo to FeedbackItemCard components", () => {
     const onScrollTo = vi.fn();

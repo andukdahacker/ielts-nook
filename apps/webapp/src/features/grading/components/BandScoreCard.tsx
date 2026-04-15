@@ -7,7 +7,7 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { Badge } from "@workspace/ui/components/badge";
 import { Pencil } from "lucide-react";
-import { useCallback, useState } from "react";
+import { forwardRef, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 interface CriteriaScores {
@@ -125,25 +125,29 @@ function EditableScore({
   );
 }
 
-export function BandScoreCard({
-  overallScore,
-  criteriaScores,
-  skill,
-  teacherFinalScore,
-  teacherCriteriaScores,
-  onScoreChange,
-  isFinalized = false,
-}: BandScoreCardProps) {
-  const { t } = useTranslation("grading");
-  const criteria = skill === "WRITING" ? WRITING_CRITERIA : SPEAKING_CRITERIA;
+export const BandScoreCard = forwardRef<HTMLDivElement, BandScoreCardProps>(
+  function BandScoreCard(
+    {
+      overallScore,
+      criteriaScores,
+      skill,
+      teacherFinalScore,
+      teacherCriteriaScores,
+      onScoreChange,
+      isFinalized = false,
+    },
+    ref,
+  ) {
+    const { t } = useTranslation("grading");
+    const criteria = skill === "WRITING" ? WRITING_CRITERIA : SPEAKING_CRITERIA;
 
-  const handleOverallChange = useCallback(
-    (v: number | null) => onScoreChange?.("overall", v),
-    [onScoreChange],
-  );
+    const handleOverallChange = useCallback(
+      (v: number | null) => onScoreChange?.("overall", v),
+      [onScoreChange],
+    );
 
-  return (
-    <Card>
+    return (
+      <Card ref={ref}>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between">
           <span className="text-sm font-medium">
@@ -166,7 +170,7 @@ export function BandScoreCard({
                 {overallScore ?? "—"}
               </span>
             )}
-            {teacherFinalScore != null && teacherFinalScore !== overallScore && (
+            {teacherFinalScore != null && overallScore != null && teacherFinalScore !== overallScore && (
               <span className="text-xs text-muted-foreground">{t("bandScore.aiScore")} {overallScore}</span>
             )}
           </div>
@@ -202,5 +206,6 @@ export function BandScoreCard({
         </div>
       </CardContent>
     </Card>
-  );
-}
+    );
+  },
+);
