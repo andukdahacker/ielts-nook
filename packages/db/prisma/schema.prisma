@@ -225,14 +225,22 @@ model ClassStudent {
   @@map("class_student")
 }
 
+enum ScheduleFrequency {
+  WEEKLY
+  BIWEEKLY
+}
+
 model ClassSchedule {
-  id        String  @id @default(cuid())
-  classId   String  @map("class_id")
-  dayOfWeek Int     @map("day_of_week") // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-  startTime String  @map("start_time") // HH:mm format
-  endTime   String  @map("end_time") // HH:mm format
-  roomName  String? @map("room_name")
-  centerId  String  @map("center_id")
+  id            String            @id @default(cuid())
+  classId       String            @map("class_id")
+  dayOfWeek     Int               @map("day_of_week") // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  startTime     String            @map("start_time") // HH:mm format (interpreted in the center's timezone)
+  endTime       String            @map("end_time") // HH:mm format (interpreted in the center's timezone)
+  roomName      String?           @map("room_name")
+  frequency     ScheduleFrequency @default(WEEKLY) @map("frequency")
+  endDate       DateTime?         @map("end_date") // null = rolling window (3 months ahead)
+  effectiveFrom DateTime?         @map("effective_from") // anchor for biweekly counting; bumped on rule change
+  centerId      String            @map("center_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -247,14 +255,17 @@ model ClassSchedule {
 }
 
 model ClassSession {
-  id         String        @id @default(cuid())
-  classId    String        @map("class_id")
-  scheduleId String?       @map("schedule_id")
-  startTime  DateTime      @map("start_time")
-  endTime    DateTime      @map("end_time")
-  roomName   String?       @map("room_name")
-  status     SessionStatus @default(SCHEDULED)
-  centerId   String        @map("center_id")
+  id                String        @id @default(cuid())
+  classId           String        @map("class_id")
+  scheduleId        String?       @map("schedule_id")
+  startTime         DateTime      @map("start_time")
+  endTime           DateTime      @map("end_time")
+  roomName          String?       @map("room_name")
+  status            SessionStatus @default(SCHEDULED)
+  isException       Boolean       @default(false) @map("is_exception")
+  originalStartTime DateTime?     @map("original_start_time")
+  originalEndTime   DateTime?     @map("original_end_time")
+  centerId          String        @map("center_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -268,6 +279,11 @@ model ClassSession {
   @@index([classId])
   @@index([scheduleId])
   @@index([startTime, endTime])
+  @@index([scheduleId, isException])
+  @@index([scheduleId, originalStartTime])
+  // Application-level dedup is reinforced by a partial unique index so
+  // concurrent generation/retries cannot persist duplicate slots.
+  @@unique([scheduleId, startTime], name: "class_session_schedule_start_uk", map: "class_session_schedule_start_uk")
   @@map("class_session")
 }
 

@@ -39,6 +39,7 @@ import { billingWebhookRoutes } from "./modules/billing/billing.webhook.routes.j
 import { healthRoutes } from "./modules/health/health.routes.js";
 import firebasePlugin from "./plugins/firebase.plugin.js";
 import prismaPlugin from "./plugins/prisma.plugin.js";
+import servicesPlugin from "./plugins/services.plugin.js";
 import resendPlugin from "./plugins/resend.plugin.js";
 import rawBody from "fastify-raw-body";
 import multipart from "@fastify/multipart";
@@ -231,6 +232,7 @@ export const buildApp = async () => {
   });
 
   app.register(prismaPlugin);
+  app.register(servicesPlugin);
 
   app.register(resendPlugin, {
     apiKey: env.RESEND_API_KEY,

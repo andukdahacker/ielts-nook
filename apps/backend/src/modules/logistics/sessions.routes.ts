@@ -21,17 +21,17 @@ import { requireRole } from "../../middlewares/role.middleware.js";
 import { AppError } from "../../errors/app-error.js";
 import { mapPrismaError } from "../../errors/prisma-errors.js";
 import { SessionsController } from "./sessions.controller.js";
-import { SessionsService } from "./sessions.service.js";
 import { NotificationsService } from "../notifications/notifications.service.js";
 import z from "zod";
 
 export async function sessionsRoutes(fastify: FastifyInstance) {
   const api = fastify.withTypeProvider<ZodTypeProvider>();
 
-  const sessionsService = new SessionsService(fastify.prisma);
+  // Use the shared SessionsService singleton (see services.plugin.ts).
+  // Both this route and schedules.routes consume the same instance.
   const notificationsService = new NotificationsService(fastify.prisma);
   const sessionsController = new SessionsController(
-    sessionsService,
+    fastify.sessionsService,
     notificationsService,
   );
 
@@ -315,8 +315,12 @@ export async function sessionsRoutes(fastify: FastifyInstance) {
     },
   });
 
+  // @deprecated — Use schedule creation (POST /schedules) which auto-generates sessions.
+  // Kept for backward compatibility.
   api.post("/generate", {
     schema: {
+      deprecated: true,
+      description: "Deprecated: Use POST /schedules which auto-generates sessions. This endpoint will be removed in a future version.",
       body: GenerateSessionsSchema,
       response: {
         201: GenerateSessionsResponseSchema,

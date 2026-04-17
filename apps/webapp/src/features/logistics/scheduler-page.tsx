@@ -10,7 +10,6 @@ import { useRooms } from "./hooks/use-rooms";
 import { WeeklyCalendar } from "./components/WeeklyCalendar";
 import { CreateSessionDialog } from "./components/CreateSessionDialog";
 import { EditSessionDialog } from "./components/EditSessionDialog";
-import { Button } from "@workspace/ui/components/button";
 import { RBACWrapper } from "@/features/auth/components/RBACWrapper";
 import type { ClassSessionWithConflicts } from "@workspace/types";
 
@@ -24,8 +23,6 @@ export function SchedulerPage() {
   const {
     sessions,
     isLoading,
-    weekStart,
-    weekEnd,
     createSession,
     isCreating,
     updateSession,
@@ -33,8 +30,6 @@ export function SchedulerPage() {
     deleteSession,
     isDeleting,
     deleteFutureSessions,
-    generateSessions,
-    isGenerating,
   } = useSessions(user?.centerId, currentWeekStart);
 
   const { classes } = useClasses(user?.centerId ?? undefined);
@@ -72,18 +67,6 @@ export function SchedulerPage() {
       toast.success(t("scheduler.toastRescheduleSuccess"));
     } catch {
       toast.error(t("scheduler.toastRescheduleError"));
-    }
-  };
-
-  const handleGenerateSessions = async () => {
-    try {
-      const result = await generateSessions({
-        startDate: weekStart,
-        endDate: weekEnd,
-      });
-      toast.success(t("scheduler.toastGenerateSuccess", { count: result?.generatedCount ?? 0 }));
-    } catch {
-      toast.error(t("scheduler.toastGenerateError"));
     }
   };
 
@@ -158,27 +141,12 @@ export function SchedulerPage() {
           </p>
         </div>
         <RBACWrapper requiredRoles={["OWNER", "ADMIN"]}>
-          <div className="flex items-center gap-2">
-            <CreateSessionDialog
-              classes={classes}
-              rooms={rooms}
-              onCreateSession={createSession}
-              isCreating={isCreating}
-            />
-            <Button
-              onClick={handleGenerateSessions}
-              disabled={isGenerating}
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                  {t("scheduler.generating")}
-                </>
-              ) : (
-                t("scheduler.generateSessions")
-              )}
-            </Button>
-          </div>
+          <CreateSessionDialog
+            classes={classes}
+            rooms={rooms}
+            onCreateSession={createSession}
+            isCreating={isCreating}
+          />
         </RBACWrapper>
       </div>
 

@@ -152,13 +152,61 @@ export type RoomListResponse = z.infer<typeof RoomListResponseSchema>;
 export const SessionStatusEnum = z.enum(["SCHEDULED", "CANCELLED", "COMPLETED"]);
 export type SessionStatus = z.infer<typeof SessionStatusEnum>;
 
+export const FrequencyEnum = z.enum(["WEEKLY", "BIWEEKLY"]);
+export type Frequency = z.infer<typeof FrequencyEnum>;
+
+const TIME_HHMM_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/**
+ * Coerce empty strings to null/undefined before refinement.
+ * Forms commonly bind empty inputs to "" which would otherwise become
+ * Invalid Date in `new Date("")` and silently fail the future-date refine.
+ */
+const optionalDateLike = z
+  .preprocess(
+    (val) => (val === "" || val === undefined ? null : val),
+    z.union([z.date(), z.string()]).nullable(),
+  )
+  .optional();
+
+const startOfTodayUtc = (): Date => {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+};
+
+const endDateFutureRefine = (val: unknown): boolean => {
+  if (val == null || val === "") return true;
+  const d = new Date(val as string | Date);
+  if (Number.isNaN(d.getTime())) return false;
+  // Compare against UTC start-of-today: prevents users near midnight in late
+  // timezones (e.g., Asia/Saigon) from being incorrectly told their valid
+  // "tomorrow" date is in the past.
+  return d.getTime() >= startOfTodayUtc().getTime();
+};
+
+const endDateMaxRefine = (val: unknown): boolean => {
+  if (val == null || val === "") return true;
+  const d = new Date(val as string | Date);
+  if (Number.isNaN(d.getTime())) return false;
+  const maxDate = new Date();
+  maxDate.setUTCMonth(maxDate.getUTCMonth() + 12);
+  return d.getTime() <= maxDate.getTime();
+};
+
+const endDateField = optionalDateLike
+  .refine(endDateFutureRefine, { message: "End date must be today or later" })
+  .refine(endDateMaxRefine, { message: "End date must be within 12 months" });
+
 export const ClassScheduleSchema = z.object({
   id: z.string(),
   classId: z.string(),
   dayOfWeek: z.number().int().min(0).max(6), // 0 = Sunday, 6 = Saturday
-  startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid time format (HH:mm)"),
-  endTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid time format (HH:mm)"),
+  startTime: z.string().regex(TIME_HHMM_REGEX, "Invalid time format (HH:mm)"),
+  endTime: z.string().regex(TIME_HHMM_REGEX, "Invalid time format (HH:mm)"),
   roomName: z.string().nullable().optional(),
+  frequency: FrequencyEnum.default("WEEKLY"),
+  endDate: z.union([z.date(), z.string()]).nullable().optional(),
+  effectiveFrom: z.union([z.date(), z.string()]).nullable().optional(),
   centerId: z.string(),
   createdAt: z.union([z.date(), z.string()]),
   updatedAt: z.union([z.date(), z.string()]),
@@ -169,14 +217,29 @@ export type ClassSchedule = z.infer<typeof ClassScheduleSchema>;
 export const CreateClassScheduleSchema = z.object({
   classId: z.string(),
   dayOfWeek: z.number().int().min(0).max(6),
-  startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid time format (HH:mm)"),
-  endTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid time format (HH:mm)"),
+  startTime: z.string().regex(TIME_HHMM_REGEX, "Invalid time format (HH:mm)"),
+  endTime: z.string().regex(TIME_HHMM_REGEX, "Invalid time format (HH:mm)"),
   roomName: z.string().nullable().optional(),
+  frequency: FrequencyEnum.default("WEEKLY"),
+  endDate: endDateField,
+  // Optional caller-controlled anchor for the series. Used as the biweekly
+  // counting origin and the first-occurrence date. Defaults to today on the
+  // server when omitted.
+  effectiveFrom: optionalDateLike,
 });
 
 export type CreateClassScheduleInput = z.infer<typeof CreateClassScheduleSchema>;
 
-export const UpdateClassScheduleSchema = CreateClassScheduleSchema.partial().omit({ classId: true });
+// Update schema mirrors create's validation for endDate so PATCHes cannot
+// bypass the future-date / 12-month cap that POSTs enforce.
+export const UpdateClassScheduleSchema = z.object({
+  dayOfWeek: z.number().int().min(0).max(6).optional(),
+  startTime: z.string().regex(TIME_HHMM_REGEX, "Invalid time format (HH:mm)").optional(),
+  endTime: z.string().regex(TIME_HHMM_REGEX, "Invalid time format (HH:mm)").optional(),
+  roomName: z.string().nullable().optional(),
+  frequency: FrequencyEnum.optional(),
+  endDate: endDateField,
+});
 
 export type UpdateClassScheduleInput = z.infer<typeof UpdateClassScheduleSchema>;
 
@@ -196,6 +259,9 @@ export const ClassSessionSchema = z.object({
   endTime: z.union([z.date(), z.string()]),
   roomName: z.string().nullable().optional(),
   status: SessionStatusEnum,
+  isException: z.boolean().default(false),
+  originalStartTime: z.union([z.date(), z.string()]).nullable().optional(),
+  originalEndTime: z.union([z.date(), z.string()]).nullable().optional(),
   centerId: z.string(),
   createdAt: z.union([z.date(), z.string()]),
   updatedAt: z.union([z.date(), z.string()]),
@@ -254,13 +320,9 @@ export const GenerateSessionsSchema = z.object({
 
 export type GenerateSessionsInput = z.infer<typeof GenerateSessionsSchema>;
 
-export const GenerateSessionsResponseSchema = createResponseSchema(
-  z.object({
-    generatedCount: z.number(),
-    sessions: z.array(ClassSessionSchema),
-  }),
-);
-export type GenerateSessionsResponse = z.infer<typeof GenerateSessionsResponseSchema>;
+// GenerateSessionsResponseSchema is defined below ConflictResultSchema so it can
+// reuse the canonical conflict shape — see "Generation response (uses
+// ConflictResultSchema)" section near the bottom of the file.
 
 // --- Notification ---
 
@@ -337,6 +399,30 @@ export type ConflictResult = z.infer<typeof ConflictResultSchema>;
 
 export const ConflictResultResponseSchema = createResponseSchema(ConflictResultSchema);
 export type ConflictResultResponse = z.infer<typeof ConflictResultResponseSchema>;
+
+// --- Generation response (uses ConflictResultSchema) ---
+
+export const GenerateSessionsResponseSchema = createResponseSchema(
+  z.object({
+    generatedCount: z.number(),
+    sessions: z.array(ClassSessionSchema),
+    conflicts: z.array(ConflictResultSchema).optional(),
+  }),
+);
+export type GenerateSessionsResponse = z.infer<typeof GenerateSessionsResponseSchema>;
+
+// Wrapper for `POST /schedules` that includes both the created schedule and
+// the auto-generated session details. Kept distinct from
+// `ClassScheduleResponseSchema` (the wrapper used by GET/PATCH) so the extra
+// fields on create don't bleed into other endpoints.
+export const CreateScheduleResponseSchema = z.object({
+  data: ClassScheduleSchema,
+  message: z.string(),
+  generatedCount: z.number(),
+  sessions: z.array(ClassSessionSchema),
+  conflicts: z.array(ConflictResultSchema),
+});
+export type CreateScheduleResponse = z.infer<typeof CreateScheduleResponseSchema>;
 
 // Extended ClassSession with conflict flag for calendar display
 export const ClassSessionWithConflictsSchema = ClassSessionSchema.extend({

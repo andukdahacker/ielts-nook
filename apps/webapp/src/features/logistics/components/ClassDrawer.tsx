@@ -44,15 +44,14 @@ import {
 } from "@workspace/ui/components/sheet";
 import { Separator } from "@workspace/ui/components/separator";
 import { cn } from "@workspace/ui/lib/utils";
-import { addWeeks, startOfWeek } from "date-fns";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { useEffect, useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { useClasses, useCourses } from "../hooks/use-logistics";
 import { useRooms } from "../hooks/use-rooms";
-import { useSessions } from "../hooks/use-sessions";
 import { RosterManager } from "./RosterManager";
 import { ScheduleManager } from "./ScheduleManager";
 
@@ -76,21 +75,13 @@ export function ClassDrawer({
   const { createClass, updateClass } = useClasses(centerId);
   const { courses } = useCourses(centerId);
   const { rooms } = useRooms(centerId);
-  const { generateSessions } = useSessions(centerId);
+  const queryClient = useQueryClient();
   const [roomComboOpen, setRoomComboOpen] = useState(false);
 
-  // Callback to auto-generate sessions when a schedule is created
+  // Callback to refetch sessions when a schedule is created (sessions are now auto-generated server-side)
   const handleScheduleCreated = useCallback(async () => {
-    const now = new Date();
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-    const fourWeeksLater = addWeeks(weekStart, 4);
-
-    await generateSessions({
-      startDate: weekStart.toISOString(),
-      endDate: fourWeeksLater.toISOString(),
-      classId: cls?.id,
-    });
-  }, [generateSessions, cls?.id]);
+    await queryClient.invalidateQueries({ queryKey: ["sessions", centerId] });
+  }, [queryClient, centerId]);
 
   const form = useForm<CreateClassInput>({
     resolver: zodResolver(CreateClassSchema),

@@ -69,7 +69,7 @@
 #   - Epic 8: Added 8.4-8.5 (i18n, golden sample UI)
 
 generated: 2026-01-29
-last_updated: 2026-04-15 # Story 13-3 → review (manual grading discoverability)
+last_updated: 2026-04-16 # Story 14-1 → review (auto-generate sessions from recurrence)
 project: classlite
 project_key: classlite
 tracking_system: file-system
@@ -249,8 +249,8 @@ development_status:
   # Epic 14: Session & Schedule Redesign
   # Status: BACKLOG — Sprint N+1
   # Scope: Auto-generate sessions, edit/cancel individual, reschedule, update recurrence
-  epic-14: backlog
-  14-1-auto-generate-sessions-from-recurrence: backlog
+  epic-14: in-progress
+  14-1-auto-generate-sessions-from-recurrence: review
   14-2-edit-cancel-individual-sessions: backlog
   14-3-reschedule-single-occurrence: backlog
   14-4-update-recurrence-rule: backlog

@@ -13,12 +13,46 @@ import {
 import {
   startOfWeek,
   endOfWeek,
-  setHours,
-  setMinutes,
   eachDayOfInterval,
+  addMonths,
   parseISO,
   isValid,
+  endOfDay,
 } from "date-fns";
+import { fromZonedTime, toZonedTime, formatInTimeZone } from "date-fns-tz";
+
+// Default tenant timezone if a center has not configured one.
+const DEFAULT_TZ = "UTC";
+
+/**
+ * Build the absolute UTC instant for a given (centerLocalDate, HH, mm) in the
+ * center's timezone. This is the load-bearing helper for generation: schedule
+ * times are wall-clock values in the center's TZ, but Prisma persists them as
+ * UTC instants. Without TZ-aware conversion, sessions drift across DST and
+ * non-UTC server hosts.
+ */
+function buildSessionInstant(
+  centerLocalDate: Date,
+  hour: number,
+  minute: number,
+  timezone: string,
+): Date {
+  // formatInTimeZone gives us the YYYY-MM-DD label we want as the local date
+  // in the center's TZ; combine with HH:mm and convert to UTC.
+  const datePart = formatInTimeZone(centerLocalDate, timezone, "yyyy-MM-dd");
+  const hh = String(hour).padStart(2, "0");
+  const mm = String(minute).padStart(2, "0");
+  return fromZonedTime(`${datePart}T${hh}:${mm}:00`, timezone);
+}
+
+/**
+ * Returns the day-of-week (0 = Sunday … 6 = Saturday) for the given instant
+ * AS OBSERVED IN the supplied timezone. Crucial for cross-tz correctness:
+ * a UTC instant near midnight maps to different weekdays in different zones.
+ */
+function dayOfWeekInTz(date: Date, timezone: string): number {
+  return Number(formatInTimeZone(date, timezone, "i")) % 7; // i: 1=Mon..7=Sun → 1..6,0
+}
 
 export class SessionsService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -226,8 +260,265 @@ export class SessionsService {
   }
 
   /**
-   * Generate sessions from schedules for a given date range.
-   * This creates specific ClassSession records from recurring ClassSchedule patterns.
+   * Generate sessions from a specific schedule, respecting frequency,
+   * exceptions, dedup, and the center's timezone.
+   *
+   * Correctness guarantees:
+   *   * Time correctness: HH:mm in the schedule is interpreted in the center's
+   *     timezone (Center.timezone), not the server's local time. Sessions land
+   *     at the same wall-clock time across DST transitions.
+   *   * Day-of-week matching: weekdays are computed against the candidate date
+   *     viewed in the center's timezone, so non-UTC centers don't generate
+   *     "Monday" sessions on Sunday or Tuesday.
+   *   * Biweekly anchoring: uses Center.effectiveFrom as the parity anchor.
+   *     Computed from UTC midnight diff so DST does not skip/duplicate weeks.
+   *   * Dedup: combines an in-memory pass (skipping CANCELLED exceptions and
+   *     respecting both `startTime` and `originalStartTime`) with a database
+   *     UNIQUE index (`class_session_schedule_start_uk`) plus
+   *     `createMany({ skipDuplicates: true })` to be race-safe.
+   *   * Manual sessions: skipped via a parallel `(classId, startTime)` lookup
+   *     so an auto-generated schedule never duplicates a manually-created
+   *     session at the same slot.
+   *   * COMPLETED sessions are sacred: their slots are never overwritten and
+   *     the in-memory dedup layer also includes them.
+   *   * Reporting: returns `result.count` from `createMany` so callers see the
+   *     true number of inserted rows (not the candidate count).
+   */
+  async generateSessionsFromSchedule(
+    centerId: string,
+    scheduleId: string,
+  ): Promise<{
+    generatedCount: number;
+    sessions: ClassSession[];
+    conflicts: ConflictResult[];
+  }> {
+    const db = getTenantedClient(this.prisma, centerId);
+
+    const schedule = await db.classSchedule.findUniqueOrThrow({
+      where: { id: scheduleId },
+    });
+
+    // Resolve the center's timezone once. Default UTC.
+    const center = await this.prisma.center.findUnique({
+      where: { id: centerId },
+      select: { timezone: true },
+    });
+    const tz = center?.timezone || DEFAULT_TZ;
+
+    // Resolve range bounds. effectiveFrom is the caller-set anchor; if absent
+    // we use today (UTC start-of-day). endDate is inclusive — we extend it to
+    // end-of-day in the center's timezone so a schedule that ends on Dec 31
+    // includes a 09:00 session on Dec 31.
+    const nowUtc = new Date();
+    const startOfTodayUtc = new Date(
+      Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth(), nowUtc.getUTCDate()),
+    );
+    const rangeStart =
+      schedule.effectiveFrom && schedule.effectiveFrom.getTime() > startOfTodayUtc.getTime()
+        ? schedule.effectiveFrom
+        : startOfTodayUtc;
+    const rangeEnd = schedule.endDate
+      ? endOfDay(toZonedTime(schedule.endDate, tz))
+      : addMonths(startOfTodayUtc, 3);
+
+    if (rangeEnd.getTime() < rangeStart.getTime()) {
+      return { generatedCount: 0, sessions: [], conflicts: [] };
+    }
+
+    // Expand candidate dates whose weekday-in-center-tz matches dayOfWeek.
+    // We iterate over UTC days (eachDayOfInterval) but evaluate the weekday in
+    // the center's TZ.
+    const days = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
+    const matchingDays = days.filter((day) => dayOfWeekInTz(day, tz) === schedule.dayOfWeek);
+
+    // For BIWEEKLY: keep every other matching day, anchored on effectiveFrom.
+    // We measure the diff in 7-day buckets against UTC midnights (rather than
+    // differenceInWeeks which rounds toward zero) so DST transitions don't
+    // cause off-by-one parity flips.
+    const anchor = schedule.effectiveFrom ?? rangeStart;
+    const anchorUtcMidnight = Date.UTC(
+      anchor.getUTCFullYear(),
+      anchor.getUTCMonth(),
+      anchor.getUTCDate(),
+    );
+    let candidateDays: Date[];
+    if (schedule.frequency === "BIWEEKLY") {
+      const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+      candidateDays = matchingDays.filter((day) => {
+        const dayUtcMidnight = Date.UTC(
+          day.getUTCFullYear(),
+          day.getUTCMonth(),
+          day.getUTCDate(),
+        );
+        const weeks = Math.floor((dayUtcMidnight - anchorUtcMidnight) / ONE_WEEK_MS);
+        return weeks % 2 === 0;
+      });
+    } else {
+      candidateDays = matchingDays;
+    }
+
+    // Don't generate sessions in the past. Compare against rangeStart (not
+    // startOfTodayUtc) so future-effective schedules still work.
+    candidateDays = candidateDays.filter((day) => day.getTime() >= rangeStart.getTime());
+
+    if (candidateDays.length === 0) {
+      return { generatedCount: 0, sessions: [], conflicts: [] };
+    }
+
+    // Parse schedule HH:mm and build candidate session instants.
+    const [startHour = 0, startMinute = 0] = schedule.startTime.split(":").map(Number);
+    const [endHour = 0, endMinute = 0] = schedule.endTime.split(":").map(Number);
+
+    const candidates = candidateDays.map((day) => ({
+      startTime: buildSessionInstant(day, startHour, startMinute, tz),
+      endTime: buildSessionInstant(day, endHour, endMinute, tz),
+    }));
+
+    // Dedup against existing sessions for this schedule. We include the
+    // schedule's own historical sessions (including exceptions and COMPLETED)
+    // and any manually-created session at the same (classId, startTime).
+    const [scheduleSessions, manualSessionsAtSlot] = await Promise.all([
+      db.classSession.findMany({
+        where: { scheduleId: schedule.id },
+        select: {
+          startTime: true,
+          originalStartTime: true,
+          status: true,
+          isException: true,
+        },
+      }),
+      // Manual sessions (no scheduleId) for the same class at any of the
+      // candidate slots — preserve them, never overwrite or duplicate.
+      db.classSession.findMany({
+        where: {
+          classId: schedule.classId,
+          scheduleId: null,
+          startTime: { in: candidates.map((c) => c.startTime) },
+        },
+        select: { startTime: true },
+      }),
+    ]);
+
+    // Build a set of "occupied" startTimes. Rules:
+    //   * Always include the row's startTime (preserves regular and COMPLETED rows).
+    //   * Include originalStartTime ONLY when the exception is still live
+    //     (status != 'CANCELLED'). A cancelled-and-re-deleted exception
+    //     should not block regenerating that slot.
+    //   * Include manual sessions at any candidate slot.
+    const existingTimes = new Set<string>();
+    for (const s of scheduleSessions) {
+      existingTimes.add(s.startTime.toISOString());
+      if (s.originalStartTime && s.status !== "CANCELLED") {
+        existingTimes.add(s.originalStartTime.toISOString());
+      }
+    }
+    for (const m of manualSessionsAtSlot) {
+      existingTimes.add(m.startTime.toISOString());
+    }
+
+    const sessionsToCreate = candidates
+      .filter((c) => !existingTimes.has(c.startTime.toISOString()))
+      .map((c) => ({
+        classId: schedule.classId,
+        scheduleId: schedule.id,
+        startTime: c.startTime,
+        endTime: c.endTime,
+        roomName: schedule.roomName,
+        status: "SCHEDULED" as const,
+        isException: false,
+        centerId,
+      }));
+
+    let actualCreatedCount = 0;
+    if (sessionsToCreate.length > 0) {
+      // skipDuplicates: a defense-in-depth fallback if the application-level
+      // dedup misses (e.g., a concurrent generation interleaves between our
+      // dedup query and the createMany). The unique index added in this
+      // migration makes the database the final source of truth.
+      const result = await db.classSession.createMany({
+        data: sessionsToCreate,
+        skipDuplicates: true,
+      });
+      actualCreatedCount = result.count;
+    }
+
+    // Fetch only the sessions we just created (by their startTimes) to avoid
+    // ballooning the response with the schedule's entire history.
+    const createdSessions =
+      sessionsToCreate.length > 0
+        ? await db.classSession.findMany({
+            where: {
+              scheduleId: schedule.id,
+              startTime: { in: sessionsToCreate.map((s) => s.startTime) },
+            },
+            include: {
+              class: {
+                include: {
+                  course: true,
+                  teacher: { select: { id: true, name: true } },
+                  _count: { select: { students: true } },
+                },
+              },
+            },
+            orderBy: { startTime: "asc" },
+          })
+        : [];
+
+    // Check batch conflicts in a single pass. checkBatchConflicts already
+    // returns Map<sessionId, hasConflict>; we do not re-issue per-session
+    // checkConflicts queries (avoids the previous N+1 pathology).
+    const conflicts: ConflictResult[] = [];
+    if (createdSessions.length > 0) {
+      const sessionData = createdSessions.map((s) => ({
+        id: s.id,
+        classId: s.classId,
+        startTime: new Date(s.startTime),
+        endTime: new Date(s.endTime),
+        roomName: s.roomName ?? null,
+      }));
+
+      const conflictMap = await this.checkBatchConflicts(centerId, sessionData);
+      // Surface only sessions that actually have conflicts. We synthesize a
+      // light ConflictResult per offending session — full per-conflict detail
+      // can be fetched on demand by the client via /sessions/check-conflicts.
+      for (const session of createdSessions) {
+        if (conflictMap.get(session.id)) {
+          conflicts.push({
+            hasConflicts: true,
+            roomConflicts: [
+              {
+                id: session.id,
+                classId: session.classId,
+                startTime: session.startTime,
+                endTime: session.endTime,
+                roomName: session.roomName,
+              },
+            ],
+            teacherConflicts: [],
+          });
+        }
+      }
+    }
+
+    return {
+      generatedCount: actualCreatedCount,
+      sessions: createdSessions,
+      conflicts,
+    };
+  }
+
+  /**
+   * @deprecated Use generateSessionsFromSchedule() — auto-generation now
+   * happens server-side when a ClassSchedule is created/updated. This method
+   * is kept only so the deprecated POST /sessions/generate endpoint remains
+   * functional for any external clients. Internally it delegates to
+   * generateSessionsFromSchedule for each affected schedule, so all the
+   * timezone/dedup/concurrency correctness fixes apply here too.
+   *
+   * The legacy `startDate`/`endDate` arguments are only used to filter which
+   * schedules are processed (those whose effective range intersects the input
+   * window). The actual generation respects each schedule's own
+   * frequency/effectiveFrom/endDate fields — not the supplied window.
    */
   async generateSessions(
     centerId: string,
@@ -246,109 +537,23 @@ export class SessionsService {
       throw AppError.badRequest("Invalid date range provided");
     }
 
-    // Get all schedules (optionally filtered by class)
     const schedules = await db.classSchedule.findMany({
       where: input.classId ? { classId: input.classId } : undefined,
+      select: { id: true },
     });
 
-    // Get existing sessions in the date range to avoid duplicates
-    const existingSessions = await db.classSession.findMany({
-      where: {
-        startTime: { gte: startDate },
-        endTime: { lte: endDate },
-        ...(input.classId && { classId: input.classId }),
-      },
-      select: {
-        classId: true,
-        startTime: true,
-      },
-    });
-
-    // Create a set of existing session keys for quick lookup
-    const existingSessionKeys = new Set(
-      existingSessions.map(
-        (s) => `${s.classId}-${s.startTime.toISOString()}`,
-      ),
-    );
-
-    const sessionsToCreate: {
-      classId: string;
-      scheduleId: string;
-      startTime: Date;
-      endTime: Date;
-      roomName: string | null;
-      status: "SCHEDULED" | "CANCELLED" | "COMPLETED";
-      centerId: string;
-    }[] = [];
-
-    // Get all days in the date range
-    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    let totalGenerated = 0;
+    const allSessions: ClassSession[] = [];
 
     for (const schedule of schedules) {
-      // Parse time strings (HH:mm format)
-      const startParts = schedule.startTime.split(":").map(Number);
-      const endParts = schedule.endTime.split(":").map(Number);
-      const startHour = startParts[0] ?? 0;
-      const startMinute = startParts[1] ?? 0;
-      const endHour = endParts[0] ?? 0;
-      const endMinute = endParts[1] ?? 0;
-
-      for (const day of days) {
-        // Check if this day matches the schedule's day of week
-        if (day.getDay() === schedule.dayOfWeek) {
-          const sessionStart = setMinutes(setHours(day, startHour), startMinute);
-          const sessionEnd = setMinutes(setHours(day, endHour), endMinute);
-
-          // Check if session already exists
-          const sessionKey = `${schedule.classId}-${sessionStart.toISOString()}`;
-          if (!existingSessionKeys.has(sessionKey)) {
-            sessionsToCreate.push({
-              classId: schedule.classId,
-              scheduleId: schedule.id,
-              startTime: sessionStart,
-              endTime: sessionEnd,
-              roomName: schedule.roomName,
-              status: "SCHEDULED",
-              centerId,
-            });
-          }
-        }
-      }
+      const result = await this.generateSessionsFromSchedule(centerId, schedule.id);
+      totalGenerated += result.generatedCount;
+      allSessions.push(...result.sessions);
     }
-
-    // Bulk create sessions
-    if (sessionsToCreate.length > 0) {
-      await db.classSession.createMany({
-        data: sessionsToCreate,
-      });
-    }
-
-    // Fetch the created sessions with relations
-    const createdSessions = await db.classSession.findMany({
-      where: {
-        startTime: { gte: startDate },
-        endTime: { lte: endDate },
-        ...(input.classId && { classId: input.classId }),
-      },
-      include: {
-        class: {
-          include: {
-            course: true,
-            teacher: {
-              select: { id: true, name: true },
-            },
-            _count: {
-              select: { students: true },
-            },
-          },
-        },
-      },
-      orderBy: { startTime: "asc" },
-    });
 
     return {
-      generatedCount: sessionsToCreate.length,
-      sessions: createdSessions,
+      generatedCount: totalGenerated,
+      sessions: allSessions,
     };
   }
 
@@ -695,7 +900,6 @@ export class SessionsService {
     }
 
     // Check each batch session against ALL overlapping sessions
-    const batchIds = new Set(sessions.map((s) => s.id));
     for (const session of sessions) {
       let hasConflict = false;
 

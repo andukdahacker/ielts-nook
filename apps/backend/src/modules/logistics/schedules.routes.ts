@@ -3,6 +3,7 @@ import {
   UpdateClassScheduleSchema,
   ClassScheduleResponseSchema,
   ClassScheduleListResponseSchema,
+  CreateScheduleResponseSchema,
   ErrorResponseSchema,
   UpdateClassScheduleInput,
   CreateClassScheduleInput,
@@ -18,7 +19,13 @@ import z from "zod";
 export async function schedulesRoutes(fastify: FastifyInstance) {
   const api = fastify.withTypeProvider<ZodTypeProvider>();
 
-  const schedulesService = new SchedulesService(fastify.prisma);
+  // Reuse the shared SessionsService singleton (decorated by services.plugin)
+  // so schedule create/update goes through the same in-memory cache as
+  // sessions.routes — no risk of multiple in-flight instances drifting.
+  const schedulesService = new SchedulesService(
+    fastify.prisma,
+    fastify.sessionsService,
+  );
   const schedulesController = new SchedulesController(schedulesService);
 
   // All schedules routes require authentication
@@ -75,7 +82,7 @@ export async function schedulesRoutes(fastify: FastifyInstance) {
     schema: {
       body: CreateClassScheduleSchema,
       response: {
-        201: ClassScheduleResponseSchema,
+        201: CreateScheduleResponseSchema,
         400: ErrorResponseSchema,
         401: ErrorResponseSchema,
         403: ErrorResponseSchema,
@@ -90,6 +97,7 @@ export async function schedulesRoutes(fastify: FastifyInstance) {
       const result = await schedulesController.createSchedule(
         request.body,
         request.jwtPayload!,
+        request.log,
       );
       return reply.status(201).send(result);
     },

@@ -16,6 +16,7 @@ import { processPolarWebhookJob } from "../billing/jobs/process-polar-webhook.jo
 import { billingReminderJob } from "../billing/jobs/billing-reminder.job.js";
 import { enforceGracePeriodJob } from "../billing/jobs/enforce-grace-period.job.js";
 import { scanExistingContentJob } from "../moderation/jobs/scan-existing-content.job.js";
+import { rollingSessionGenerationJob } from "../logistics/jobs/rolling-session-generation.job.js";
 
 // Export functions array - all Inngest functions must be registered here
 export const functions: ReturnType<typeof inngest.createFunction>[] = [
@@ -34,4 +35,5 @@ export const functions: ReturnType<typeof inngest.createFunction>[] = [
   billingReminderJob,
   enforceGracePeriodJob,
   scanExistingContentJob,
+  rollingSessionGenerationJob,
 ];

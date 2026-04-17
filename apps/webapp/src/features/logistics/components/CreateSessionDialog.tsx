@@ -48,15 +48,20 @@ import { Plus, CalendarIcon, ChevronsUpDown, Check, Info } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import type { Class, CreateClassSessionInput, Room, Suggestion } from "@workspace/types";
 import { useConflictCheck } from "../hooks/use-conflict-check";
+import { useSchedules } from "../hooks/use-logistics";
 import { ConflictWarningBanner } from "./ConflictWarningBanner";
 
 const createSessionSchema = z.object({
   classId: z.string().min(1, "Please select a class"),
-  date: z.date({ required_error: "Please select a date" }),
+  date: z.date(),
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
   roomName: z.string().optional(),
   recurrence: z.enum(["none", "weekly", "biweekly"]).optional(),
+  // Series end date (only relevant when recurrence != "none"). Stored as an
+  // empty string when omitted; the submit handler coerces "" to undefined
+  // before sending to the backend.
+  endDate: z.string().optional(),
 });
 
 type CreateSessionFormValues = z.infer<typeof createSessionSchema>;
@@ -97,6 +102,7 @@ export function CreateSessionDialog({
   const [forceSubmit, setForceSubmit] = useState(false);
   const [roomComboOpen, setRoomComboOpen] = useState(false);
   const { user } = useAuth();
+  const { createSchedule } = useSchedules(undefined, user?.centerId ?? undefined);
 
   // Track if we have valid form data to avoid premature conflict clearing
   const hasValidFormData = useRef(false);
@@ -113,6 +119,7 @@ export function CreateSessionDialog({
       endTime: defaultEndTime ?? "10:00",
       roomName: "",
       recurrence: "none",
+      endDate: "",
     },
   });
 
@@ -126,6 +133,7 @@ export function CreateSessionDialog({
         endTime: defaultEndTime ?? "10:00",
         roomName: "",
         recurrence: "none",
+        endDate: "",
       });
     }
   }, [open, defaultDate, defaultStartTime, defaultEndTime, form]);
@@ -247,21 +255,61 @@ export function CreateSessionDialog({
         return;
       }
 
-      await onCreateSession({
-        classId: values.classId,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-        roomName: values.roomName || undefined,
-        recurrence: values.recurrence === "none" ? undefined : values.recurrence,
-      });
+      if (values.recurrence && values.recurrence !== "none") {
+        // Create a ClassSchedule — backend auto-generates sessions.
+        const frequency = values.recurrence === "weekly" ? "WEEKLY" : "BIWEEKLY";
+        const dayOfWeek = values.date.getDay(); // 0=Sun, 6=Sat
+        const startTimeStr = values.startTime; // HH:mm
+        const endTimeStr = values.endTime; // HH:mm
 
-      const successMessage =
-        values.recurrence === "weekly"
-          ? t("createSession.toastSuccessWeekly")
-          : values.recurrence === "biweekly"
-            ? t("createSession.toastSuccessBiweekly")
-            : t("createSession.toastSuccess");
-      toast.success(successMessage);
+        // Pass effectiveFrom so the backend anchors the series at the user's
+        // chosen first-occurrence date — without this, the backend would
+        // anchor at "today" and a user who picked next Friday for a weekly
+        // series would get this Wednesday onward instead of next Friday.
+        const result = await createSchedule({
+          classId: values.classId,
+          dayOfWeek,
+          startTime: startTimeStr,
+          endTime: endTimeStr,
+          roomName: values.roomName || undefined,
+          frequency,
+          effectiveFrom: values.date.toISOString(),
+          endDate: values.endDate || undefined,
+        });
+
+        // Surface conflict count from the backend response so the user knows
+        // generated sessions overlap existing room/teacher bookings.
+        const conflictCount =
+          (result as { conflicts?: unknown[] } | null | undefined)?.conflicts
+            ?.length ?? 0;
+        const generatedCount =
+          (result as { generatedCount?: number } | null | undefined)
+            ?.generatedCount ?? 0;
+        if (conflictCount > 0) {
+          toast.warning(
+            t("scheduleManager.generatedWithConflicts", {
+              count: generatedCount,
+              conflicts: conflictCount,
+            }),
+          );
+        } else {
+          const successMessage =
+            values.recurrence === "weekly"
+              ? t("createSession.toastSuccessWeekly")
+              : t("createSession.toastSuccessBiweekly");
+          toast.success(successMessage);
+        }
+      } else {
+        // Create a single session
+        await onCreateSession({
+          classId: values.classId,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          roomName: values.roomName || undefined,
+        });
+        toast.success(t("createSession.toastSuccess"));
+      }
+
       setOpen(false);
       form.reset();
       clearConflicts();
@@ -528,6 +576,32 @@ export function CreateSessionDialog({
                     : t("createSession.recurrenceBiweeklyInfo")}
                 </span>
               </div>
+            )}
+
+            {/* End date — only shown for recurring series. Empty = rolling
+                3-month window per the backend defaults. */}
+            {recurrence && recurrence !== "none" && (
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("scheduleManager.endDate")}</FormLabel>
+                    <FormControl>
+                      <input
+                        type="date"
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      {t("scheduleManager.noEndDateHint")}
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
 
             {/* Conflict check error */}
