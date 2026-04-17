@@ -68,8 +68,8 @@ export const useSessions = (centerId?: string | null, weekStart?: Date, includeC
     },
     // Optimistic update for snappy drag-and-drop UX
     onMutate: async ({ id, input }) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["sessions", centerId] });
+      // Cancel outgoing refetches for this specific week
+      await queryClient.cancelQueries({ queryKey: ["sessions", centerId, format(weekStartDate, "yyyy-MM-dd"), includeConflicts] });
 
       // Snapshot previous value
       const previousSessions = queryClient.getQueryData<ClassSessionWithConflicts[]>([
@@ -165,6 +165,54 @@ export const useSessions = (centerId?: string | null, weekStart?: Date, includeC
     },
   });
 
+  const cancelSessionMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await client.POST(
+        "/api/v1/logistics/sessions/{id}/cancel",
+        {
+          params: { path: { id } },
+        },
+      );
+      if (error) throw error;
+      return data?.data;
+    },
+    // Optimistic update for instant UI feedback
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["sessions", centerId, format(weekStartDate, "yyyy-MM-dd"), includeConflicts] });
+
+      const previousSessions = queryClient.getQueryData<ClassSessionWithConflicts[]>([
+        "sessions",
+        centerId,
+        format(weekStartDate, "yyyy-MM-dd"),
+        includeConflicts,
+      ]);
+
+      if (previousSessions) {
+        queryClient.setQueryData<ClassSessionWithConflicts[]>(
+          ["sessions", centerId, format(weekStartDate, "yyyy-MM-dd"), includeConflicts],
+          previousSessions.map((session) =>
+            session.id === id
+              ? { ...session, status: "CANCELLED" }
+              : session,
+          ),
+        );
+      }
+
+      return { previousSessions };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousSessions) {
+        queryClient.setQueryData(
+          ["sessions", centerId, format(weekStartDate, "yyyy-MM-dd"), includeConflicts],
+          context.previousSessions,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["sessions", centerId] });
+    },
+  });
+
   const deleteFutureSessionsMutation = useMutation({
     mutationFn: async (id: string) => {
       const { data, error } = await client.DELETE(
@@ -216,6 +264,8 @@ export const useSessions = (centerId?: string | null, weekStart?: Date, includeC
     isCreating: createSessionMutation.isPending,
     updateSession: updateSessionMutation.mutateAsync,
     isUpdating: updateSessionMutation.isPending,
+    cancelSession: cancelSessionMutation.mutateAsync,
+    isCancelling: cancelSessionMutation.isPending,
     deleteSession: deleteSessionMutation.mutateAsync,
     isDeleting: deleteSessionMutation.isPending,
     deleteFutureSessions: deleteFutureSessionsMutation.mutateAsync,

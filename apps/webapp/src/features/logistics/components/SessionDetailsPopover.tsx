@@ -19,8 +19,9 @@ import {
 } from "@workspace/ui/components/alert-dialog";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
-import { Calendar, Clock, MapPin, Users, User, Trash2, ClipboardList, Pencil } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, User, Trash2, ClipboardList, Pencil, Ban } from "lucide-react";
 import { RBACWrapper } from "@/features/auth/components/RBACWrapper";
+import { useAuth } from "@/features/auth/auth-context";
 
 type SessionWithDetails = ClassSession & {
   class?: {
@@ -37,8 +38,10 @@ interface SessionDetailsPopoverProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onDelete?: (sessionId: string) => void;
+  onCancel?: (sessionId: string) => void;
   onDeleteFuture?: (sessionId: string) => void;
   isDeleting?: boolean;
+  isCancelling?: boolean;
   onMarkAttendance?: (session: SessionWithDetails) => void;
   onEdit?: (session: SessionWithDetails) => void;
 }
@@ -49,13 +52,17 @@ export function SessionDetailsPopover({
   open,
   onOpenChange,
   onDelete,
+  onCancel,
   onDeleteFuture,
   isDeleting,
+  isCancelling,
   onMarkAttendance,
   onEdit,
 }: SessionDetailsPopoverProps) {
   const { t } = useTranslation("logistics");
+  const { user } = useAuth();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const startTime = new Date(session.startTime);
   const endTime = new Date(session.endTime);
@@ -65,6 +72,10 @@ export function SessionDetailsPopover({
   const teacherName = session.class?.teacher?.name ?? null;
   const studentCount = session.class?._count?.students ?? 0;
   const isRecurring = !!session.scheduleId;
+  const isCancelled = session.status === "CANCELLED";
+
+  // Teacher can edit/cancel only if assigned to this class
+  const isAssignedTeacher = session.class?.teacher?.id === user?.id;
 
   // Calculate duration in minutes
   const durationMs = endTime.getTime() - startTime.getTime();
@@ -97,6 +108,16 @@ export function SessionDetailsPopover({
   const handleDeleteAllFuture = () => {
     onDeleteFuture?.(session.id);
     setDeleteDialogOpen(false);
+  };
+
+  const handleCancelClick = () => {
+    setCancelDialogOpen(true);
+  };
+
+  const handleCancelConfirm = () => {
+    onCancel?.(session.id);
+    setCancelDialogOpen(false);
+    onOpenChange?.(false);
   };
 
   return (
@@ -169,58 +190,89 @@ export function SessionDetailsPopover({
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex flex-col gap-2 pt-2 border-t">
-              {/* Mark Attendance - Only for non-cancelled sessions */}
-              {session.status !== "CANCELLED" && onMarkAttendance && (
-                <RBACWrapper requiredRoles={["OWNER", "ADMIN", "TEACHER"]}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      onMarkAttendance?.(session);
-                      onOpenChange?.(false);
-                    }}
-                  >
-                    <ClipboardList className="size-4 mr-1" />
-                    {t("sessionDetails.markAttendance")}
-                  </Button>
-                </RBACWrapper>
-              )}
+            {/* Cancelled status indicator */}
+            {isCancelled && (
+              <div className="pt-2 border-t">
+                <Badge variant="secondary" className="bg-red-100 text-red-800">
+                  {t("sessionBlock.cancelled")}
+                </Badge>
+              </div>
+            )}
 
-              {/* Edit - Admin/Owner only */}
-              {onEdit && (
+            {/* Actions — hidden for cancelled sessions */}
+            {!isCancelled && (
+              <div className="flex flex-col gap-2 pt-2 border-t">
+                {/* Mark Attendance - Only for non-cancelled sessions */}
+                {onMarkAttendance && (
+                  <RBACWrapper requiredRoles={["OWNER", "ADMIN", "TEACHER"]}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        onMarkAttendance?.(session);
+                        onOpenChange?.(false);
+                      }}
+                    >
+                      <ClipboardList className="size-4 mr-1" />
+                      {t("sessionDetails.markAttendance")}
+                    </Button>
+                  </RBACWrapper>
+                )}
+
+                {/* Edit - Owner/Admin + assigned Teacher */}
+                {onEdit && (
+                  <RBACWrapper requiredRoles={["OWNER", "ADMIN", "TEACHER"]}>
+                    {(user?.role === "OWNER" || user?.role === "ADMIN" || isAssignedTeacher) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          onEdit(session);
+                          onOpenChange?.(false);
+                        }}
+                      >
+                        <Pencil className="size-4 mr-1" />
+                        {t("button.edit", { ns: "common" })}
+                      </Button>
+                    )}
+                  </RBACWrapper>
+                )}
+
+                {/* Cancel Session - Owner/Admin + assigned Teacher */}
+                {onCancel && (
+                  <RBACWrapper requiredRoles={["OWNER", "ADMIN", "TEACHER"]}>
+                    {(user?.role === "OWNER" || user?.role === "ADMIN" || isAssignedTeacher) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                        onClick={handleCancelClick}
+                        disabled={isCancelling}
+                      >
+                        <Ban className="size-4 mr-1" />
+                        {isCancelling ? t("sessionDetails.cancelling") : t("sessionDetails.cancelSession")}
+                      </Button>
+                    )}
+                  </RBACWrapper>
+                )}
+
+                {/* Delete - Admin/Owner only */}
                 <RBACWrapper requiredRoles={["OWNER", "ADMIN"]}>
                   <Button
-                    variant="outline"
+                    variant="destructive"
                     size="sm"
                     className="w-full"
-                    onClick={() => {
-                      onEdit(session);
-                      onOpenChange?.(false);
-                    }}
+                    onClick={handleDeleteClick}
+                    disabled={isDeleting}
                   >
-                    <Pencil className="size-4 mr-1" />
-                    {t("button.edit", { ns: "common" })}
+                    <Trash2 className="size-4 mr-1" />
+                    {isDeleting ? t("sessionDetails.deleting") : t("button.delete", { ns: "common" })}
                   </Button>
                 </RBACWrapper>
-              )}
-
-              {/* Delete - Admin/Owner only */}
-              <RBACWrapper requiredRoles={["OWNER", "ADMIN"]}>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="w-full"
-                  onClick={handleDeleteClick}
-                  disabled={isDeleting}
-                >
-                  <Trash2 className="size-4 mr-1" />
-                  {isDeleting ? t("sessionDetails.deleting") : t("button.delete", { ns: "common" })}
-                </Button>
-              </RBACWrapper>
-            </div>
+              </div>
+            )}
           </div>
         </PopoverContent>
       </Popover>
@@ -254,6 +306,29 @@ export function SessionDetailsPopover({
                 {t("sessionDetails.deleteAllFuture")}
               </AlertDialogAction>
             )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Confirmation Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("sessionDetails.cancelTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("sessionDetails.cancelDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col gap-2 sm:flex-row">
+            <AlertDialogCancel className="w-full sm:w-auto min-h-[44px]">{t("button.cancel", { ns: "common" })}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelConfirm}
+              className="w-full sm:w-auto min-h-[44px] bg-orange-600 text-white hover:bg-orange-700"
+            >
+              {t("sessionDetails.cancelConfirm")}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

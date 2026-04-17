@@ -2362,6 +2362,13 @@ export interface paths {
                                 startTime: string;
                                 endTime: string;
                                 roomName?: string | null;
+                                /**
+                                 * @default WEEKLY
+                                 * @enum {string}
+                                 */
+                                frequency: "WEEKLY" | "BIWEEKLY";
+                                endDate?: (string) | null;
+                                effectiveFrom?: (string) | null;
                                 centerId: string;
                                 createdAt: string;
                                 updatedAt: string;
@@ -2412,6 +2419,13 @@ export interface paths {
                         startTime: string;
                         endTime: string;
                         roomName?: string | null;
+                        /**
+                         * @default WEEKLY
+                         * @enum {string}
+                         */
+                        frequency?: "WEEKLY" | "BIWEEKLY";
+                        endDate?: string | null;
+                        effectiveFrom?: string | null;
                     };
                 };
             };
@@ -2430,11 +2444,93 @@ export interface paths {
                                 startTime: string;
                                 endTime: string;
                                 roomName?: string | null;
+                                /**
+                                 * @default WEEKLY
+                                 * @enum {string}
+                                 */
+                                frequency: "WEEKLY" | "BIWEEKLY";
+                                endDate?: (string) | null;
+                                effectiveFrom?: (string) | null;
                                 centerId: string;
                                 createdAt: string;
                                 updatedAt: string;
-                            } | null;
+                            };
                             message: string;
+                            generatedCount: number;
+                            sessions: {
+                                id: string;
+                                classId: string;
+                                scheduleId?: string | null;
+                                startTime: string;
+                                endTime: string;
+                                roomName?: string | null;
+                                /** @enum {string} */
+                                status: "SCHEDULED" | "CANCELLED" | "COMPLETED";
+                                /** @default false */
+                                isException: boolean;
+                                originalStartTime?: (string) | null;
+                                originalEndTime?: (string) | null;
+                                centerId: string;
+                                createdAt: string;
+                                updatedAt: string;
+                                class?: {
+                                    id: string;
+                                    name: string;
+                                    courseId: string;
+                                    teacherId?: string | null;
+                                    defaultRoomName?: string | null;
+                                    centerId: string;
+                                    createdAt: string;
+                                    updatedAt: string;
+                                    course?: {
+                                        id: string;
+                                        name: string;
+                                        description?: string | null;
+                                        color?: string | null;
+                                        centerId: string;
+                                        createdAt: string;
+                                        updatedAt: string;
+                                    };
+                                    teacher?: {
+                                        id: string;
+                                        name: string | null;
+                                    } | null;
+                                    _count?: {
+                                        students: number;
+                                    };
+                                    studentCount?: number;
+                                };
+                            }[];
+                            conflicts: {
+                                hasConflicts: boolean;
+                                roomConflicts: {
+                                    id: string;
+                                    classId: string;
+                                    startTime: string;
+                                    endTime: string;
+                                    roomName?: string | null;
+                                    className?: string;
+                                    courseName?: string;
+                                    teacherName?: string | null;
+                                }[];
+                                teacherConflicts: {
+                                    id: string;
+                                    classId: string;
+                                    startTime: string;
+                                    endTime: string;
+                                    roomName?: string | null;
+                                    className?: string;
+                                    courseName?: string;
+                                    teacherName?: string | null;
+                                }[];
+                                suggestions?: {
+                                    /** @enum {string} */
+                                    type: "time" | "room";
+                                    value: string;
+                                    startTime?: string;
+                                    endTime?: string;
+                                }[];
+                            }[];
                         };
                     };
                 };
@@ -2526,6 +2622,13 @@ export interface paths {
                                 startTime: string;
                                 endTime: string;
                                 roomName?: string | null;
+                                /**
+                                 * @default WEEKLY
+                                 * @enum {string}
+                                 */
+                                frequency: "WEEKLY" | "BIWEEKLY";
+                                endDate?: (string) | null;
+                                effectiveFrom?: (string) | null;
                                 centerId: string;
                                 createdAt: string;
                                 updatedAt: string;
@@ -2664,6 +2767,9 @@ export interface paths {
                         startTime?: string;
                         endTime?: string;
                         roomName?: string | null;
+                        /** @enum {string} */
+                        frequency?: "WEEKLY" | "BIWEEKLY";
+                        endDate?: string | null;
                     };
                 };
             };
@@ -2682,6 +2788,13 @@ export interface paths {
                                 startTime: string;
                                 endTime: string;
                                 roomName?: string | null;
+                                /**
+                                 * @default WEEKLY
+                                 * @enum {string}
+                                 */
+                                frequency: "WEEKLY" | "BIWEEKLY";
+                                endDate?: (string) | null;
+                                effectiveFrom?: (string) | null;
                                 centerId: string;
                                 createdAt: string;
                                 updatedAt: string;
@@ -2791,6 +2904,10 @@ export interface paths {
                                 roomName?: string | null;
                                 /** @enum {string} */
                                 status: "SCHEDULED" | "CANCELLED" | "COMPLETED";
+                                /** @default false */
+                                isException: boolean;
+                                originalStartTime?: (string) | null;
+                                originalEndTime?: (string) | null;
                                 centerId: string;
                                 createdAt: string;
                                 updatedAt: string;
@@ -2892,6 +3009,10 @@ export interface paths {
                                 roomName?: string | null;
                                 /** @enum {string} */
                                 status: "SCHEDULED" | "CANCELLED" | "COMPLETED";
+                                /** @default false */
+                                isException: boolean;
+                                originalStartTime?: (string) | null;
+                                originalEndTime?: (string) | null;
                                 centerId: string;
                                 createdAt: string;
                                 updatedAt: string;
@@ -3018,6 +3139,10 @@ export interface paths {
                                 roomName?: string | null;
                                 /** @enum {string} */
                                 status: "SCHEDULED" | "CANCELLED" | "COMPLETED";
+                                /** @default false */
+                                isException: boolean;
+                                originalStartTime?: (string) | null;
+                                originalEndTime?: (string) | null;
                                 centerId: string;
                                 createdAt: string;
                                 updatedAt: string;
@@ -3121,6 +3246,10 @@ export interface paths {
                                 roomName?: string | null;
                                 /** @enum {string} */
                                 status: "SCHEDULED" | "CANCELLED" | "COMPLETED";
+                                /** @default false */
+                                isException: boolean;
+                                originalStartTime?: (string) | null;
+                                originalEndTime?: (string) | null;
                                 centerId: string;
                                 createdAt: string;
                                 updatedAt: string;
@@ -3307,6 +3436,10 @@ export interface paths {
                                 roomName?: string | null;
                                 /** @enum {string} */
                                 status: "SCHEDULED" | "CANCELLED" | "COMPLETED";
+                                /** @default false */
+                                isException: boolean;
+                                originalStartTime?: (string) | null;
+                                originalEndTime?: (string) | null;
                                 centerId: string;
                                 createdAt: string;
                                 updatedAt: string;
@@ -3391,6 +3524,18 @@ export interface paths {
                     };
                 };
                 /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+                /** @description Default Response */
                 500: {
                     headers: {
                         [name: string]: unknown;
@@ -3404,6 +3549,149 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/api/v1/logistics/sessions/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                classId: string;
+                                scheduleId?: string | null;
+                                startTime: string;
+                                endTime: string;
+                                roomName?: string | null;
+                                /** @enum {string} */
+                                status: "SCHEDULED" | "CANCELLED" | "COMPLETED";
+                                /** @default false */
+                                isException: boolean;
+                                originalStartTime?: (string) | null;
+                                originalEndTime?: (string) | null;
+                                centerId: string;
+                                createdAt: string;
+                                updatedAt: string;
+                                class?: {
+                                    id: string;
+                                    name: string;
+                                    courseId: string;
+                                    teacherId?: string | null;
+                                    defaultRoomName?: string | null;
+                                    centerId: string;
+                                    createdAt: string;
+                                    updatedAt: string;
+                                    course?: {
+                                        id: string;
+                                        name: string;
+                                        description?: string | null;
+                                        color?: string | null;
+                                        centerId: string;
+                                        createdAt: string;
+                                        updatedAt: string;
+                                    };
+                                    teacher?: {
+                                        id: string;
+                                        name: string | null;
+                                    } | null;
+                                    _count?: {
+                                        students: number;
+                                    };
+                                    studentCount?: number;
+                                };
+                            } | null;
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                            error?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/logistics/sessions/{id}/future": {
@@ -3517,6 +3805,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * @deprecated
+         * @description Deprecated: Use POST /schedules which auto-generates sessions. This endpoint will be removed in a future version.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -3552,6 +3844,10 @@ export interface paths {
                                     roomName?: string | null;
                                     /** @enum {string} */
                                     status: "SCHEDULED" | "CANCELLED" | "COMPLETED";
+                                    /** @default false */
+                                    isException: boolean;
+                                    originalStartTime?: (string) | null;
+                                    originalEndTime?: (string) | null;
                                     centerId: string;
                                     createdAt: string;
                                     updatedAt: string;
@@ -3582,6 +3878,36 @@ export interface paths {
                                         };
                                         studentCount?: number;
                                     };
+                                }[];
+                                conflicts?: {
+                                    hasConflicts: boolean;
+                                    roomConflicts: {
+                                        id: string;
+                                        classId: string;
+                                        startTime: string;
+                                        endTime: string;
+                                        roomName?: string | null;
+                                        className?: string;
+                                        courseName?: string;
+                                        teacherName?: string | null;
+                                    }[];
+                                    teacherConflicts: {
+                                        id: string;
+                                        classId: string;
+                                        startTime: string;
+                                        endTime: string;
+                                        roomName?: string | null;
+                                        className?: string;
+                                        courseName?: string;
+                                        teacherName?: string | null;
+                                    }[];
+                                    suggestions?: {
+                                        /** @enum {string} */
+                                        type: "time" | "room";
+                                        value: string;
+                                        startTime?: string;
+                                        endTime?: string;
+                                    }[];
                                 }[];
                             } | null;
                             message: string;
@@ -18227,6 +18553,7 @@ export interface paths {
                 query?: {
                     status?: "PENDING" | "APPROVED" | "REDACTED" | "DELETED";
                     contentType?: "EXERCISE" | "SUBMISSION" | "AI_FEEDBACK";
+                    contentId?: string;
                     page?: number;
                     limit?: number;
                 };

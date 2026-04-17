@@ -128,7 +128,7 @@ describe("SessionsService - updateSession, getClassParticipants, generateSession
       );
     });
 
-    it("should allow updating status", async () => {
+    it("should reject setting status to CANCELLED via update (must use cancel endpoint)", async () => {
       const sessionId = "session-1";
       mockTenantedClient.classSession.findUniqueOrThrow.mockResolvedValue({
         id: sessionId,
@@ -137,21 +137,29 @@ describe("SessionsService - updateSession, getClassParticipants, generateSession
         status: "SCHEDULED",
         centerId,
       });
-      mockTenantedClient.classSession.update.mockResolvedValue({
+
+      await expect(
+        sessionsService.updateSession(centerId, sessionId, {
+          status: "CANCELLED",
+        }),
+      ).rejects.toThrow("Use the cancel endpoint to cancel a session");
+    });
+
+    it("should reject setting status to COMPLETED via update", async () => {
+      const sessionId = "session-1";
+      mockTenantedClient.classSession.findUniqueOrThrow.mockResolvedValue({
         id: sessionId,
-        status: "CANCELLED",
+        startTime: new Date(),
+        endTime: new Date(),
+        status: "SCHEDULED",
         centerId,
       });
 
-      await sessionsService.updateSession(centerId, sessionId, {
-        status: "CANCELLED",
-      });
-
-      expect(mockTenantedClient.classSession.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ status: "CANCELLED" }),
+      await expect(
+        sessionsService.updateSession(centerId, sessionId, {
+          status: "COMPLETED",
         }),
-      );
+      ).rejects.toThrow("Cannot set status to COMPLETED via update");
     });
   });
 

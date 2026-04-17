@@ -175,6 +175,66 @@ export class SessionsController {
     };
   }
 
+  async cancelSession(
+    id: string,
+    user: JwtPayload,
+  ): Promise<ClassSessionResponse> {
+    const centerId = user.centerId;
+    if (!centerId) throw AppError.unauthorized("Center ID missing from token");
+
+    const { session, alreadyCancelled } = await this.sessionsService.cancelSession(centerId, id);
+
+    // Skip notifications on idempotent re-cancel
+    if (!alreadyCancelled) {
+      try {
+        // Send in-app notifications to participants
+        const participants = await this.sessionsService.getClassParticipants(
+          centerId,
+          session.classId,
+        );
+
+        const userIdsToNotify: string[] = [
+          ...participants.studentIds,
+          ...(participants.teacherId ? [participants.teacherId] : []),
+        ];
+
+        if (userIdsToNotify.length > 0) {
+          const className = session.class?.name ?? "Class";
+          const courseName = session.class?.course?.name ?? "Course";
+          const sessionTime = format(new Date(session.startTime), "MMM d, h:mm a");
+
+          await this.notificationsService.createBulkNotifications(
+            centerId,
+            userIdsToNotify,
+            "Session Cancelled",
+            `${courseName} - ${className} on ${sessionTime} has been cancelled`,
+          );
+        }
+
+        // Emit cancellation email event
+        await inngest.send({
+          name: "logistics/session.cancelled",
+          data: {
+            centerId,
+            classId: session.classId,
+            originalStartTime: new Date(session.startTime).toISOString(),
+            originalEndTime: new Date(session.endTime).toISOString(),
+            roomName: session.roomName ?? null,
+            isBulk: false,
+          },
+        } as SessionCancelledEvent);
+      } catch (notificationError) {
+        // Log but don't fail the cancel — DB state is already committed
+        console.error("Failed to send cancel notifications:", notificationError);
+      }
+    }
+
+    return {
+      data: session,
+      message: "Session cancelled successfully",
+    };
+  }
+
   async deleteSession(
     id: string,
     user: JwtPayload,

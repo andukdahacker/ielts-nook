@@ -34,12 +34,14 @@ interface WeeklyCalendarProps {
   ) => void;
   onSessionUpdate?: (sessionId: string, updates: { roomName?: string }) => void;
   onSessionDelete?: (sessionId: string) => void;
+  onSessionCancel?: (sessionId: string) => void;
   onDeleteFuture?: (sessionId: string) => void;
   onEdit?: (session: ClassSessionWithConflicts) => void;
   onSlotClick?: (date: Date, startTime: string) => void;
   onDragCreate?: (date: Date, startTime: string, endTime: string) => void;
   isUpdating?: boolean;
   isDeleting?: boolean;
+  isCancelling?: boolean;
 }
 
 // Time configuration
@@ -56,12 +58,14 @@ export function WeeklyCalendar({
   onSessionMove,
   onSessionUpdate,
   onSessionDelete,
+  onSessionCancel,
   onDeleteFuture,
   onEdit,
   onSlotClick,
   onDragCreate,
   isUpdating,
   isDeleting,
+  isCancelling,
 }: WeeklyCalendarProps) {
   const { t } = useTranslation("logistics");
   const [selectedSession, setSelectedSession] = useState<ClassSessionWithConflicts | null>(
@@ -573,8 +577,10 @@ export function WeeklyCalendar({
         if (!open) setSelectedSession(null);
       }}
       onDelete={onSessionDelete}
+      onCancel={onSessionCancel}
       onDeleteFuture={onDeleteFuture}
       isDeleting={isDeleting}
+      isCancelling={isCancelling}
       onMarkAttendance={handleMarkAttendance}
       onEdit={onEdit}
     >

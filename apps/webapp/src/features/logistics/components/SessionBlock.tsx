@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { cn } from "@workspace/ui/lib/utils";
 import { AlertTriangle } from "lucide-react";
+import { Badge } from "@workspace/ui/components/badge";
 
 interface SessionBlockProps {
   session: ClassSession;
@@ -24,6 +25,7 @@ export function SessionBlock({
   const { t } = useTranslation("logistics");
   const startTime = new Date(session.startTime);
   const endTime = new Date(session.endTime);
+  const isCancelled = session.status === "CANCELLED";
 
   // Get course color from nested class->course relation
   const courseColor = session.class?.course?.color ?? "#2563EB";
@@ -49,6 +51,7 @@ export function SessionBlock({
         "relative cursor-pointer rounded-md px-2 py-1 text-xs transition-all",
         "border-l-4 shadow-sm hover:shadow-md",
         isDragging && "opacity-50 shadow-lg",
+        isCancelled && "opacity-50",
         className
       )}
       style={{
@@ -70,7 +73,7 @@ export function SessionBlock({
           <AlertTriangle className="size-3 text-amber-600" />
         </button>
       )}
-      <div className="font-medium truncate" style={{ color: courseColor }}>
+      <div className={cn("font-medium truncate", isCancelled && "line-through")} style={{ color: courseColor }}>
         {courseName}
       </div>
       <div className="text-muted-foreground truncate text-[10px]">
@@ -83,6 +86,11 @@ export function SessionBlock({
         <div className="text-muted-foreground truncate text-[10px]">
           {session.roomName}
         </div>
+      )}
+      {isCancelled && (
+        <Badge variant="secondary" className="mt-0.5 bg-red-100 text-red-800 text-[9px] px-1 py-0">
+          {t("sessionBlock.cancelled")}
+        </Badge>
       )}
     </div>
   );

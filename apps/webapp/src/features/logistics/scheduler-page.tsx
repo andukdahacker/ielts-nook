@@ -27,6 +27,8 @@ export function SchedulerPage() {
     isCreating,
     updateSession,
     isUpdating,
+    cancelSession,
+    isCancelling,
     deleteSession,
     isDeleting,
     deleteFutureSessions,
@@ -103,6 +105,15 @@ export function SchedulerPage() {
     }
   };
 
+  const handleSessionCancel = useCallback(async (sessionId: string) => {
+    try {
+      await cancelSession(sessionId);
+      toast.success(t("scheduler.toastCancelSuccess"));
+    } catch {
+      toast.error(t("scheduler.toastCancelError"));
+    }
+  }, [cancelSession, t]);
+
   const handleEdit = useCallback((session: ClassSessionWithConflicts) => {
     setEditSession(session);
     setEditDialogOpen(true);
@@ -158,12 +169,14 @@ export function SchedulerPage() {
           onSessionMove={handleSessionMove}
           onSessionUpdate={handleSessionUpdate}
           onSessionDelete={handleSessionDelete}
+          onSessionCancel={handleSessionCancel}
           onDeleteFuture={handleDeleteFuture}
           onEdit={handleEdit}
           onSlotClick={handleSlotClick}
           onDragCreate={handleDragCreate}
           isUpdating={isUpdating}
           isDeleting={isDeleting}
+          isCancelling={isCancelling}
         />
       </div>
 

@@ -175,22 +175,54 @@ export class SessionsService {
       where: { id },
     });
 
-    const updateData: Record<string, unknown> = {};
-    if (input.startTime !== undefined) {
-      updateData.startTime = typeof input.startTime === "string"
-        ? new Date(input.startTime)
-        : input.startTime;
+    // Determine if time is changing
+    const newStartTime = input.startTime !== undefined
+      ? (typeof input.startTime === "string" ? new Date(input.startTime) : input.startTime)
+      : undefined;
+    const newEndTime = input.endTime !== undefined
+      ? (typeof input.endTime === "string" ? new Date(input.endTime) : input.endTime)
+      : undefined;
+
+    const timeChanged =
+      (newStartTime !== undefined && newStartTime.getTime() !== currentSession.startTime.getTime()) ||
+      (newEndTime !== undefined && newEndTime.getTime() !== currentSession.endTime.getTime());
+
+    // Cannot edit time on a completed session
+    if (timeChanged && currentSession.status === "COMPLETED") {
+      throw AppError.conflict("Cannot edit time on a completed session");
     }
-    if (input.endTime !== undefined) {
-      updateData.endTime = typeof input.endTime === "string"
-        ? new Date(input.endTime)
-        : input.endTime;
+
+    const updateData: Record<string, unknown> = {};
+    if (newStartTime !== undefined) {
+      updateData.startTime = newStartTime;
+    }
+    if (newEndTime !== undefined) {
+      updateData.endTime = newEndTime;
     }
     if (input.roomName !== undefined) {
       updateData.roomName = input.roomName;
     }
     if (input.status !== undefined) {
+      // Block status changes that must go through dedicated endpoints
+      if (input.status === "CANCELLED") {
+        throw AppError.conflict("Use the cancel endpoint to cancel a session");
+      }
+      if (input.status === "COMPLETED" && currentSession.status !== "COMPLETED") {
+        throw AppError.conflict("Cannot set status to COMPLETED via update");
+      }
       updateData.status = input.status;
+    }
+
+    // Exception tracking: time change marks session as exception
+    if (timeChanged) {
+      updateData.isException = true;
+      // Only set original times on first exception (don't overwrite on re-edit)
+      if (currentSession.originalStartTime == null) {
+        updateData.originalStartTime = currentSession.startTime;
+      }
+      if (currentSession.originalEndTime == null) {
+        updateData.originalEndTime = currentSession.endTime;
+      }
     }
 
     const session = await db.classSession.update({
@@ -217,6 +249,63 @@ export class SessionsService {
       previousEndTime: currentSession.endTime,
       previousRoomName: currentSession.roomName,
     };
+  }
+
+  async cancelSession(
+    centerId: string,
+    id: string,
+  ): Promise<{ session: ClassSession; alreadyCancelled: boolean }> {
+    const db = getTenantedClient(this.prisma, centerId);
+
+    const session = await db.classSession.findUniqueOrThrow({
+      where: { id },
+    });
+
+    // Cannot cancel a completed session
+    if (session.status === "COMPLETED") {
+      throw AppError.conflict("Cannot cancel a completed session");
+    }
+
+    // Idempotent: already cancelled — return as-is with includes, skip notifications
+    if (session.status === "CANCELLED") {
+      const existing = await db.classSession.findUniqueOrThrow({
+        where: { id },
+        include: {
+          class: {
+            include: {
+              course: true,
+              teacher: { select: { id: true, name: true } },
+              _count: { select: { students: true } },
+            },
+          },
+        },
+      });
+      return { session: existing, alreadyCancelled: true };
+    }
+
+    const updated = await db.classSession.update({
+      where: { id },
+      data: {
+        status: "CANCELLED",
+        isException: true,
+        ...(session.originalStartTime == null && {
+          originalStartTime: session.startTime,
+        }),
+        ...(session.originalEndTime == null && {
+          originalEndTime: session.endTime,
+        }),
+      },
+      include: {
+        class: {
+          include: {
+            course: true,
+            teacher: { select: { id: true, name: true } },
+            _count: { select: { students: true } },
+          },
+        },
+      },
+    });
+    return { session: updated, alreadyCancelled: false };
   }
 
   async deleteSession(centerId: string, id: string): Promise<void> {
