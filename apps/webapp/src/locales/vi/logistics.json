@@ -239,5 +239,9 @@
   "rosterManager.emptyNotFound": "Không tìm thấy học viên.",
   "rosterManager.emptyAllEnrolled": "Tất cả học viên đã có trong lớp này.",
   "rosterManager.emptyNoSearchResults": "Không có học viên nào phù hợp với tìm kiếm.",
-  "rosterManager.studentsBadge": "Học viên"
+  "rosterManager.studentsBadge": "Học viên",
+  "scheduler.confirmRescheduleTitle": "Dời lịch buổi học?",
+  "scheduler.confirmRescheduleBody": "Chuyển {{courseName}} — {{className}} sang {{newDate}} lúc {{newTime}}?",
+  "scheduler.rescheduledBadge": "Đã dời lịch",
+  "sessionDetails.originalTime": "Ban đầu: {{date}} lúc {{time}}"
 }

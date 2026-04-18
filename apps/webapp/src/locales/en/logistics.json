@@ -239,5 +239,9 @@
   "rosterManager.emptyNotFound": "No students found.",
   "rosterManager.emptyAllEnrolled": "All students are already in this class.",
   "rosterManager.emptyNoSearchResults": "No students match your search.",
-  "rosterManager.studentsBadge": "Students"
+  "rosterManager.studentsBadge": "Students",
+  "scheduler.confirmRescheduleTitle": "Reschedule Session?",
+  "scheduler.confirmRescheduleBody": "Move {{courseName}} — {{className}} to {{newDate}} at {{newTime}}?",
+  "scheduler.rescheduledBadge": "Rescheduled",
+  "sessionDetails.originalTime": "Originally: {{date}} at {{time}}"
 }

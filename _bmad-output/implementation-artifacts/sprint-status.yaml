@@ -69,7 +69,7 @@
 #   - Epic 8: Added 8.4-8.5 (i18n, golden sample UI)
 
 generated: 2026-01-29
-last_updated: 2026-04-17 # Story 14-2 → review (edit/cancel individual sessions)
+last_updated: 2026-04-17 # Story 14-3 → review (reschedule single occurrence)
 project: classlite
 project_key: classlite
 tracking_system: file-system
@@ -252,7 +252,7 @@ development_status:
   epic-14: in-progress
   14-1-auto-generate-sessions-from-recurrence: review
   14-2-edit-cancel-individual-sessions: review
-  14-3-reschedule-single-occurrence: backlog
+  14-3-reschedule-single-occurrence: review
   14-4-update-recurrence-rule: backlog
   epic-14-retrospective: optional
 

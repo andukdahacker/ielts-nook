@@ -170,6 +170,15 @@ export function SessionDetailsPopover({
                 </span>
               </div>
 
+              {session.originalStartTime && (
+                <div className="flex items-center gap-2 text-muted-foreground text-xs ml-6">
+                  {t("sessionDetails.originalTime", {
+                    date: format(new Date(session.originalStartTime), "EEE, MMM d"),
+                    time: format(new Date(session.originalStartTime), "h:mm a"),
+                  })}
+                </div>
+              )}
+
               {session.roomName && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="size-4" />

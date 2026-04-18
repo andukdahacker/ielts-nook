@@ -31,6 +31,7 @@ interface WeeklyCalendarProps {
     sessionId: string,
     newStartTime: Date,
     newEndTime: Date,
+    session: ClassSessionWithConflicts,
   ) => void;
   onSessionUpdate?: (sessionId: string, updates: { roomName?: string }) => void;
   onSessionDelete?: (sessionId: string) => void;
@@ -489,7 +490,7 @@ export function WeeklyCalendar({
     );
     const newEndTime = new Date(newStartTime.getTime() + duration);
 
-    onSessionMove(draggedSession.id, newStartTime, newEndTime);
+    onSessionMove(draggedSession.id, newStartTime, newEndTime, draggedSession);
     handleDragEnd();
   };
 
@@ -541,7 +542,7 @@ export function WeeklyCalendar({
       if (!onSessionMove) return;
       const newStartTime = new Date(suggestion.startTime);
       const newEndTime = new Date(suggestion.endTime);
-      onSessionMove(conflictSession.id, newStartTime, newEndTime);
+      onSessionMove(conflictSession.id, newStartTime, newEndTime, conflictSession);
     } else if (suggestion.type === "room") {
       if (!onSessionUpdate) return;
       onSessionUpdate(conflictSession.id, { roomName: suggestion.value });
@@ -586,8 +587,8 @@ export function WeeklyCalendar({
     >
       <div
         className={cn(
-          "h-full cursor-grab active:cursor-grabbing",
-          canDrag && "select-none",
+          "h-full",
+          canDrag ? "cursor-grab active:cursor-grabbing select-none" : "cursor-default",
         )}
         draggable={canDrag}
         onDragStart={canDrag ? (e) => handleDragStart(e, session) : undefined}
@@ -914,7 +915,7 @@ export function WeeklyCalendar({
                             width: `calc(${widthPercent}% - 4px)`,
                           }}
                         >
-                          {renderSessionBlock(session, true)}
+                          {renderSessionBlock(session, !!onSessionMove && session.status !== "CANCELLED" && session.status !== "COMPLETED")}
                         </div>
                       );
                     })}

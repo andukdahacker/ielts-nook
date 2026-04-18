@@ -26,6 +26,7 @@ export function SessionBlock({
   const startTime = new Date(session.startTime);
   const endTime = new Date(session.endTime);
   const isCancelled = session.status === "CANCELLED";
+  const isNonDraggable = session.status === "CANCELLED" || session.status === "COMPLETED";
 
   // Get course color from nested class->course relation
   const courseColor = session.class?.course?.color ?? "#2563EB";
@@ -52,6 +53,7 @@ export function SessionBlock({
         "border-l-4 shadow-sm hover:shadow-md",
         isDragging && "opacity-50 shadow-lg",
         isCancelled && "opacity-50",
+        isNonDraggable && "cursor-not-allowed",
         className
       )}
       style={{
@@ -90,6 +92,11 @@ export function SessionBlock({
       {isCancelled && (
         <Badge variant="secondary" className="mt-0.5 bg-red-100 text-red-800 text-[9px] px-1 py-0">
           {t("sessionBlock.cancelled")}
+        </Badge>
+      )}
+      {session.isException && !isCancelled && (
+        <Badge variant="secondary" className="mt-0.5 bg-blue-100 text-blue-800 text-[9px] px-1 py-0">
+          {t("scheduler.rescheduledBadge")}
         </Badge>
       )}
     </div>

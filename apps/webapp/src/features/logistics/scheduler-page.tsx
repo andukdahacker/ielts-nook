@@ -1,13 +1,25 @@
 import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { startOfWeek } from "date-fns";
+import { startOfWeek, format } from "date-fns";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@workspace/ui/components/alert-dialog";
 import { useAuth } from "@/features/auth/auth-context";
 import { useSessions } from "./hooks/use-sessions";
 import { useClasses } from "./hooks/use-logistics";
 import { useRooms } from "./hooks/use-rooms";
+import { useConflictCheck } from "./hooks/use-conflict-check";
 import { WeeklyCalendar } from "./components/WeeklyCalendar";
+import { ConflictWarningBanner } from "./components/ConflictWarningBanner";
 import { CreateSessionDialog } from "./components/CreateSessionDialog";
 import { EditSessionDialog } from "./components/EditSessionDialog";
 import { RBACWrapper } from "@/features/auth/components/RBACWrapper";
@@ -49,28 +61,66 @@ export function SchedulerPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editSession, setEditSession] = useState<ClassSessionWithConflicts | null>(null);
 
+  // Reschedule confirmation state
+  const [pendingReschedule, setPendingReschedule] = useState<{
+    sessionId: string;
+    session: ClassSessionWithConflicts;
+    newStartTime: Date;
+    newEndTime: Date;
+  } | null>(null);
+
+  const {
+    hasConflicts: rescheduleHasConflicts,
+    roomConflicts: rescheduleRoomConflicts,
+    teacherConflicts: rescheduleTeacherConflicts,
+    suggestions: rescheduleSuggestions,
+    checkConflictsImmediate: checkRescheduleConflicts,
+    clearConflicts: clearRescheduleConflicts,
+    isChecking: isCheckingRescheduleConflicts,
+  } = useConflictCheck();
+
   const handleWeekChange = (newWeekStart: Date) => {
     setCurrentWeekStart(newWeekStart);
   };
 
-  const handleSessionMove = async (
+  const handleSessionMove = useCallback((
     sessionId: string,
     newStartTime: Date,
-    newEndTime: Date
+    newEndTime: Date,
+    session: ClassSessionWithConflicts,
   ) => {
+    setPendingReschedule({ sessionId, session, newStartTime, newEndTime });
+    checkRescheduleConflicts({
+      classId: session.classId,
+      startTime: newStartTime.toISOString(),
+      endTime: newEndTime.toISOString(),
+      roomName: session.roomName,
+      excludeSessionId: session.id,
+    });
+  }, [checkRescheduleConflicts]);
+
+  const handleConfirmReschedule = useCallback(async () => {
+    if (!pendingReschedule) return;
     try {
       await updateSession({
-        id: sessionId,
+        id: pendingReschedule.sessionId,
         input: {
-          startTime: newStartTime.toISOString(),
-          endTime: newEndTime.toISOString(),
+          startTime: pendingReschedule.newStartTime.toISOString(),
+          endTime: pendingReschedule.newEndTime.toISOString(),
         },
       });
       toast.success(t("scheduler.toastRescheduleSuccess"));
+      setPendingReschedule(null);
+      clearRescheduleConflicts();
     } catch {
       toast.error(t("scheduler.toastRescheduleError"));
     }
-  };
+  }, [pendingReschedule, updateSession, t, clearRescheduleConflicts]);
+
+  const handleCancelReschedule = useCallback(() => {
+    setPendingReschedule(null);
+    clearRescheduleConflicts();
+  }, [clearRescheduleConflicts]);
 
   const handleSessionUpdate = async (
     sessionId: string,
@@ -166,7 +216,7 @@ export function SchedulerPage() {
           sessions={sessions}
           weekStart={currentWeekStart}
           onWeekChange={handleWeekChange}
-          onSessionMove={handleSessionMove}
+          onSessionMove={user?.role !== "STUDENT" ? handleSessionMove : undefined}
           onSessionUpdate={handleSessionUpdate}
           onSessionDelete={handleSessionDelete}
           onSessionCancel={handleSessionCancel}
@@ -208,6 +258,57 @@ export function SchedulerPage() {
           }}
         />
       )}
+
+      {/* Reschedule Confirmation Dialog */}
+      <AlertDialog open={!!pendingReschedule} onOpenChange={(open) => { if (!open) handleCancelReschedule(); }}>
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("scheduler.confirmRescheduleTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingReschedule && t("scheduler.confirmRescheduleBody", {
+                courseName: pendingReschedule.session.class?.course?.name ?? t("sessionBlock.courseFallback"),
+                className: pendingReschedule.session.class?.name ?? t("sessionBlock.classFallback"),
+                newDate: format(pendingReschedule.newStartTime, "EEEE, MMMM d"),
+                newTime: format(pendingReschedule.newStartTime, "h:mm a"),
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {rescheduleHasConflicts && (
+            <>
+              <ConflictWarningBanner
+                roomConflicts={rescheduleRoomConflicts}
+                teacherConflicts={rescheduleTeacherConflicts}
+                suggestions={rescheduleSuggestions}
+                onForceSave={handleConfirmReschedule}
+                isForcing={isUpdating}
+              />
+              <AlertDialogFooter className="flex flex-col gap-2 sm:flex-row">
+                <AlertDialogCancel className="w-full sm:w-auto min-h-[44px]">
+                  {t("button.cancel", { ns: "common" })}
+                </AlertDialogCancel>
+              </AlertDialogFooter>
+            </>
+          )}
+
+          {!rescheduleHasConflicts && (
+            <AlertDialogFooter className="flex flex-col gap-2 sm:flex-row">
+              <AlertDialogCancel className="w-full sm:w-auto min-h-[44px]">
+                {t("button.cancel", { ns: "common" })}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmReschedule}
+                className="w-full sm:w-auto min-h-[44px]"
+                disabled={isUpdating || isCheckingRescheduleConflicts}
+              >
+                {isUpdating ? t("editSession.saving") : isCheckingRescheduleConflicts ? t("editSession.saving") : t("button.confirm", { ns: "common" })}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
