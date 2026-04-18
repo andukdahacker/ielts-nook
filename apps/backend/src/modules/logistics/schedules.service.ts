@@ -126,7 +126,13 @@ export class SchedulesService {
     centerId: string,
     id: string,
     input: UpdateClassScheduleInput,
-  ): Promise<ClassSchedule> {
+  ): Promise<{
+    schedule: ClassSchedule;
+    deletedCount: number;
+    generatedCount: number;
+    sessions: ClassSession[];
+    conflicts: ConflictResult[];
+  }> {
     const db = getTenantedClient(this.prisma, centerId);
 
     // Bump effectiveFrom whenever any anchor-affecting field changes so
@@ -142,15 +148,114 @@ export class SchedulesService {
     if (input.endDate !== undefined) {
       data.endDate = input.endDate ? new Date(input.endDate) : null;
     }
+
+    const effectiveFrom = new Date();
     if (shouldBumpAnchor) {
-      data.effectiveFrom = new Date();
+      data.effectiveFrom = effectiveFrom;
     }
 
     const row = await db.classSchedule.update({
       where: { id },
       data,
     });
-    return asSchedule(row);
+    const schedule = asSchedule(row);
+
+    // If no anchor fields changed (e.g., only roomName), skip delete-regenerate
+    if (!shouldBumpAnchor) {
+      return { schedule, deletedCount: 0, generatedCount: 0, sessions: [], conflicts: [] };
+    }
+
+    // Phase 1 (delete): selectively remove future non-exception, non-completed sessions.
+    // Preserves: (a) isException = true, (b) status = COMPLETED, (c) past sessions.
+    const deleteResult = await db.classSession.deleteMany({
+      where: {
+        scheduleId: id,
+        startTime: { gte: effectiveFrom },
+        isException: false,
+        status: { not: "COMPLETED" },
+      },
+    });
+
+    // Phase 2 (regenerate): call the existing generation engine.
+    // NOT inside $transaction — generateSessionsFromSchedule calls getTenantedClient internally.
+    let generation: {
+      generatedCount: number;
+      sessions: ClassSession[];
+      conflicts: ConflictResult[];
+    } = { generatedCount: 0, sessions: [], conflicts: [] };
+    try {
+      generation = await this.sessionsService.generateSessionsFromSchedule(
+        centerId,
+        id,
+      );
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Schedule updated but session regeneration failed", {
+        scheduleId: id,
+        centerId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    return {
+      schedule,
+      deletedCount: deleteResult.count,
+      generatedCount: generation.generatedCount,
+      sessions: generation.sessions,
+      conflicts: generation.conflicts,
+    };
+  }
+
+  async previewUpdateSchedule(
+    centerId: string,
+    scheduleId: string,
+    effectiveFrom?: Date,
+  ): Promise<{
+    deletableCount: number;
+    preservedExceptions: number;
+    preservedCompleted: number;
+    totalFutureAffected: number;
+  }> {
+    const db = getTenantedClient(this.prisma, centerId);
+
+    // Verify the schedule exists — throws if not found (produces 404)
+    await db.classSchedule.findUniqueOrThrow({ where: { id: scheduleId } });
+
+    const cutoff = effectiveFrom ?? new Date();
+
+    const [deletableCount, preservedExceptions, preservedCompleted] =
+      await Promise.all([
+        db.classSession.count({
+          where: {
+            scheduleId,
+            startTime: { gte: cutoff },
+            isException: false,
+            status: { not: "COMPLETED" },
+          },
+        }),
+        db.classSession.count({
+          where: {
+            scheduleId,
+            startTime: { gte: cutoff },
+            isException: true,
+          },
+        }),
+        db.classSession.count({
+          where: {
+            scheduleId,
+            startTime: { gte: cutoff },
+            isException: false,
+            status: "COMPLETED",
+          },
+        }),
+      ]);
+
+    return {
+      deletableCount,
+      preservedExceptions,
+      preservedCompleted,
+      totalFutureAffected: deletableCount + preservedExceptions + preservedCompleted,
+    };
   }
 
   async deleteSchedule(centerId: string, id: string): Promise<void> {

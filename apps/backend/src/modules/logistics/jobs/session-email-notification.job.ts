@@ -4,6 +4,7 @@ import { createPrisma } from "../../../plugins/create-prisma.js";
 import { Resend } from "resend";
 import { buildScheduleChangeEmail } from "../emails/schedule-change.template.js";
 import { buildSessionCancelledEmail } from "../emails/session-cancelled.template.js";
+import { buildRecurrenceChangedEmail } from "../emails/recurrence-changed.template.js";
 
 // Event types
 export type SessionScheduleChangedEvent = {
@@ -31,6 +32,17 @@ export type SessionCancelledEvent = {
     roomName: string | null;
     isBulk: boolean;
     deletedCount?: number;
+  };
+};
+
+export type ScheduleRecurrenceChangedEvent = {
+  name: "logistics/schedule.recurrence-changed";
+  data: {
+    scheduleId: string;
+    centerId: string;
+    classId: string;
+    deletedCount: number;
+    generatedCount: number;
   };
 };
 
@@ -399,6 +411,174 @@ export const sessionCancellationEmailJob = inngest.createFunction(
                   recipientId: recipient.id,
                   centerId,
                   type: "session-cancelled",
+                  status: "skipped",
+                },
+              });
+              return { sent: false };
+            }
+          } finally {
+            await prisma.$disconnect();
+          }
+        },
+      );
+      results.push(result);
+    }
+
+    return {
+      status: "completed",
+      sent: results.filter((r) => r.sent).length,
+    };
+  },
+);
+
+/**
+ * Inngest job: sends email notifications when a schedule's recurrence rule changes.
+ *
+ * Uses cancelOn + step.sleep debounce: if a new event for the same scheduleId
+ * arrives during the sleep window, this job is cancelled and a new one starts.
+ */
+export const scheduleRecurrenceChangedEmailJob = inngest.createFunction(
+  {
+    id: "schedule-recurrence-changed-email",
+    retries: 3,
+    cancelOn: [
+      {
+        event: "logistics/schedule.recurrence-changed",
+        match: "data.scheduleId",
+      },
+    ],
+  },
+  { event: "logistics/schedule.recurrence-changed" },
+  async ({ event, step }) => {
+    const { centerId, classId } = event.data;
+
+    // Debounce: wait 2 minutes for rapid edits to settle
+    await step.sleep("debounce-rapid-edits", "2m");
+
+    // Re-query actual session counts after debounce (event data may be stale
+    // from a cancelled-and-restarted run due to rapid edits)
+    const counts = await step.run("fetch-current-counts", async () => {
+      const prisma = createPrisma();
+      try {
+        const db = getTenantedClient(prisma, centerId);
+        const schedules = await db.classSchedule.findMany({
+          where: { classId },
+          select: { id: true },
+        });
+        const scheduleIds = schedules.map((s) => s.id);
+        const now = new Date();
+        const sessionCount = await db.classSession.count({
+          where: {
+            scheduleId: { in: scheduleIds },
+            startTime: { gte: now },
+          },
+        });
+        return { sessionCount };
+      } finally {
+        await prisma.$disconnect();
+      }
+    });
+
+    // Fetch class info
+    const classInfo = await step.run("fetch-class-info", async () => {
+      const prisma = createPrisma();
+      try {
+        const db = getTenantedClient(prisma, centerId);
+        const classData = await db.class.findUnique({
+          where: { id: classId },
+          include: { course: { select: { name: true } } },
+        });
+        return {
+          courseName: classData?.course.name ?? "Course",
+          className: classData?.name ?? "Class",
+        };
+      } finally {
+        await prisma.$disconnect();
+      }
+    });
+
+    // Fetch recipients filtered by email preference
+    const recipients = await step.run("fetch-recipients", async () => {
+      return fetchRecipientsForClass(centerId, classId);
+    });
+
+    if (recipients.length === 0) return { status: "no-recipients", sent: 0 };
+
+    // Fetch center name for email template
+    const centerName = await step.run("fetch-center-name", async () => {
+      return fetchCenterName(centerId);
+    });
+
+    const resendApiKey = process.env.RESEND_API_KEY;
+    const emailFrom = process.env.EMAIL_FROM ?? "noreply@classlite.com";
+    const webappUrl = process.env.WEBAPP_URL ?? "http://localhost:5173";
+    const scheduleUrl = `${webappUrl}/${centerId}/logistics/scheduler`;
+
+    // Use live counts instead of stale event data
+    const updatedSessionCount = counts.sessionCount;
+
+    const results: { sent: boolean }[] = [];
+
+    for (const recipient of recipients) {
+      const result = await step.run(
+        `send-recurrence-email-${recipient.id}`,
+        async () => {
+          const prisma = createPrisma();
+          try {
+            const resend = resendApiKey ? new Resend(resendApiKey) : null;
+            const db = getTenantedClient(prisma, centerId);
+            const locale = (
+              recipient.preferredLanguage === "vi" ? "vi" : "en"
+            ) as "en" | "vi";
+
+            if (resend && recipient.email) {
+              try {
+                const { subject, html } = buildRecurrenceChangedEmail({
+                  courseName: classInfo.courseName,
+                  className: classInfo.className,
+                  deletedCount: 0,
+                  generatedCount: updatedSessionCount,
+                  scheduleUrl,
+                  centerName,
+                  recipientName: recipient.name,
+                  locale,
+                });
+
+                await resend.emails.send({
+                  from: emailFrom,
+                  to: recipient.email,
+                  subject,
+                  html,
+                });
+
+                await db.emailLog.create({
+                  data: {
+                    recipientId: recipient.id,
+                    centerId,
+                    type: "recurrence-changed",
+                    status: "sent",
+                    subject,
+                  },
+                });
+                return { sent: true };
+              } catch (err) {
+                await db.emailLog.create({
+                  data: {
+                    recipientId: recipient.id,
+                    centerId,
+                    type: "recurrence-changed",
+                    status: "failed",
+                    error: String(err),
+                  },
+                });
+                return { sent: false };
+              }
+            } else {
+              await db.emailLog.create({
+                data: {
+                  recipientId: recipient.id,
+                  centerId,
+                  type: "recurrence-changed",
                   status: "skipped",
                 },
               });

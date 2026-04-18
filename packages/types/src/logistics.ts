@@ -424,6 +424,29 @@ export const CreateScheduleResponseSchema = z.object({
 });
 export type CreateScheduleResponse = z.infer<typeof CreateScheduleResponseSchema>;
 
+// Enriched response for PATCH /schedules/:id — includes delete-regenerate stats
+export const UpdateScheduleResponseSchema = z.object({
+  data: ClassScheduleSchema,
+  message: z.string(),
+  deletedCount: z.number(),
+  generatedCount: z.number(),
+  sessions: z.array(ClassSessionSchema),
+  conflicts: z.array(ConflictResultSchema),
+});
+export type UpdateScheduleResponse = z.infer<typeof UpdateScheduleResponseSchema>;
+
+// Preview response for GET /schedules/:id/preview-update
+export const PreviewUpdateScheduleResponseSchema = z.object({
+  data: z.object({
+    deletableCount: z.number(),
+    preservedExceptions: z.number(),
+    preservedCompleted: z.number(),
+    totalFutureAffected: z.number(),
+  }),
+  message: z.string(),
+});
+export type PreviewUpdateScheduleResponse = z.infer<typeof PreviewUpdateScheduleResponseSchema>;
+
 // Extended ClassSession with conflict flag for calendar display
 export const ClassSessionWithConflictsSchema = ClassSessionSchema.extend({
   hasConflicts: z.boolean().optional(),

@@ -4,6 +4,8 @@ import {
   ClassScheduleResponseSchema,
   ClassScheduleListResponseSchema,
   CreateScheduleResponseSchema,
+  UpdateScheduleResponseSchema,
+  PreviewUpdateScheduleResponseSchema,
   ErrorResponseSchema,
   UpdateClassScheduleInput,
   CreateClassScheduleInput,
@@ -103,6 +105,32 @@ export async function schedulesRoutes(fastify: FastifyInstance) {
     },
   });
 
+  api.get("/:id/preview-update", {
+    schema: {
+      params: z.object({
+        id: z.string(),
+      }),
+      response: {
+        200: PreviewUpdateScheduleResponseSchema,
+        401: ErrorResponseSchema,
+        403: ErrorResponseSchema,
+        404: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+    preHandler: [requireRole(["OWNER", "ADMIN"])],
+    handler: async (
+      request: FastifyRequest<{ Params: { id: string } }>,
+      reply,
+    ) => {
+      const result = await schedulesController.previewUpdateSchedule(
+        request.params.id,
+        request.jwtPayload!,
+      );
+      return reply.send(result);
+    },
+  });
+
   api.patch("/:id", {
     schema: {
       params: z.object({
@@ -110,7 +138,7 @@ export async function schedulesRoutes(fastify: FastifyInstance) {
       }),
       body: UpdateClassScheduleSchema,
       response: {
-        200: ClassScheduleResponseSchema,
+        200: UpdateScheduleResponseSchema,
         400: ErrorResponseSchema,
         401: ErrorResponseSchema,
         403: ErrorResponseSchema,
@@ -130,6 +158,7 @@ export async function schedulesRoutes(fastify: FastifyInstance) {
         request.params.id,
         request.body,
         request.jwtPayload!,
+        request.log,
       );
       return reply.send(result);
     },

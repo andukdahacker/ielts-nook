@@ -35,6 +35,10 @@ describe("SchedulesService", () => {
         update: vi.fn(),
         delete: vi.fn(),
       },
+      classSession: {
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        count: vi.fn().mockResolvedValue(0),
+      },
       class: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({ id: classId, centerId }),
       },
@@ -202,11 +206,12 @@ describe("SchedulesService", () => {
     it("bumps effectiveFrom when frequency changes", async () => {
       mockTenantedClient.classSchedule.update.mockResolvedValue({
         id: "schedule-1",
+        classId,
         frequency: "BIWEEKLY",
       });
 
       const before = new Date();
-      await schedulesService.updateSchedule(centerId, "schedule-1", {
+      const result = await schedulesService.updateSchedule(centerId, "schedule-1", {
         frequency: "BIWEEKLY",
       });
       const after = new Date();
@@ -216,17 +221,19 @@ describe("SchedulesService", () => {
       expect(eff).toBeInstanceOf(Date);
       expect(eff.getTime()).toBeGreaterThanOrEqual(before.getTime());
       expect(eff.getTime()).toBeLessThanOrEqual(after.getTime());
+      expect(result.schedule.id).toBe("schedule-1");
     });
 
     it("bumps effectiveFrom when dayOfWeek/startTime/endTime change", async () => {
-      mockTenantedClient.classSchedule.update.mockResolvedValue({ id: "schedule-1" });
+      mockTenantedClient.classSchedule.update.mockResolvedValue({ id: "schedule-1", classId });
 
       await schedulesService.updateSchedule(centerId, "schedule-1", { dayOfWeek: 3 });
       let updateCall = mockTenantedClient.classSchedule.update.mock.calls[0]?.[0];
       expect(updateCall?.data.effectiveFrom).toBeInstanceOf(Date);
 
       vi.clearAllMocks();
-      mockTenantedClient.classSchedule.update.mockResolvedValue({ id: "schedule-1" });
+      mockTenantedClient.classSchedule.update.mockResolvedValue({ id: "schedule-1", classId });
+      mockTenantedClient.classSession.deleteMany.mockResolvedValue({ count: 0 });
 
       await schedulesService.updateSchedule(centerId, "schedule-1", { startTime: "10:00" });
       updateCall = mockTenantedClient.classSchedule.update.mock.calls[0]?.[0];
@@ -235,19 +242,24 @@ describe("SchedulesService", () => {
 
     it("does NOT bump effectiveFrom when only roomName/endDate changes", async () => {
       // Editing roomName alone should not desync biweekly counting.
-      mockTenantedClient.classSchedule.update.mockResolvedValue({ id: "schedule-1" });
+      mockTenantedClient.classSchedule.update.mockResolvedValue({ id: "schedule-1", classId });
 
-      await schedulesService.updateSchedule(centerId, "schedule-1", {
+      const result = await schedulesService.updateSchedule(centerId, "schedule-1", {
         roomName: "Room B",
       });
 
       const updateCall = mockTenantedClient.classSchedule.update.mock.calls[0]?.[0];
       expect(updateCall?.data.effectiveFrom).toBeUndefined();
       expect(updateCall?.data.roomName).toBe("Room B");
+      // No delete-regenerate when no anchor fields changed
+      expect(result.deletedCount).toBe(0);
+      expect(result.generatedCount).toBe(0);
+      expect(mockTenantedClient.classSession.deleteMany).not.toHaveBeenCalled();
+      expect(mockSessionsService.generateSessionsFromSchedule).not.toHaveBeenCalled();
     });
 
     it("coerces endDate string to Date on update", async () => {
-      mockTenantedClient.classSchedule.update.mockResolvedValue({ id: "schedule-1" });
+      mockTenantedClient.classSchedule.update.mockResolvedValue({ id: "schedule-1", classId });
 
       await schedulesService.updateSchedule(centerId, "schedule-1", {
         endDate: "2027-01-15",
@@ -258,7 +270,7 @@ describe("SchedulesService", () => {
     });
 
     it("normalizes endDate=null when caller clears it", async () => {
-      mockTenantedClient.classSchedule.update.mockResolvedValue({ id: "schedule-1" });
+      mockTenantedClient.classSchedule.update.mockResolvedValue({ id: "schedule-1", classId });
 
       await schedulesService.updateSchedule(centerId, "schedule-1", {
         endDate: null,
@@ -266,6 +278,194 @@ describe("SchedulesService", () => {
 
       const updateCall = mockTenantedClient.classSchedule.update.mock.calls[0]?.[0];
       expect(updateCall?.data.endDate).toBeNull();
+    });
+  });
+
+  describe("updateSchedule (delete-regenerate — story 14-4)", () => {
+    it("deletes future non-exception sessions and re-generates on anchor field change", async () => {
+      mockTenantedClient.classSchedule.update.mockResolvedValue({
+        id: "schedule-1",
+        classId,
+        dayOfWeek: 3,
+      });
+      mockTenantedClient.classSession.deleteMany.mockResolvedValue({ count: 8 });
+      (mockSessionsService.generateSessionsFromSchedule as any).mockResolvedValue({
+        generatedCount: 10,
+        sessions: [{ id: "s1" }],
+        conflicts: [],
+      });
+
+      const result = await schedulesService.updateSchedule(centerId, "schedule-1", {
+        dayOfWeek: 3,
+      });
+
+      expect(result.deletedCount).toBe(8);
+      expect(result.generatedCount).toBe(10);
+      expect(result.sessions).toHaveLength(1);
+      expect(mockSessionsService.generateSessionsFromSchedule).toHaveBeenCalledWith(
+        centerId,
+        "schedule-1",
+      );
+    });
+
+    it("delete query preserves exceptions (isException = true)", async () => {
+      mockTenantedClient.classSchedule.update.mockResolvedValue({
+        id: "schedule-1",
+        classId,
+        frequency: "BIWEEKLY",
+      });
+      mockTenantedClient.classSession.deleteMany.mockResolvedValue({ count: 5 });
+
+      await schedulesService.updateSchedule(centerId, "schedule-1", {
+        frequency: "BIWEEKLY",
+      });
+
+      const deleteCall = mockTenantedClient.classSession.deleteMany.mock.calls[0]?.[0];
+      expect(deleteCall.where.isException).toBe(false);
+    });
+
+    it("delete query preserves COMPLETED sessions", async () => {
+      mockTenantedClient.classSchedule.update.mockResolvedValue({
+        id: "schedule-1",
+        classId,
+      });
+      mockTenantedClient.classSession.deleteMany.mockResolvedValue({ count: 3 });
+
+      await schedulesService.updateSchedule(centerId, "schedule-1", {
+        startTime: "14:00",
+      });
+
+      const deleteCall = mockTenantedClient.classSession.deleteMany.mock.calls[0]?.[0];
+      expect(deleteCall.where.status).toEqual({ not: "COMPLETED" });
+    });
+
+    it("delete query only targets future sessions (startTime >= effectiveFrom)", async () => {
+      mockTenantedClient.classSchedule.update.mockResolvedValue({
+        id: "schedule-1",
+        classId,
+      });
+      mockTenantedClient.classSession.deleteMany.mockResolvedValue({ count: 0 });
+
+      const before = new Date();
+      await schedulesService.updateSchedule(centerId, "schedule-1", {
+        endTime: "16:00",
+      });
+
+      const deleteCall = mockTenantedClient.classSession.deleteMany.mock.calls[0]?.[0];
+      expect(deleteCall.where.scheduleId).toBe("schedule-1");
+      const gte = deleteCall.where.startTime.gte as Date;
+      expect(gte.getTime()).toBeGreaterThanOrEqual(before.getTime());
+    });
+
+    it("returns schedule even when session regeneration throws", async () => {
+      mockTenantedClient.classSchedule.update.mockResolvedValue({
+        id: "schedule-1",
+        classId,
+        dayOfWeek: 5,
+      });
+      mockTenantedClient.classSession.deleteMany.mockResolvedValue({ count: 4 });
+      (mockSessionsService.generateSessionsFromSchedule as any).mockRejectedValue(
+        new Error("generation failed"),
+      );
+
+      const result = await schedulesService.updateSchedule(centerId, "schedule-1", {
+        dayOfWeek: 5,
+      });
+
+      expect(result.schedule.id).toBe("schedule-1");
+      expect(result.deletedCount).toBe(4);
+      expect(result.generatedCount).toBe(0);
+      expect(result.sessions).toEqual([]);
+    });
+
+    it("updating frequency from WEEKLY to BIWEEKLY triggers delete-regenerate", async () => {
+      mockTenantedClient.classSchedule.update.mockResolvedValue({
+        id: "schedule-1",
+        classId,
+        frequency: "BIWEEKLY",
+      });
+      mockTenantedClient.classSession.deleteMany.mockResolvedValue({ count: 12 });
+      (mockSessionsService.generateSessionsFromSchedule as any).mockResolvedValue({
+        generatedCount: 6,
+        sessions: [],
+        conflicts: [],
+      });
+
+      const result = await schedulesService.updateSchedule(centerId, "schedule-1", {
+        frequency: "BIWEEKLY",
+      });
+
+      expect(result.deletedCount).toBe(12);
+      expect(result.generatedCount).toBe(6);
+    });
+  });
+
+  describe("previewUpdateSchedule (story 14-4)", () => {
+    beforeEach(() => {
+      mockTenantedClient.classSchedule.findUniqueOrThrow.mockResolvedValue({ id: "schedule-1" });
+    });
+
+    it("returns correct counts for deletable vs preserved sessions", async () => {
+      mockTenantedClient.classSession.count
+        .mockResolvedValueOnce(5)  // deletable
+        .mockResolvedValueOnce(2)  // preserved exceptions
+        .mockResolvedValueOnce(1); // preserved completed (non-exception)
+
+      const result = await schedulesService.previewUpdateSchedule(centerId, "schedule-1");
+
+      expect(result.deletableCount).toBe(5);
+      expect(result.preservedExceptions).toBe(2);
+      expect(result.preservedCompleted).toBe(1);
+      expect(result.totalFutureAffected).toBe(8);
+    });
+
+    it("returns 0 deletable when all future sessions are exceptions or completed", async () => {
+      mockTenantedClient.classSession.count
+        .mockResolvedValueOnce(0)  // deletable
+        .mockResolvedValueOnce(3)  // preserved exceptions
+        .mockResolvedValueOnce(2); // preserved completed (non-exception)
+
+      const result = await schedulesService.previewUpdateSchedule(centerId, "schedule-1");
+
+      expect(result.deletableCount).toBe(0);
+      expect(result.totalFutureAffected).toBe(5);
+    });
+
+    it("uses provided effectiveFrom as cutoff date", async () => {
+      const cutoff = new Date("2026-06-01T00:00:00Z");
+      mockTenantedClient.classSession.count
+        .mockResolvedValueOnce(3)
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(0);
+
+      await schedulesService.previewUpdateSchedule(centerId, "schedule-1", cutoff);
+
+      const countCalls = mockTenantedClient.classSession.count.mock.calls;
+      expect(countCalls[0][0].where.startTime.gte).toEqual(cutoff);
+    });
+
+    it("preservedCompleted excludes exception sessions to avoid double-counting", async () => {
+      mockTenantedClient.classSession.count
+        .mockResolvedValueOnce(3)  // deletable
+        .mockResolvedValueOnce(2)  // preserved exceptions
+        .mockResolvedValueOnce(1); // preserved completed (non-exception only)
+
+      await schedulesService.previewUpdateSchedule(centerId, "schedule-1");
+
+      const countCalls = mockTenantedClient.classSession.count.mock.calls;
+      // Third query (preservedCompleted) must filter isException: false
+      expect(countCalls[2][0].where.isException).toBe(false);
+      expect(countCalls[2][0].where.status).toBe("COMPLETED");
+    });
+
+    it("throws for nonexistent schedule", async () => {
+      mockTenantedClient.classSchedule.findUniqueOrThrow.mockRejectedValue(
+        new Error("Record not found"),
+      );
+
+      await expect(
+        schedulesService.previewUpdateSchedule(centerId, "nonexistent"),
+      ).rejects.toThrow("Record not found");
     });
   });
 

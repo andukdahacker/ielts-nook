@@ -268,10 +268,11 @@ export const useSchedules = (classId?: string, _centerId?: string) => {
         },
       );
       if (error) throw error;
-      return data?.data;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schedules", classId] });
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
     },
   });
 
@@ -287,8 +288,20 @@ export const useSchedules = (classId?: string, _centerId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schedules", classId] });
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
     },
   });
+
+  const previewScheduleUpdate = async (scheduleId: string) => {
+    const { data, error } = await client.GET(
+      "/api/v1/logistics/schedules/{id}/preview-update",
+      {
+        params: { path: { id: scheduleId } },
+      },
+    );
+    if (error) throw error;
+    return data?.data;
+  };
 
   return {
     schedules: schedulesQuery.data ?? [],
@@ -296,7 +309,9 @@ export const useSchedules = (classId?: string, _centerId?: string) => {
     createSchedule: createScheduleMutation.mutateAsync,
     updateSchedule: updateScheduleMutation.mutateAsync,
     deleteSchedule: deleteScheduleMutation.mutateAsync,
+    previewScheduleUpdate,
     isCreating: createScheduleMutation.isPending,
+    isUpdating: updateScheduleMutation.isPending,
     isDeleting: deleteScheduleMutation.isPending,
   };
 };

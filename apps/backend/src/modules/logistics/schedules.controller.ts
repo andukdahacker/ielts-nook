@@ -4,9 +4,12 @@ import {
   CreateClassScheduleInput,
   CreateScheduleResponse,
   UpdateClassScheduleInput,
+  UpdateScheduleResponse,
+  PreviewUpdateScheduleResponse,
 } from "@workspace/types";
 import { FastifyBaseLogger } from "fastify";
 import { JwtPayload } from "jsonwebtoken";
+import { inngest } from "../inngest/client.js";
 import { SchedulesService } from "./schedules.service.js";
 
 export class SchedulesController {
@@ -83,18 +86,66 @@ export class SchedulesController {
     id: string,
     input: UpdateClassScheduleInput,
     user: JwtPayload,
-  ): Promise<ClassScheduleResponse> {
+    log?: FastifyBaseLogger,
+  ): Promise<UpdateScheduleResponse> {
     const centerId = user.centerId;
     if (!centerId) throw new Error("Center ID missing from token");
 
-    const schedule = await this.schedulesService.updateSchedule(
+    const result = await this.schedulesService.updateSchedule(
       centerId,
       id,
       input,
     );
+
+    const { schedule, deletedCount, generatedCount, sessions, conflicts } = result;
+
+    // Emit notification event when sessions were successfully changed
+    // Suppress when generatedCount is 0 but deletedCount > 0 (partial failure)
+    if (generatedCount > 0) {
+      try {
+        await inngest.send({
+          name: "logistics/schedule.recurrence-changed",
+          data: {
+            scheduleId: id,
+            centerId,
+            classId: schedule.classId,
+            deletedCount,
+            generatedCount,
+          },
+        });
+      } catch (err) {
+        log?.error(
+          { scheduleId: id, error: err instanceof Error ? err.message : String(err) },
+          "Failed to emit recurrence-changed event",
+        );
+      }
+    }
+
+    const message = deletedCount > 0 || generatedCount > 0
+      ? `Schedule updated — ${deletedCount} sessions removed, ${generatedCount} regenerated`
+      : "Schedule updated successfully";
+
     return {
       data: schedule,
-      message: "Schedule updated successfully",
+      message,
+      deletedCount,
+      generatedCount,
+      sessions,
+      conflicts,
+    };
+  }
+
+  async previewUpdateSchedule(
+    id: string,
+    user: JwtPayload,
+  ): Promise<PreviewUpdateScheduleResponse> {
+    const centerId = user.centerId;
+    if (!centerId) throw new Error("Center ID missing from token");
+
+    const preview = await this.schedulesService.previewUpdateSchedule(centerId, id);
+    return {
+      data: preview,
+      message: "Preview generated successfully",
     };
   }
 

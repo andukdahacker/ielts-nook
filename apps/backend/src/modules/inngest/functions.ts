@@ -5,6 +5,7 @@ import { csvImportJob } from "../users/jobs/csv-import.job.js";
 import {
   sessionEmailNotificationJob,
   sessionCancellationEmailJob,
+  scheduleRecurrenceChangedEmailJob,
 } from "../logistics/jobs/session-email-notification.job.js";
 import { questionGenerationJob } from "../exercises/jobs/question-generation.job.js";
 import { analyzeSubmissionJob } from "../grading/jobs/analyze-submission.job.js";
@@ -36,4 +37,5 @@ export const functions: ReturnType<typeof inngest.createFunction>[] = [
   enforceGracePeriodJob,
   scanExistingContentJob,
   rollingSessionGenerationJob,
+  scheduleRecurrenceChangedEmailJob,
 ];
