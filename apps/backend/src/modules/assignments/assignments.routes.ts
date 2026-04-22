@@ -39,7 +39,7 @@ export async function assignmentsRoutes(fastify: FastifyInstance) {
   const service = new AssignmentsService(fastify.prisma, notificationsService);
   const controller = new AssignmentsController(service);
 
-  // All routes require authentication + teacher/admin/owner role
+  // All routes require authentication + teacher/owner role (admin removed per Story 15-2)
   fastify.addHook("preHandler", authMiddleware);
 
   // CRITICAL: Register literal POST routes BEFORE parameterized routes
@@ -57,7 +57,7 @@ export async function assignmentsRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER"])],
+    preHandler: [requireRole(["OWNER", "TEACHER"])],
     handler: async (request, reply) => {
       try {
         const { exerciseIds } = request.body as { exerciseIds: string[] };
@@ -86,7 +86,7 @@ export async function assignmentsRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER"])],
+    preHandler: [requireRole(["OWNER", "TEACHER"])],
     handler: async (request, reply) => {
       try {
         const filters = request.query as {
@@ -117,7 +117,7 @@ export async function assignmentsRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER"])],
+    preHandler: [requireRole(["OWNER", "TEACHER"])],
     handler: async (request, reply) => {
       try {
         const result = await controller.create(request.body as Parameters<typeof controller.create>[0], request.jwtPayload!);
@@ -139,7 +139,7 @@ export async function assignmentsRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER"])],
+    preHandler: [requireRole(["OWNER", "TEACHER"])],
     handler: async (request, reply) => {
       try {
         const { id } = request.params as { id: string };
@@ -164,7 +164,7 @@ export async function assignmentsRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER"])],
+    preHandler: [requireRole(["OWNER", "TEACHER"])],
     handler: async (request, reply) => {
       try {
         const { id } = request.params as { id: string };
@@ -188,7 +188,7 @@ export async function assignmentsRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER"])],
+    preHandler: [requireRole(["OWNER", "TEACHER"])],
     handler: async (request, reply) => {
       try {
         const { id } = request.params as { id: string };
@@ -213,7 +213,7 @@ export async function assignmentsRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER"])],
+    preHandler: [requireRole(["OWNER", "TEACHER"])],
     handler: async (request, reply) => {
       try {
         const { id } = request.params as { id: string };
@@ -237,7 +237,7 @@ export async function assignmentsRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER"])],
+    preHandler: [requireRole(["OWNER", "TEACHER"])],
     handler: async (request, reply) => {
       try {
         const { id } = request.params as { id: string };
@@ -260,7 +260,7 @@ export async function assignmentsRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER"])],
+    preHandler: [requireRole(["OWNER", "TEACHER"])],
     handler: async (request, reply) => {
       try {
         const { id } = request.params as { id: string };

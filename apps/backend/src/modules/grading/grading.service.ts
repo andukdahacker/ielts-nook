@@ -18,7 +18,8 @@ export class GradingService {
   /**
    * Resolve Firebase UID to user ID and verify teacher-class access.
    * Teachers can only access submissions from classes they teach.
-   * ADMIN/OWNER have full access within their tenant.
+   * OWNER has full access within their tenant.
+   * Note: ADMIN is blocked at route level (Story 15-2) so only TEACHER/OWNER reach here.
    */
   private async verifyAccess(
     db: ReturnType<typeof getTenantedClient>,
@@ -31,13 +32,13 @@ export class GradingService {
     const userId = authAccount.userId;
 
     // Teachers can only access submissions from classes they teach
-    // ADMIN/OWNER have full access within tenant (RBAC middleware already verified role)
+    // OWNER has full access within tenant (RBAC middleware already verified role)
     if (!classTeacherId || classTeacherId !== userId) {
       const membership = await db.centerMembership.findFirst({
         where: { userId },
         select: { role: true },
       });
-      if (!membership || (membership.role !== "ADMIN" && membership.role !== "OWNER")) {
+      if (!membership || membership.role !== "OWNER") {
         throw AppError.forbidden("You can only access submissions from your classes");
       }
     }
@@ -324,12 +325,12 @@ export class GradingService {
     const db = getTenantedClient(this.prisma, centerId);
 
     const { userId, role } = await this.resolveUser(db, firebaseUid);
-    const isPrivileged = role === "ADMIN" || role === "OWNER";
+    const isPrivileged = role === "OWNER";
 
     const { classId, assignmentId, status, gradingStatus, sortBy = "submittedAt", sortOrder = "asc", page, limit } = filters;
 
     // Build class filter: TEACHER can only see their own classes,
-    // ADMIN/OWNER have full access within the tenant
+    // OWNER has full access within the tenant
     const classFilter = isPrivileged
       ? (classId ? { classId } : {})
       : (classId

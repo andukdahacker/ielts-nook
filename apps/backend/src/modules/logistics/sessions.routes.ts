@@ -109,6 +109,7 @@ export async function sessionsRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
+    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER", "STUDENT"])],
     handler: async (
       request: FastifyRequest<{
         Querystring: { startDate: string; endDate: string; classId?: string; includeConflicts?: string };
@@ -150,6 +151,7 @@ export async function sessionsRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
+    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER", "STUDENT"])],
     handler: async (
       request: FastifyRequest<{
         Querystring: { weekStart: string; classId?: string };
@@ -189,6 +191,7 @@ export async function sessionsRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
+    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER", "STUDENT"])],
     handler: async (
       request: FastifyRequest<{ Params: { id: string } }>,
       reply,

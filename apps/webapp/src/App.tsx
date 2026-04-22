@@ -220,7 +220,7 @@ function App() {
                       element={
                         <ErrorBoundary>
                           <ProtectedRoute
-                            allowedRoles={["OWNER", "ADMIN", "TEACHER"]}
+                            allowedRoles={["OWNER", "TEACHER"]}
                           >
                             <AssignmentsPage />
                           </ProtectedRoute>
@@ -268,7 +268,7 @@ function App() {
                       element={
                         <ErrorBoundary>
                           <ProtectedRoute
-                            allowedRoles={["OWNER", "ADMIN", "TEACHER"]}
+                            allowedRoles={["OWNER", "TEACHER"]}
                           >
                             <GradingQueuePage />
                           </ProtectedRoute>
@@ -280,7 +280,7 @@ function App() {
                       element={
                         <ErrorBoundary>
                           <ProtectedRoute
-                            allowedRoles={["OWNER", "ADMIN", "TEACHER"]}
+                            allowedRoles={["OWNER", "TEACHER"]}
                           >
                             <GradingQueuePage />
                           </ProtectedRoute>

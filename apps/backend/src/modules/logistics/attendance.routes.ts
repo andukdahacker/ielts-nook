@@ -97,7 +97,7 @@ export async function attendanceRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [checkTeacherSessionAccess],
+    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER"]), checkTeacherSessionAccess],
     handler: async (
       request: FastifyRequest<{ Params: { sessionId: string } }>,
       reply,
@@ -126,7 +126,7 @@ export async function attendanceRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [checkTeacherSessionAccess],
+    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER"]), checkTeacherSessionAccess],
     handler: async (
       request: FastifyRequest<{
         Params: { sessionId: string };
@@ -159,7 +159,7 @@ export async function attendanceRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [checkTeacherSessionAccess],
+    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER"]), checkTeacherSessionAccess],
     handler: async (
       request: FastifyRequest<{
         Params: { sessionId: string };

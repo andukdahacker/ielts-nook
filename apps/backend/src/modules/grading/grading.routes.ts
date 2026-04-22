@@ -52,7 +52,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
   const service = new GradingService(fastify.prisma);
   const controller = new GradingController(service);
 
-  // All grading routes require authentication + TEACHER/ADMIN/OWNER role
+  // All grading routes require authentication + TEACHER/OWNER role (ADMIN removed per Story 15-2)
   fastify.addHook("preHandler", authMiddleware);
 
   // GET /submissions — List submissions with AI analysis status (grading queue)
@@ -67,7 +67,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    preHandler: [requireRole(["TEACHER", "OWNER"])],
     handler: async (request, reply) => {
       try {
         const payload = request.jwtPayload!;
@@ -103,7 +103,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    preHandler: [requireRole(["TEACHER", "OWNER"])],
     handler: async (request, reply) => {
       try {
         const payload = request.jwtPayload!;
@@ -136,7 +136,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    preHandler: [requireRole(["TEACHER", "OWNER"])],
     handler: async (request, reply) => {
       try {
         const payload = request.jwtPayload!;
@@ -168,7 +168,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    preHandler: [requireRole(["TEACHER", "OWNER"])],
     handler: async (request, reply) => {
       try {
         const payload = request.jwtPayload!;
@@ -201,7 +201,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    preHandler: [requireRole(["TEACHER", "OWNER"])],
     handler: async (request, reply) => {
       try {
         const payload = request.jwtPayload!;
@@ -235,7 +235,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    preHandler: [requireRole(["TEACHER", "OWNER"])],
     handler: async (request, reply) => {
       try {
         const payload = request.jwtPayload!;
@@ -270,7 +270,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    preHandler: [requireRole(["TEACHER", "OWNER"])],
     handler: async (request, reply) => {
       try {
         const payload = request.jwtPayload!;
@@ -304,7 +304,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    preHandler: [requireRole(["TEACHER", "OWNER"])],
     handler: async (request, reply) => {
       try {
         const payload = request.jwtPayload!;
@@ -338,7 +338,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    preHandler: [requireRole(["TEACHER", "OWNER"])],
     handler: async (request, reply) => {
       try {
         const payload = request.jwtPayload!;
@@ -373,7 +373,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    preHandler: [requireRole(["TEACHER", "OWNER"])],
     handler: async (request, reply) => {
       try {
         const payload = request.jwtPayload!;
@@ -410,7 +410,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    preHandler: [requireRole(["TEACHER", "OWNER"])],
     handler: async (request, reply) => {
       try {
         const payload = request.jwtPayload!;
@@ -444,7 +444,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    preHandler: [requireRole(["TEACHER", "OWNER"])],
     handler: async (request, reply) => {
       try {
         const payload = request.jwtPayload!;
@@ -544,7 +544,7 @@ export async function gradingRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
-    preHandler: [requireRole(["TEACHER", "ADMIN", "OWNER"])],
+    preHandler: [requireRole(["TEACHER", "OWNER"])],
     handler: async (request, reply) => {
       try {
         const payload = request.jwtPayload!;

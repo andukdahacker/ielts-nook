@@ -44,6 +44,7 @@ export async function schedulesRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
+    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER", "STUDENT"])],
     handler: async (
       request: FastifyRequest<{ Querystring: { classId?: string } }>,
       reply,
@@ -68,6 +69,7 @@ export async function schedulesRoutes(fastify: FastifyInstance) {
         500: ErrorResponseSchema,
       },
     },
+    preHandler: [requireRole(["OWNER", "ADMIN", "TEACHER", "STUDENT"])],
     handler: async (
       request: FastifyRequest<{ Params: { id: string } }>,
       reply,

@@ -179,6 +179,134 @@ describe("Grading Routes Integration", () => {
     });
   });
 
+  describe("ADMIN role access (Story 15-2)", () => {
+    it("should return 403 for ADMIN on GET /submissions", async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValueOnce({
+        uid: "firebase-admin-1",
+        email: "admin@test.com",
+        role: "ADMIN",
+        center_id: "center-1",
+      });
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/v1/grading/submissions",
+        headers: { authorization: "Bearer admin-token" },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it("should return 403 for ADMIN on GET /submissions/:submissionId", async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValueOnce({
+        uid: "firebase-admin-1",
+        email: "admin@test.com",
+        role: "ADMIN",
+        center_id: "center-1",
+      });
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/v1/grading/submissions/sub-1",
+        headers: { authorization: "Bearer admin-token" },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it("should return 403 for ADMIN on POST /submissions/:submissionId/comments", async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValueOnce({
+        uid: "firebase-admin-1",
+        email: "admin@test.com",
+        role: "ADMIN",
+        center_id: "center-1",
+      });
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/grading/submissions/sub-1/comments",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { content: "Test", visibility: "student_facing" },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it("should return 403 for ADMIN on POST /submissions/:submissionId/finalize", async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValueOnce({
+        uid: "firebase-admin-1",
+        email: "admin@test.com",
+        role: "ADMIN",
+        center_id: "center-1",
+      });
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/grading/submissions/sub-1/finalize",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { teacherFinalScore: 7.0 },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it("should allow ADMIN on student-facing GET /student/submissions/:submissionId", async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValueOnce({
+        uid: "firebase-admin-1",
+        email: "admin@test.com",
+        role: "ADMIN",
+        center_id: "center-1",
+      });
+
+      mockDb.authAccount.findUniqueOrThrow.mockResolvedValueOnce({
+        userId: "admin-user-1",
+        provider: "FIREBASE",
+        providerUserId: "firebase-admin-1",
+      });
+      mockDb.centerMembership.findFirst.mockResolvedValueOnce({ role: "ADMIN" });
+      mockDb.submission.findUnique.mockResolvedValue({
+        ...mockSubmission,
+        studentId: "admin-user-1",
+      });
+      mockDb.submissionFeedback.findUnique.mockResolvedValue(mockFeedback);
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/v1/grading/student/submissions/sub-1",
+        headers: { authorization: "Bearer admin-token" },
+      });
+
+      // Should not be 403 - ADMIN is allowed on student-facing routes
+      expect(response.statusCode).not.toBe(403);
+    });
+
+    it("should allow ADMIN on student-facing GET /student/submissions/:submissionId/history (AC7)", async () => {
+      mockFirebaseAuth.verifyIdToken.mockResolvedValueOnce({
+        uid: "firebase-admin-1",
+        email: "admin@test.com",
+        role: "ADMIN",
+        center_id: "center-1",
+      });
+
+      mockDb.authAccount.findUniqueOrThrow.mockResolvedValueOnce({
+        userId: "admin-user-1",
+        provider: "FIREBASE",
+        providerUserId: "firebase-admin-1",
+      });
+      mockDb.centerMembership.findFirst.mockResolvedValueOnce({ role: "ADMIN" });
+      mockDb.submission.findMany.mockResolvedValue([]);
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/v1/grading/student/submissions/sub-1/history",
+        headers: { authorization: "Bearer admin-token" },
+      });
+
+      // Should not be 403 - ADMIN is allowed on student-facing routes (AC7)
+      expect(response.statusCode).not.toBe(403);
+    });
+  });
+
   describe("GET /submissions/:submissionId", () => {
     it("should return 200 with submission detail", async () => {
       mockDb.submission.findUnique.mockResolvedValue(mockSubmission);

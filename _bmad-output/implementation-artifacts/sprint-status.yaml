@@ -69,7 +69,7 @@
 #   - Epic 8: Added 8.4-8.5 (i18n, golden sample UI)
 
 generated: 2026-01-29
-last_updated: 2026-04-18 # Story 14-4 → review (update recurrence rule)
+last_updated: 2026-04-22 # Story 15-2 → review
 project: classlite
 project_key: classlite
 tracking_system: file-system
@@ -243,25 +243,25 @@ development_status:
   epic-13: in-progress
   13-1-click-to-scroll-comments: done
   13-2-google-docs-style-comments: done # Pre-satisfied — all ACs met by Epic 5 + Story 13-1 implementation
-  13-3-manual-grading-discoverability: review
+  13-3-manual-grading-discoverability: done
   epic-13-retrospective: optional
 
   # Epic 14: Session & Schedule Redesign
   # Status: BACKLOG — Sprint N+1
   # Scope: Auto-generate sessions, edit/cancel individual, reschedule, update recurrence
   epic-14: in-progress
-  14-1-auto-generate-sessions-from-recurrence: review
-  14-2-edit-cancel-individual-sessions: review
-  14-3-reschedule-single-occurrence: review
-  14-4-update-recurrence-rule: review
+  14-1-auto-generate-sessions-from-recurrence: done
+  14-2-edit-cancel-individual-sessions: done
+  14-3-reschedule-single-occurrence: done
+  14-4-update-recurrence-rule: done
   epic-14-retrospective: optional
 
   # Epic 15: RBAC Audit & Permissions
   # Status: BACKLOG — Sprint N+1
   # Scope: Permissions matrix, admin view cleanup, owner god mode, role distinction UI
-  epic-15: backlog
-  15-1-rbac-audit: backlog
-  15-2-admin-remove-grading-assignment-views: backlog
+  epic-15: in-progress
+  15-1-rbac-audit: done
+  15-2-admin-remove-grading-assignment-views: review
   15-3-owner-god-mode: backlog
   15-4-clearer-role-distinction-in-ui: backlog
   epic-15-retrospective: optional

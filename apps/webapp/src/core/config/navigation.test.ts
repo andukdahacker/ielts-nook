@@ -67,11 +67,23 @@ describe("navigation config", () => {
       expect(ownerItems).toHaveLength(10);
     });
 
-    it("ADMIN sees all nav items", () => {
+    it("ADMIN sees nav items except grading and assignments (Story 15-2)", () => {
       const adminItems = config.filter((item) =>
         item.allowedRoles.includes("ADMIN")
       );
-      expect(adminItems).toHaveLength(10);
+      const titles = adminItems.map((item) => item.title);
+
+      expect(titles).not.toContain("nav.grading");
+      expect(titles).not.toContain("nav.assignments");
+      expect(titles).toContain("nav.dashboard");
+      expect(titles).toContain("nav.schedule");
+      expect(titles).toContain("nav.classes");
+      expect(titles).toContain("nav.exercises");
+      expect(titles).toContain("nav.mockTests");
+      expect(titles).toContain("nav.students");
+      expect(titles).toContain("nav.settings");
+      expect(titles).toContain("nav.profile");
+      expect(adminItems).toHaveLength(8);
     });
 
     it("TEACHER sees correct nav items (no Settings)", () => {

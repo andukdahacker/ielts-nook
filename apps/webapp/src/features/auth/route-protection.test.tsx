@@ -94,7 +94,7 @@ describe("Route Protection", () => {
   });
 
   describe("Grading route protection", () => {
-    const allowedRoles = ["OWNER", "ADMIN", "TEACHER"];
+    const allowedRoles = ["OWNER", "TEACHER"];
 
     it("allows OWNER to access grading", () => {
       renderProtectedRoute(
@@ -112,6 +112,15 @@ describe("Route Protection", () => {
         allowedRoles
       );
       expect(screen.getByText("Grading Page")).toBeInTheDocument();
+    });
+
+    it("redirects ADMIN from grading (Story 15-2)", () => {
+      renderProtectedRoute(
+        "/test-center/dashboard/grading",
+        { role: "ADMIN", centerId: "test-center" },
+        allowedRoles
+      );
+      expect(screen.queryByText("Grading Page")).not.toBeInTheDocument();
     });
 
     it("redirects STUDENT from grading", () => {

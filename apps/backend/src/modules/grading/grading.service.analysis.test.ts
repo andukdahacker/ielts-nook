@@ -228,7 +228,7 @@ describe("GradingService", () => {
       ).rejects.toThrow("You can only access submissions from your classes");
     });
 
-    it("should allow ADMIN to access submissions from any class", async () => {
+    it("should deny ADMIN access to submissions from other classes (Story 15-2)", async () => {
       mockDb.submission.findUnique.mockResolvedValue({
         ...mockSubmission,
         assignment: {
@@ -237,11 +237,10 @@ describe("GradingService", () => {
         },
       });
       mockDb.centerMembership.findFirst.mockResolvedValue(mockAdminMembership);
-      mockDb.gradingJob.findUnique.mockResolvedValue(null);
 
-      const result = await service.triggerAnalysis(centerId, submissionId, firebaseUid);
-
-      expect(result).toEqual(mockGradingJob);
+      await expect(
+        service.triggerAnalysis(centerId, submissionId, firebaseUid),
+      ).rejects.toThrow("You can only access submissions from your classes");
     });
   });
 
