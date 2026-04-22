@@ -8,6 +8,7 @@ import { Link, useLocation } from "react-router";
 import { useAuth } from "@/features/auth/auth-context";
 import {
   getNavigationConfig,
+  getNavigationGroups,
   getMobileNavItems,
   getOverflowNavItems,
 } from "@/core/config/navigation";
@@ -34,6 +35,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   // Mobile bottom bar: top 4 mobileVisible items + overflow
   const mobileNavItems = getMobileNavItems(filteredNavItems);
   const overflowNavItems = getOverflowNavItems(filteredNavItems);
+  const navGroups = getNavigationGroups(centerId || "default");
 
   return (
     <SidebarProvider>
@@ -99,7 +101,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             );
           })}
           {overflowNavItems.length > 0 && (
-            <MobileNavOverflow items={overflowNavItems} />
+            <MobileNavOverflow items={overflowNavItems} groups={navGroups} userRole={user?.role} />
           )}
         </nav>
       </div>

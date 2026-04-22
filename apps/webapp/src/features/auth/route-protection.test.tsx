@@ -164,6 +164,26 @@ describe("Route Protection", () => {
     });
   });
 
+  describe("Owner full access (AC1 - Story 15-3)", () => {
+    it("OWNER can access all protected routes without redirect", () => {
+      const routes = [
+        { path: "/test-center/dashboard/settings", roles: ["OWNER", "ADMIN"], name: "Settings" },
+        { path: "/test-center/dashboard/grading", roles: ["OWNER", "TEACHER"], name: "Grading" },
+        { path: "/test-center/dashboard/students", roles: ["OWNER", "ADMIN", "TEACHER"], name: "Students" },
+      ];
+
+      for (const route of routes) {
+        const { unmount } = renderProtectedRoute(
+          route.path,
+          { role: "OWNER", centerId: "test-center" },
+          route.roles
+        );
+        expect(screen.getByText(`${route.name} Page`)).toBeInTheDocument();
+        unmount();
+      }
+    });
+  });
+
   describe("Unauthenticated access", () => {
     it("redirects unauthenticated users from protected routes", () => {
       renderProtectedRoute(

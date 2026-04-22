@@ -69,7 +69,7 @@
 #   - Epic 8: Added 8.4-8.5 (i18n, golden sample UI)
 
 generated: 2026-01-29
-last_updated: 2026-04-22 # Story 15-2 → review
+last_updated: 2026-04-22 # Story 15-3 → review
 project: classlite
 project_key: classlite
 tracking_system: file-system
@@ -262,7 +262,7 @@ development_status:
   epic-15: in-progress
   15-1-rbac-audit: done
   15-2-admin-remove-grading-assignment-views: review
-  15-3-owner-god-mode: backlog
+  15-3-owner-god-mode: review
   15-4-clearer-role-distinction-in-ui: backlog
   epic-15-retrospective: optional
 

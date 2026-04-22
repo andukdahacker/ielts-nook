@@ -18,14 +18,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useTranslation } from "react-i18next";
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
-import { getNavigationConfig } from "@/core/config/navigation";
-
-export type NavItem = {
-  title: string;
-  url: string;
-  icon: React.ReactNode;
-  badge?: string;
-};
+import { getNavigationGroups } from "@/core/config/navigation";
 
 function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { tenant } = useTenant();
@@ -33,21 +26,7 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { t } = useTranslation();
   const centerId = user?.centerId;
 
-  const navConfig = getNavigationConfig(centerId || "default");
-  const filteredNavItems = navConfig
-    .filter((item) => user?.role && item.allowedRoles.includes(user.role))
-    .sort((a, b) => a.order - b.order)
-    .map((item) => ({
-      title: item.title,
-      url: item.url,
-      icon: <item.icon />,
-      // Teachers have read-only access to Classes. Match on the URL suffix
-      // (a stable identifier) rather than the i18n key string.
-      badge:
-        user?.role === "TEACHER" && item.url.endsWith("/classes")
-          ? t("sidebar.readOnlyBadge")
-          : undefined,
-    }));
+  const navGroups = getNavigationGroups(centerId || "default");
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -77,7 +56,13 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={filteredNavItems} />
+        <NavMain
+          groups={navGroups}
+          userRole={user?.role}
+          teacherClassesBadge={
+            user?.role === "TEACHER" ? t("sidebar.readOnlyBadge") : undefined
+          }
+        />
       </SidebarContent>
       <SidebarFooter>
         <NavUser

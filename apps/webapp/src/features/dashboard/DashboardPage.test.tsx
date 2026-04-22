@@ -107,10 +107,10 @@ describe("DashboardPage", () => {
       </BrowserRouter>,
     );
 
-    // Students should see Dashboard, Schedule, and My Profile
+    // Students should see Dashboard and Schedule in grouped sidebar nav
     expect(screen.getAllByText(/Dashboard/i)[0]).toBeInTheDocument();
     expect(screen.getAllByText(/Schedule/i)[0]).toBeInTheDocument();
-    expect(screen.getAllByText(/My Profile/i)[0]).toBeInTheDocument();
+    // Profile is accessible via NavUser dropdown (sidebar footer), not in nav groups
 
     // Students should NOT see Classes, Exercises, Grading, Students, or Settings
     expect(screen.queryByText(/Classes/i)).not.toBeInTheDocument();

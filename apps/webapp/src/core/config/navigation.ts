@@ -109,6 +109,57 @@ export const getNavigationConfig = (centerId: string): NavItemConfig[] => {
   ];
 };
 
+export interface NavGroupConfig {
+  label: string;
+  items: NavItemConfig[];
+}
+
+/** True when an item is accessible only to OWNER (used for badge rendering). */
+export const isOwnerOnly = (item: NavItemConfig) =>
+  item.allowedRoles.length === 1 && item.allowedRoles[0] === "OWNER";
+
+/**
+ * Get navigation items organized into logical groups for sidebar display.
+ * Profile is excluded — handled separately in sidebar footer (NavUser).
+ */
+export const getNavigationGroups = (centerId: string): NavGroupConfig[] => {
+  const allItems = getNavigationConfig(centerId);
+  const grouped = allItems.filter((i) => i.title !== "nav.profile");
+
+  // Preserves the order of `titles`, not the source array order.
+  const findByTitles = (titles: string[]) => {
+    const itemMap = new Map(grouped.map((i) => [i.title, i]));
+    return titles
+      .map((t) => itemMap.get(t))
+      .filter((i): i is NavItemConfig => i !== undefined);
+  };
+
+  return [
+    {
+      label: "nav.group.overview",
+      items: findByTitles(["nav.dashboard", "nav.schedule"]),
+    },
+    {
+      label: "nav.group.teaching",
+      items: findByTitles([
+        "nav.classes",
+        "nav.exercises",
+        "nav.mockTests",
+        "nav.assignments",
+        "nav.grading",
+      ]),
+    },
+    {
+      label: "nav.group.people",
+      items: findByTitles(["nav.students"]),
+    },
+    {
+      label: "nav.group.administration",
+      items: findByTitles(["nav.settings"]),
+    },
+  ];
+};
+
 /**
  * Get nav items visible in mobile bottom bar (mobileVisible: true, max 4)
  */
