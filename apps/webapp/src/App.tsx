@@ -3,7 +3,8 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { toast, Toaster } from "sonner";
 import { ErrorBoundary } from "./core/components/common/error-boundary";
-import { UnauthorizedError } from "./core/client";
+import { UnauthorizedError, ForbiddenError } from "./core/client";
+import i18next from "i18next";
 import { ThemeProvider } from "./core/components/common/theme-provider";
 import { AuthProvider } from "./features/auth/auth-context";
 import { ForgotPasswordPage } from "./features/auth/forgot-password-page";
@@ -46,6 +47,7 @@ function App() {
       queries: {
         retry: (failureCount, error) => {
           if (error instanceof UnauthorizedError) return false;
+          if (error instanceof ForbiddenError) return false;
           return failureCount < 3;
         },
       },
@@ -53,7 +55,9 @@ function App() {
         retry: 0,
         onError: (error) => {
           if (error instanceof UnauthorizedError) {
-            toast.error("Unauthenticated");
+            toast.error(i18next.t("errors.unauthenticated", "Unauthenticated"));
+          } else if (error instanceof ForbiddenError) {
+            toast.error(i18next.t("errors.forbidden", "You do not have permission for this action"));
           }
         },
       },

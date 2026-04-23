@@ -36,6 +36,8 @@
   "errors.hideDetails": "Hide error details",
   "errors.tryAgain": "Try Again",
   "errors.goToDashboard": "Go to Dashboard",
+  "errors.unauthenticated": "Unauthenticated",
+  "errors.forbidden": "You do not have permission for this action",
   "status.live": "Live",
   "status.syncing": "Syncing...",
   "status.offline": "Offline - Changes Queued",

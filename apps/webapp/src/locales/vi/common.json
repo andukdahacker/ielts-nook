@@ -36,6 +36,8 @@
   "errors.hideDetails": "Ẩn chi tiết lỗi",
   "errors.tryAgain": "Thử lại",
   "errors.goToDashboard": "Về trang tổng quan",
+  "errors.unauthenticated": "Chưa xác thực",
+  "errors.forbidden": "Bạn không có quyền thực hiện hành động này",
   "status.live": "Trực tiếp",
   "status.syncing": "Đang đồng bộ...",
   "status.offline": "Ngoại tuyến - Thay đổi đang chờ",

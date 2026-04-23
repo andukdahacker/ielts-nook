@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@workspace/ui/components/sidebar";
+import { Badge } from "@workspace/ui/components/badge";
 import { useTenant } from "@/features/tenants/tenant-context";
 import { useAuth } from "@/features/auth/auth-context";
 import { useTranslation } from "react-i18next";
@@ -49,7 +50,14 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <span className="truncate font-medium">
                   {tenant?.name || t("sidebar.defaultName")}
                 </span>
-                <span className="truncate text-xs">{user?.role}</span>
+                {user?.role && (
+                  <Badge
+                    variant={user.role === "OWNER" ? "default" : user.role === "ADMIN" ? "secondary" : "outline"}
+                    className="w-fit text-[10px] px-1.5 py-0 group-data-[collapsible=icon]:hidden"
+                  >
+                    {String(t(`role.${user.role.toLowerCase()}`))}
+                  </Badge>
+                )}
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

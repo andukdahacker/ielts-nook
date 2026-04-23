@@ -212,6 +212,17 @@ describe("NavMain grouped navigation", () => {
     expect(screen.queryByText("Grading")).not.toBeInTheDocument();
   });
 
+  it("TEACHER does not see Administration group (Settings requires OWNER/ADMIN) (AC2 verification)", () => {
+    renderNavMain("TEACHER", "/c1/dashboard");
+
+    expect(screen.getByText("Overview")).toBeInTheDocument();
+    expect(screen.getByText("Teaching")).toBeInTheDocument();
+    expect(screen.getByText("People")).toBeInTheDocument();
+    // TEACHER should NOT see Administration (Settings allowedRoles: ["OWNER", "ADMIN"])
+    expect(screen.queryByText("Administration")).not.toBeInTheDocument();
+    expect(screen.queryByText("Settings")).not.toBeInTheDocument();
+  });
+
   it("renders nothing when userRole is undefined (auth loading)", () => {
     const { container } = renderNavMain(undefined);
 
